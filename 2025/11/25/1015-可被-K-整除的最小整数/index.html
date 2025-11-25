@@ -19,23 +19,21 @@
   <meta name="author" content="wyz">
   <meta name="keywords" content="">
   
-    <meta name="description" content="题目： 给定一个二进制数组 nums ( 索引从0开始 )。 我们将xi 定义为其二进制表示形式为子数组 nums[0..i] (从最高有效位到最低有效位)。 例如，如果 nums &#x3D;[1,0,1] ，那么 x0 &#x3D; 1, x1 &#x3D; 2, 和 x2 &#x3D; 5。  返回布尔值列表 answer，只有当 xi 可以被 5 整除时，答案 answer[i] 为 true，否则为 false。 示例 1：">
+    <meta name="description" content="给定正整数 k ，你需要找出可以被 k 整除的、仅包含数字 1 的最 小 正整数 n 的长度。 返回 n 的长度。如果不存在这样的 n ，就返回-1。 注意： n 可能不符合 64 位带符号整数。 示例 1： 输入：k &#x3D; 1输出：1解释：最小的答案是 n &#x3D; 1，其长度为 1。 示例 2： 输入：k &#x3D; 2输出：-1解释：不存在可被 2 整除的正整数 n 。 示例">
 <meta property="og:type" content="article">
-<meta property="og:title" content="1018. 可被 5 整除的二进制前缀">
-<meta property="og:url" content="http://example.com/2025/11/24/1018-%E5%8F%AF%E8%A2%AB-5-%E6%95%B4%E9%99%A4%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%89%8D%E7%BC%80/index.html">
+<meta property="og:title" content="1015. 可被 K 整除的最小整数">
+<meta property="og:url" content="http://example.com/2025/11/25/1015-%E5%8F%AF%E8%A2%AB-K-%E6%95%B4%E9%99%A4%E7%9A%84%E6%9C%80%E5%B0%8F%E6%95%B4%E6%95%B0/index.html">
 <meta property="og:site_name" content="歪嘴臭狗的狗窝">
-<meta property="og:description" content="题目： 给定一个二进制数组 nums ( 索引从0开始 )。 我们将xi 定义为其二进制表示形式为子数组 nums[0..i] (从最高有效位到最低有效位)。 例如，如果 nums &#x3D;[1,0,1] ，那么 x0 &#x3D; 1, x1 &#x3D; 2, 和 x2 &#x3D; 5。  返回布尔值列表 answer，只有当 xi 可以被 5 整除时，答案 answer[i] 为 true，否则为 false。 示例 1：">
+<meta property="og:description" content="给定正整数 k ，你需要找出可以被 k 整除的、仅包含数字 1 的最 小 正整数 n 的长度。 返回 n 的长度。如果不存在这样的 n ，就返回-1。 注意： n 可能不符合 64 位带符号整数。 示例 1： 输入：k &#x3D; 1输出：1解释：最小的答案是 n &#x3D; 1，其长度为 1。 示例 2： 输入：k &#x3D; 2输出：-1解释：不存在可被 2 整除的正整数 n 。 示例">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/pic/1018.png">
-<meta property="article:published_time" content="2025-11-24T13:03:06.000Z">
-<meta property="article:modified_time" content="2025-11-24T13:27:11.687Z">
+<meta property="article:published_time" content="2025-11-25T05:14:34.000Z">
+<meta property="article:modified_time" content="2025-11-25T05:19:03.374Z">
 <meta property="article:author" content="wyz">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://example.com/pic/1018.png">
   
   
   
-  <title>1018. 可被 5 整除的二进制前缀 - 歪嘴臭狗的狗窝</title>
+  <title>1015. 可被 K 整除的最小整数 - 歪嘴臭狗的狗窝</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -201,7 +199,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="1018. 可被 5 整除的二进制前缀"></span>
+            <span id="subtitle" data-typed-text="1015. 可被 K 整除的最小整数"></span>
           
         </div>
 
@@ -212,8 +210,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2025-11-24 21:03" pubdate>
-          2025年11月24日 晚上
+        <time datetime="2025-11-25 13:14" pubdate>
+          2025年11月25日 下午
         </time>
       </span>
     
@@ -224,7 +222,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          832 字
+          934 字
         
       </span>
     
@@ -235,7 +233,7 @@
         
         
         
-          7 分钟
+          8 分钟
         
       </span>
     
@@ -272,31 +270,29 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">1018. 可被 5 整除的二进制前缀</h1>
+            <h1 id="seo-header">1015. 可被 K 整除的最小整数</h1>
             
             
               <div class="markdown-body">
                 
-                <p><strong>题目：</strong></p>
-<p>给定一个二进制数组 nums ( 索引从0开始 )。</p>
-<p>我们将xi 定义为其二进制表示形式为子数组 nums[0..i] (从最高有效位到最低有效位)。</p>
-<pre><code class="hljs">例如，如果 nums =[1,0,1] ，那么 x0 = 1, x1 = 2, 和 x2 = 5。
-</code></pre>
-<p>返回布尔值列表 answer，只有当 xi 可以被 5 整除时，答案 answer[i] 为 true，否则为 false。</p>
+                <p>给定正整数 k ，你需要找出可以被 k 整除的、仅包含数字 1 的最 小 正整数 n 的长度。</p>
+<p>返回 n 的长度。如果不存在这样的 n ，就返回-1。</p>
+<p>注意： n 可能不符合 64 位带符号整数。</p>
 <p>示例 1：</p>
-<p>输入：nums &#x3D; [0,1,1]<br>输出：[true,false,false]<br>解释：<br>输入数字为 0, 01, 011；也就是十进制中的 0, 1, 3 。只有第一个数可以被 5 整除，因此 answer[0] 为 true 。</p>
+<p>输入：k &#x3D; 1<br>输出：1<br>解释：最小的答案是 n &#x3D; 1，其长度为 1。</p>
 <p>示例 2：</p>
-<p>输入：nums &#x3D; [1,1,1]<br>输出：[false,false,false]</p>
-<p>提示：</p>
-<pre><code class="hljs">1 &lt;= nums.length &lt;= 105 
-nums[i] 仅为 0 或 1
-</code></pre>
+<p>输入：k &#x3D; 2<br>输出：-1<br>解释：不存在可被 2 整除的正整数 n 。</p>
+<p>示例 3：</p>
+<p>输入：k &#x3D; 3<br>输出：3<br>解释：最小的答案是 n &#x3D; 111，其长度为 3。</p>
 <p>代码：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Solution</span> &#123;<br><span class="hljs-keyword">public</span>:<br>    <span class="hljs-function">vector&lt;<span class="hljs-type">bool</span>&gt; <span class="hljs-title">prefixesDivBy5</span><span class="hljs-params">(vector&lt;<span class="hljs-type">int</span>&gt;&amp; nums)</span> </span>&#123;<br>        vector&lt;<span class="hljs-type">bool</span>&gt;answer;<br>        <span class="hljs-type">int</span> prefix=<span class="hljs-number">0</span>;<br>        <span class="hljs-type">int</span> length=nums.<span class="hljs-built_in">size</span>();<br>        <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i=<span class="hljs-number">0</span>;i&lt;length;i++)&#123;<br>            prefix=((prefix&lt;&lt;<span class="hljs-number">1</span>)+nums[i])%<span class="hljs-number">5</span>;<br>            answer.<span class="hljs-built_in">emplace_back</span>(prefix==<span class="hljs-number">0</span>);<br>        &#125;<br>        <span class="hljs-keyword">return</span> answer;<br>    &#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
-<p>解法：<br>考虑到数组 nums 可能很长，如果每次都保留 numi​ 的值，则可能导致溢出。由于只需要知道每个 numi​ 是否可以被 5 整除，因此在计算过程中只需要保留余数即可。</p>
-<p>分配律的运算律：</p>
-<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm"><span class="hljs-number">1</span>. (a + <span class="hljs-keyword">b) </span>% p = (a % p + <span class="hljs-keyword">b </span>% p) % p <br><span class="hljs-number">2</span>. (a - <span class="hljs-keyword">b) </span>% p = (a % p - <span class="hljs-keyword">b </span>% p) % p <br><span class="hljs-number">3</span>. (a * <span class="hljs-keyword">b) </span>% p = (a % p * <span class="hljs-keyword">b </span>% p) % p <br><span class="hljs-number">4</span>. (a^<span class="hljs-keyword">b) </span>% p = ((a % p)^<span class="hljs-keyword">b) </span>% p<br></code></pre></td></tr></table></figure>
-<p><img src="/../pic/1018.png" srcset="/img/loading.gif" lazyload alt="证明过程"></p>
+<figure class="highlight perl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs perl"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Solution</span> </span>&#123;<br>public:<br>    <span class="hljs-keyword">int</span> smallestRepunitDivByK(<span class="hljs-keyword">int</span> k) &#123;<br>        <span class="hljs-keyword">int</span> resid=<span class="hljs-number">1</span><span class="hljs-variable">%k</span>,len=<span class="hljs-number">1</span>;<br>        unordered_set&lt;<span class="hljs-keyword">int</span>&gt;st;<br>        st.insert(resid);<br>        <span class="hljs-keyword">while</span>(resid!=<span class="hljs-number">0</span>)&#123;<br>            resid=(resid*<span class="hljs-number">10</span>+<span class="hljs-number">1</span>)<span class="hljs-variable">%k</span>;<br>            len++;<br>            <span class="hljs-keyword">if</span>(st.find(resid)!=st.end())&#123;<br>                <span class="hljs-keyword">return</span> -<span class="hljs-number">1</span>;<br>            &#125;<br>            st.insert(resid);<br>        &#125;<br>        <span class="hljs-keyword">return</span> len;<br>    &#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>resid是余数，如果resid不为0则不能被k整除。residnew可以由residold推出：<br>residnew​​&#x3D;(nold​×10+1) mod k<br>        &#x3D;((nold​modk)×10+1) mod k<br>        &#x3D;(residold​×10+1) mod k​<br>所以只需要记录resid即可，由于resid是对k取模，不会超出k，如果resid出现重复，则说明不存在解，因为循环的方式是*10+1，出现重复后面的步骤都一样。</p>
+<p>优化:当 k 为 2 或者 5 的倍数时，能够被 k 整除的数字末尾一定不为 1，所以此时一定无解。</p>
+<p>resid 随着 1 的增加，最后一定进入循环，我们能找到两个对 k 同余的 n 和 m。假设 n&gt;m，那么一定有以下等式成立：</p>
+<p>(n−m) ≡ 0 (mod k)</p>
+<p>n−m 可以表示为 11…100…0 的形式，因此有 11…100…0 ≡ 0 (modk)。</p>
+<p>如果此时 k 不为 2 或 5 的倍数，则 k 与 10 没有公因数，k 与 10 互质。n−m 末尾的 0 可以除掉，因此 11…1≡0(modk)，问题一定有解。</p>
 
                 
               </div>
@@ -335,8 +331,8 @@ nums[i] 仅为 0 或 1
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>1018. 可被 5 整除的二进制前缀</div>
-      <div>http://example.com/2025/11/24/1018-可被-5-整除的二进制前缀/</div>
+      <div>1015. 可被 K 整除的最小整数</div>
+      <div>http://example.com/2025/11/25/1015-可被-K-整除的最小整数/</div>
     </div>
     <div class="license-meta">
       
@@ -348,7 +344,7 @@ nums[i] 仅为 0 或 1
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2025年11月24日</div>
+          <div>2025年11月25日</div>
         </div>
       
       
@@ -380,18 +376,12 @@ nums[i] 仅为 0 或 1
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2025/11/25/1015-%E5%8F%AF%E8%A2%AB-K-%E6%95%B4%E9%99%A4%E7%9A%84%E6%9C%80%E5%B0%8F%E6%95%B4%E6%95%B0/" title="1015. 可被 K 整除的最小整数">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">1015. 可被 K 整除的最小整数</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2025/11/24/go%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95/" title="go基础语法">
-                        <span class="hidden-mobile">go基础语法</span>
+                      <a href="/2025/11/24/1018-%E5%8F%AF%E8%A2%AB-5-%E6%95%B4%E9%99%A4%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%89%8D%E7%BC%80/" title="1018. 可被 5 整除的二进制前缀">
+                        <span class="hidden-mobile">1018. 可被 5 整除的二进制前缀</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
