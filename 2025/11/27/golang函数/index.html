@@ -27,7 +27,7 @@
 <meta property="og:description" content="4.1 定义 (Definition)知识点： 基本特征： 不支持嵌套定义（命名函数）、不支持重载、不支持默认参数。 第一类对象： 函数可作为变量赋值、作为参数传递或作为返回值。 语法限制： 左花括号 { 必须在函数签名行尾，不能另起一行。 内存分配： 编译器通过逃逸分析（escape analysis）决定局部变量分配在栈还是堆上。 示例代码： 1234567891011121314151617">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-11-27T12:01:34.000Z">
-<meta property="article:modified_time" content="2025-11-27T12:12:40.547Z">
+<meta property="article:modified_time" content="2025-11-27T12:15:27.751Z">
 <meta property="article:author" content="wyz">
 <meta name="twitter:card" content="summary_large_image">
   
@@ -222,7 +222,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          4.6k 字
+          4.5k 字
         
       </span>
     
@@ -285,7 +285,7 @@
 <p>4.2 参数 (Arguments)<br>知识点：</p>
 <p>传值（Pass-by-value）： Go中所有参数均为值拷贝传递。即使传递指针，也是拷贝指针的副本（指向同一地址）。</p>
 <p>变参（Variadic）： 本质是切片。只能作为最后一个参数，定义为 …Type。</p>
-<p>结构体参数： 建议将过多的参数重构为结构体，变相实现可选参数或命名参数功能。</p>
+<p>将过多的参数重构为结构体，变相实现可选参数或命名参数功能。</p>
 <p>示例代码（变参）：</p>
 <figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs stylus">package <span class="hljs-selector-tag">main</span><br><br>import <span class="hljs-string">&quot;fmt&quot;</span><br><br>func <span class="hljs-built_in">test</span>(s string, <span class="hljs-selector-tag">a</span> ...int) &#123;<br>    fmt<span class="hljs-selector-class">.Printf</span>(<span class="hljs-string">&quot;%T, %v\n&quot;</span>, <span class="hljs-selector-tag">a</span>, a)<br>&#125;<br><br>func <span class="hljs-selector-tag">main</span>() &#123;<br>    <span class="hljs-built_in">test</span>(<span class="hljs-string">&quot;abc&quot;</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>)<br>    <br>    <span class="hljs-comment">// 切片作为变参传递需展开</span><br>    <span class="hljs-selector-tag">a</span> := <span class="hljs-selector-attr">[]</span>int&#123;<span class="hljs-number">10</span>, <span class="hljs-number">20</span>, <span class="hljs-number">30</span>&#125;<br>    <span class="hljs-built_in">test</span>(<span class="hljs-string">&quot;slice&quot;</span>, <span class="hljs-selector-tag">a</span>...) <br>&#125;<br>输出：<br><br><span class="hljs-selector-attr">[]</span>int, <span class="hljs-selector-attr">[1 2 3 4]</span><br><span class="hljs-selector-attr">[]</span>int, <span class="hljs-selector-attr">[10 20 30]</span><br></code></pre></td></tr></table></figure>
 <p>4.3 返回值 (Return Values)<br>知识点：</p>
@@ -313,7 +313,7 @@
 <p>Panic&#x2F;Recover： 类似异常机制。</p>
 <p>panic：中断流程，执行延迟调用。</p>
 <p>recover：仅在 defer 函数中有效，用于捕获 panic 错误，避免进程崩溃。</p>
-<p>建议： 除非不可恢复的错误（如系统崩溃），否则尽量使用 error 而非 panic。</p>
+<p>除非不可恢复的错误（如系统崩溃），否则尽量使用 error 而非 panic。</p>
 <p>示例代码（Panic&#x2F;Recover）：</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> <span class="hljs-string">&quot;log&quot;</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>        <span class="hljs-keyword">if</span> err := <span class="hljs-built_in">recover</span>(); err != <span class="hljs-literal">nil</span> &#123;<br>            log.Println(<span class="hljs-string">&quot;caught:&quot;</span>, err) <span class="hljs-comment">// 捕获错误</span><br>        &#125;<br>    &#125;()<br>    <br>    <span class="hljs-built_in">panic</span>(<span class="hljs-string">&quot;i am dead&quot;</span>) <span class="hljs-comment">// 引发错误</span><br>    <span class="hljs-built_in">println</span>(<span class="hljs-string">&quot;exit.&quot;</span>)   <span class="hljs-comment">// 不会执行</span><br>&#125;<br>输出：<br><br><br><br>caught: i am dead<br></code></pre></td></tr></table></figure>
 
@@ -360,7 +360,7 @@
 <p>连续调用 panic，仅最后一个会被 recover 捕获 。</p>
 <p>错误处理模式：</p>
 <p>虽然 Go 代码中充斥着 if err !&#x3D; nil，但可以通过自定义错误类型（Type Switch）来携带更多上下文 。</p>
-<p>不要忽略 error，应严格检查。对于复杂的组合条件判断，建议重构为独立函数以简化主流程逻辑 。</p>
+<p>不要忽略 error，应严格检查。对于复杂的组合条件判断，重构为独立函数以简化主流程逻辑 。</p>
 
                 
               </div>
@@ -368,6 +368,27 @@
             <hr/>
             <div>
               <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go/" class="category-chain-item">go</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
   
   
 </div>
