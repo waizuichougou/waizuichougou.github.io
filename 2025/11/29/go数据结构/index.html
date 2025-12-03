@@ -22,12 +22,12 @@
     <meta name="description" content="5.1 字符串 (String)核心知识点： 定义： 字符串是不可变的字节序列。默认值是 “” 而非 nil。 底层结构： 它不是一个简单的数组，而是一个复合结构（reflect.StringHeader），包含一个指向底层字节数组的指针 str 和长度 len。 struct { str unsafe.Pointer; len int }  特性： 支持索引访问字节（不可寻址，也就是不能&amp;amp">
 <meta property="og:type" content="article">
 <meta property="og:title" content="go数据结构">
-<meta property="og:url" content="http://example.com/2025/11/29/go%E6%95%B0%E6%8D%AE/index.html">
+<meta property="og:url" content="http://example.com/2025/11/29/go%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/index.html">
 <meta property="og:site_name" content="歪嘴臭狗的狗窝">
 <meta property="og:description" content="5.1 字符串 (String)核心知识点： 定义： 字符串是不可变的字节序列。默认值是 “” 而非 nil。 底层结构： 它不是一个简单的数组，而是一个复合结构（reflect.StringHeader），包含一个指向底层字节数组的指针 str 和长度 len。 struct { str unsafe.Pointer; len int }  特性： 支持索引访问字节（不可寻址，也就是不能&amp;amp">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2025-11-29T07:07:57.000Z">
-<meta property="article:modified_time" content="2025-11-29T07:08:23.549Z">
+<meta property="article:published_time" content="2025-11-29T01:42:41.000Z">
+<meta property="article:modified_time" content="2025-11-29T03:04:24.000Z">
 <meta property="article:author" content="wyz">
 <meta name="twitter:card" content="summary_large_image">
   
@@ -210,8 +210,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2025-11-29 15:07" pubdate>
-          2025年11月29日 下午
+        <time datetime="2025-11-29 09:42" pubdate>
+          2025年11月29日 上午
         </time>
       </span>
     
@@ -222,7 +222,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          16k 字
+          7.5k 字
         
       </span>
     
@@ -233,7 +233,7 @@
         
         
         
-          131 分钟
+          63 分钟
         
       </span>
     
@@ -378,167 +378,53 @@
 
 <p>5.4 字典 (Map)<br>核心知识点：</p>
 <p>定义： 无序键值对集合，引用类型。</p>
-<p>要求： Key 必须支持 &#x3D;&#x3D; 和 !&#x3D; 比较运算，比如数字 字符串 指针 结构体和对应结构类型（切片、函数、包含切片的结构体不能作为 Key）。</p>
-<p>操作： 使用 make 创建，delete 删除。读取不存在的 Key 返回零值，可用 ok-idiom 模式判断是否存在。访问和删除不存在的键值不会报错，默认为0</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs go">m:=<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int</span>&#123;<br>	<span class="hljs-string">&quot;a&quot;</span>=<span class="hljs-number">1</span>,<br>	<span class="hljs-string">&quot;b&quot;</span>=<span class="hljs-number">2</span>，<br>&#125;<span class="hljs-comment">//匿名结构体</span><br>m[<span class="hljs-string">&quot;a&quot;</span>]=<span class="hljs-number">10</span><span class="hljs-comment">//修改</span><br>m[<span class="hljs-string">&quot;c&quot;</span>]=<span class="hljs-number">20</span><span class="hljs-comment">//新增</span><br><span class="hljs-keyword">if</span> v,ok := m[<span class="hljs-string">&quot;d&quot;</span>];ok&#123;<br>	<span class="hljs-built_in">println</span>(v)<br>&#125;<span class="hljs-comment">// ok-idiom 模式</span><br><span class="hljs-built_in">delete</span>(m,<span class="hljs-string">&quot;d&quot;</span>)<br></code></pre></td></tr></table></figure>
-
+<p>要求： Key 必须支持 &#x3D;&#x3D; 和 !&#x3D; 比较运算（切片、函数、包含切片的结构体不能作为 Key）。</p>
+<p>操作： 使用 make 创建，delete 删除。读取不存在的 Key 返回零值，可用 ok-idiom 模式判断是否存在。</p>
 <p>深度分析：</p>
-<p>不可寻址 (Not Addressable)： 字典中的 Value 是不可寻址的。你不能直接获取 m[“key”] 的地址，也不能直接修改 Value 中结构体的字段（如 m[“k”].field &#x3D; 1 会报错）。必须将整个 Value 替换，或让 Value 为指针类型。原因是map 的 value 可能随着 rehash 而搬家，Go 拒绝给这种“不稳定”地址开门。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">type</span> user <span class="hljs-keyword">struct</span> &#123;<br>	name <span class="hljs-type">string</span><br>	age  <span class="hljs-type">byte</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	m := <span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]user&#123;<br>		<span class="hljs-number">1</span>: &#123;<span class="hljs-string">&quot;Tom&quot;</span>, <span class="hljs-number">19</span>&#125;,<br>	&#125;<br>	<span class="hljs-comment">// m[1].age += 1   // 编译错误：cannot assign to m[1].age</span><br>	_ = m<br>&#125;<br><br>正确方式：先取出整个 value，改完再整体写回<br><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> <span class="hljs-string">&quot;fmt&quot;</span><br><br><span class="hljs-keyword">type</span> user <span class="hljs-keyword">struct</span> &#123;<br>	name <span class="hljs-type">string</span><br>	age  <span class="hljs-type">byte</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	m := <span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]user&#123;<br>		<span class="hljs-number">1</span>: &#123;<span class="hljs-string">&quot;Tom&quot;</span>, <span class="hljs-number">19</span>&#125;,<br>	&#125;<br>	<span class="hljs-comment">// 1. 读出完整值</span><br>	u := m[<span class="hljs-number">1</span>]<br>	<span class="hljs-comment">// 2. 修改</span><br>	u.age++<br>	<span class="hljs-comment">// 3. 整体重新赋值</span><br>	m[<span class="hljs-number">1</span>] = u<br>	fmt.Println(m[<span class="hljs-number">1</span>]) <span class="hljs-comment">// &#123;Tom 20&#125;</span><br>&#125;<br><br>一步到位把 value 做成指针，直接透过指针改目标<br><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> <span class="hljs-string">&quot;fmt&quot;</span><br><br><span class="hljs-keyword">type</span> user <span class="hljs-keyword">struct</span> &#123;<br>	name <span class="hljs-type">string</span><br>	age  <span class="hljs-type">byte</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	m := <span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]*user&#123;<br>		<span class="hljs-number">1</span>: &#123;<span class="hljs-string">&quot;Jack&quot;</span>, <span class="hljs-number">20</span>&#125;, <span class="hljs-comment">// 复合字面量自动取地址 &amp;user&#123;...&#125;</span><br>	&#125;<br>	<span class="hljs-comment">// m[1] 返回的是 *user，可直接改成员</span><br>	m[<span class="hljs-number">1</span>].age++<br>	fmt.Println(m[<span class="hljs-number">1</span>]) <span class="hljs-comment">// &amp;&#123;Jack 21&#125;</span><br>&#125;<br><br>彩蛋：数值类型 <span class="hljs-string">`m[key]++`</span> 为什么合法？  <br>因为整型 value 是完整值，<span class="hljs-string">`++`</span> 等价于 <span class="hljs-string">`m[key] = m[key] + 1`</span>，没有取地址操作。<br><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> <span class="hljs-string">&quot;fmt&quot;</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	cnt := <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int</span>&#123;<span class="hljs-string">&quot;a&quot;</span>: <span class="hljs-number">10</span>&#125;<br>	cnt[<span class="hljs-string">&quot;a&quot;</span>]++        <span class="hljs-comment">// 合法</span><br>	fmt.Println(cnt) <span class="hljs-comment">// map[a:11]</span><br>&#125;<br></code></pre></td></tr></table></figure>
-
-
+<p>不可寻址 (Not Addressable)： 字典中的 Value 是不可寻址的。你不能直接获取 m[“key”] 的地址，也不能直接修改 Value 中结构体的字段（如 m[“k”].field &#x3D; 1 会报错）。必须将整个 Value 替换，或让 Value 为指针类型。</p>
 <p>安全性： nil 字典可以读取（返回零值），但写入会 Panic。</p>
 <p>并发不安全： 多协程并发读写 map 会导致运行时 Panic，需使用 sync.RWMutex 保护。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;sync&quot;</span><br>	<span class="hljs-string">&quot;time&quot;</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	<span class="hljs-keyword">var</span> lock sync.RWMutex <span class="hljs-comment">// 读写锁</span><br>	m := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int</span>)<br><br>	<span class="hljs-comment">// 写 goroutine</span><br>	<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		<span class="hljs-keyword">for</span> &#123;<br>			lock.Lock() <span class="hljs-comment">// 写锁，排他</span><br>			m[<span class="hljs-string">&quot;a&quot;</span>] += <span class="hljs-number">1</span><br>			lock.Unlock()<br>			time.Sleep(time.Microsecond)<br>		&#125;<br>	&#125;()<br><br>	<span class="hljs-comment">// 大量读 goroutine</span><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">8</span>; i++ &#123;<br>		<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(id <span class="hljs-type">int</span>)</span></span> &#123;<br>			<span class="hljs-keyword">for</span> &#123;<br>				lock.RLock() <span class="hljs-comment">// 共享读锁</span><br>				v := m[<span class="hljs-string">&quot;a&quot;</span>]<br>				lock.RUnlock()<br>				_ = v<br>				time.Sleep(time.Microsecond)<br>			&#125;<br>		&#125;(i)<br>	&#125;<br><br>	time.Sleep(<span class="hljs-number">2</span> * time.Second)<br>	lock.RLock()<br>	fmt.Println(<span class="hljs-string">&quot;final a =&quot;</span>, m[<span class="hljs-string">&quot;a&quot;</span>])<br>	lock.RUnlock()<br>&#125;<br></code></pre></td></tr></table></figure>
-
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs go">锁粒度要细：只锁真正临界区，不能用 <span class="hljs-keyword">defer</span> 延迟解锁（会把临界区拉长）<br><span class="hljs-comment">// ❌ defer 把锁范围拖长，吞吐量骤降</span><br>lock.Lock()<br><span class="hljs-keyword">defer</span> lock.Unlock() <span class="hljs-comment">// 临界区 = 整个 for 循环</span><br><span class="hljs-keyword">for</span> &#123; ... &#125;<br><br><span class="hljs-comment">// ✅ 细粒度，临界区仅一行</span><br>lock.Lock()<br>m[<span class="hljs-string">&quot;a&quot;</span>] += <span class="hljs-number">1</span><br>lock.Unlock()<br><br>预分配： 初始化时指定容量 <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]<span class="hljs-type">int</span>, <span class="hljs-number">1000</span>) 可减少扩容时的哈希表重建和内存分配开销。<br></code></pre></td></tr></table></figure>
-
-<p>字典对象本身就是指针包装，传参时无需取地址。创建时内存预分配足够空间能提升性能，减少扩张时的内存重新分配和rehash操作。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;testing&quot;</span><br>	<span class="hljs-string">&quot;unsafe&quot;</span><br>)<br><br><span class="hljs-comment">// ---------- 1. map 本身就是指针，传参零拷贝 ----------</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">test</span><span class="hljs-params">(x <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int</span>)</span></span> &#123;<br>	fmt.Printf(<span class="hljs-string">&quot;x:%p\n&quot;</span>, x) <span class="hljs-comment">// 直接打印指针值</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main1</span><span class="hljs-params">()</span></span> &#123;<br>	m  := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int</span>)<br>	m2 := <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int</span>&#123;&#125; <span class="hljs-comment">// 字面量创建</span><br><br>	test(m)                       <span class="hljs-comment">// 不需要 &amp;m</span><br>	test(m2)<br>	fmt.Printf(<span class="hljs-string">&quot;m:%p, %d B\n&quot;</span>, m, unsafe.Sizeof(m))   <span class="hljs-comment">// 始终 8 字节（指针）</span><br>	fmt.Printf(<span class="hljs-string">&quot;m2:%p, %d B\n&quot;</span>, m2, unsafe.Sizeof(m2))<br>&#125;<br><br><span class="hljs-comment">// ---------- 2. 预分配容量 vs 零容量对比 ----------</span><br><br><span class="hljs-comment">// 零容量：插入时频繁 rehash / 扩容</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">testNoCap</span><span class="hljs-params">()</span></span> <span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]<span class="hljs-type">int</span> &#123;<br>	m := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]<span class="hljs-type">int</span>) <span class="hljs-comment">// cap=0</span><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">1000</span>; i++ &#123;<br>		m[i] = i<br>	&#125;<br>	<span class="hljs-keyword">return</span> m<br>&#125;<br><br><span class="hljs-comment">// 预分配 1000 个桶，减少扩容与重哈希</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">testWithCap</span><span class="hljs-params">()</span></span> <span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]<span class="hljs-type">int</span> &#123;<br>	m := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]<span class="hljs-type">int</span>, <span class="hljs-number">1000</span>) <span class="hljs-comment">// 一次性建好桶</span><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">1000</span>; i++ &#123;<br>		m[i] = i<br>	&#125;<br>	<span class="hljs-keyword">return</span> m<br>&#125;<br><br><span class="hljs-comment">// ---------- 3. Benchmark ----------</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">BenchmarkNoCap</span><span class="hljs-params">(b *testing.B)</span></span> &#123;<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; b.N; i++ &#123;<br>		_ = testNoCap()<br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">BenchmarkWithCap</span><span class="hljs-params">(b *testing.B)</span></span> &#123;<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; b.N; i++ &#123;<br>		_ = testWithCap()<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
-
-<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">BenchmarkNoCap</span>-<span class="hljs-number">8</span>     <span class="hljs-number">2922</span>    <span class="hljs-number">408777</span> ns/op    <span class="hljs-number">289536</span> B/op    <span class="hljs-number">199</span> allocs/op<br><span class="hljs-attribute">BenchmarkWithCap</span>-<span class="hljs-number">8</span>   <span class="hljs-number">5214</span>    <span class="hljs-number">229256</span> ns/op     <span class="hljs-number">65536</span> B/op      <span class="hljs-number">1</span> allocs/op<br></code></pre></td></tr></table></figure>
-
-
+<p>预分配： 初始化时指定容量 make(map[int]int, 1000) 可减少扩容时的哈希表重建和内存分配开销。</p>
 <p>示例代码：</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> <span class="hljs-string">&quot;fmt&quot;</span><br><br><span class="hljs-keyword">type</span> user <span class="hljs-keyword">struct</span> &#123;<br>	name <span class="hljs-type">string</span><br>	age  <span class="hljs-type">int</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	m := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]user)<br>	m[<span class="hljs-string">&quot;Tom&quot;</span>] = user&#123;name: <span class="hljs-string">&quot;Tom&quot;</span>, age: <span class="hljs-number">10</span>&#125;<br><br>	<span class="hljs-comment">// 深度分析：Value 不可寻址</span><br>	<span class="hljs-comment">// m[&quot;Tom&quot;].age = 11 // Error: cannot assign to struct field</span><br>	<br>	<span class="hljs-comment">// 正确修改方式：整体赋值</span><br>	u := m[<span class="hljs-string">&quot;Tom&quot;</span>]<br>	u.age = <span class="hljs-number">11</span><br>	m[<span class="hljs-string">&quot;Tom&quot;</span>] = u<br>	<br>	fmt.Println(m)<br>&#125;<br></code></pre></td></tr></table></figure>
 
 <p>5.5 结构体 (Struct)<br>核心知识点：</p>
 <p>定义： 字段集合，复合类型。</p>
-<p>匿名结构：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> <span class="hljs-string">&quot;fmt&quot;</span><br><br><span class="hljs-comment">// ---------- 1. 顺序 vs 命名初始化 ----------</span><br><span class="hljs-keyword">type</span> user <span class="hljs-keyword">struct</span> &#123;<br>	name <span class="hljs-type">string</span><br>	age  <span class="hljs-type">byte</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main1</span><span class="hljs-params">()</span></span> &#123;<br>	<span class="hljs-comment">// 顺序：必须全部字段按定义顺序出现</span><br>	u1 := user&#123;<span class="hljs-string">&quot;Tom&quot;</span>, <span class="hljs-number">12</span>&#125;<br>	_ = u1<br><br>	<span class="hljs-comment">// 命名：字段可乱序、可省略（零值填充），扩容时兼容旧代码</span><br>	u2 := user&#123;name: <span class="hljs-string">&quot;Tom&quot;</span>&#125; <span class="hljs-comment">// age 自动为 0</span><br>	fmt.Println(u1, u2)<br>&#125;<br><br><span class="hljs-comment">// ---------- 2. 匿名结构：当场定义当场用 ----------</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main2</span><span class="hljs-params">()</span></span> &#123;<br>	<span class="hljs-comment">// 直接定义匿名结构变量</span><br>	u := <span class="hljs-keyword">struct</span> &#123;<br>		name <span class="hljs-type">string</span><br>		age  <span class="hljs-type">byte</span><br>	&#125;&#123;<br>		name: <span class="hljs-string">&quot;Tom&quot;</span>,<br>		age:  <span class="hljs-number">12</span>,<br>	&#125;<br>	fmt.Println(u)<br>&#125;<br><br><span class="hljs-comment">// ---------- 3. 匿名结构作为字段 ----------</span><br><span class="hljs-keyword">type</span> file <span class="hljs-keyword">struct</span> &#123;<br>	name <span class="hljs-type">string</span><br>	attr <span class="hljs-keyword">struct</span> &#123; <span class="hljs-comment">// 匿名结构类型字段</span><br>		owner <span class="hljs-type">int</span><br>		perm  <span class="hljs-type">int</span><br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main3</span><span class="hljs-params">()</span></span> &#123;<br>	<span class="hljs-keyword">var</span> f file<br>	f.name = <span class="hljs-string">&quot;test.dat&quot;</span><br>	<span class="hljs-comment">// 错误：attr: &#123;owner:1, perm:0755&#125;  // missing type in composite literal</span><br>	f.attr.owner = <span class="hljs-number">1</span> <span class="hljs-comment">// 只能逐字段赋值</span><br>	f.attr.perm = <span class="hljs-number">0755</span><br>	fmt.Printf(<span class="hljs-string">&quot;%+v\n&quot;</span>, f)<br>&#125;<br></code></pre></td></tr></table></figure>
-
-<p>匿名字段： 没有名字仅有类型的字段，支持嵌入其他类型（包括结构体、接口），实现类似继承的功能（直接访问内嵌类型的字段和方法）。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;os&quot;</span><br>)<br><br><span class="hljs-comment">// ---------- 1. 基本匿名字段（嵌入结构体） ----------</span><br><span class="hljs-keyword">type</span> attr <span class="hljs-keyword">struct</span> &#123;<br>	perm <span class="hljs-type">int</span><br>&#125;<br><span class="hljs-keyword">type</span> file <span class="hljs-keyword">struct</span> &#123;<br>	name <span class="hljs-type">string</span> <span class="hljs-comment">// 普通字段</span><br>	attr        <span class="hljs-comment">// 匿名字段（嵌入），编译器隐式生成字段名 attr</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main1</span><span class="hljs-params">()</span></span> &#123;<br>	f := file&#123;<br>		name: <span class="hljs-string">&quot;test.dat&quot;</span>,<br>		attr: attr&#123;perm: <span class="hljs-number">0755</span>&#125;, <span class="hljs-comment">// 初始化时必须显式写类型名</span><br>	&#125;<br>	f.perm = <span class="hljs-number">0644</span> <span class="hljs-comment">// 可直接提升访问：f.perm 等价于 f.attr.perm</span><br>	fmt.Println(f.perm)<br>&#125;<br><br><span class="hljs-comment">// ---------- 2. 嵌入其他包的类型 ----------</span><br><span class="hljs-keyword">type</span> data <span class="hljs-keyword">struct</span> &#123;<br>	os.File <span class="hljs-comment">// 隐式字段名 File（不含包名 os）</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main2</span><span class="hljs-params">()</span></span> &#123;<br>	d := data&#123;File: *os.Stdin&#125; <span class="hljs-comment">// 初始化需写 File:</span><br>	fmt.Printf(<span class="hljs-string">&quot;%+v\n&quot;</span>, d)<br>&#125;<br><br><span class="hljs-comment">// ---------- 3. 基础类型/指针也能嵌入 ----------</span><br><span class="hljs-keyword">type</span> base <span class="hljs-keyword">struct</span> &#123;<br>	*<span class="hljs-type">int</span>    <span class="hljs-comment">// 指针类型匿名字段，隐式字段名 int</span><br>	<span class="hljs-type">string</span>  <span class="hljs-comment">// 基础类型匿名字段，隐式字段名 string</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main3</span><span class="hljs-params">()</span></span> &#123;<br>	x := <span class="hljs-number">100</span><br>	d := base&#123;<br>		<span class="hljs-type">int</span>:    &amp;x,   <span class="hljs-comment">// 初始化写类型名</span><br>		<span class="hljs-type">string</span>: <span class="hljs-string">&quot;abc&quot;</span>,<br>	&#125;<br>	fmt.Printf(<span class="hljs-string">&quot;%#v\n&quot;</span>, d)<br>&#125;<br><br><span class="hljs-comment">// ---------- 4. 什么不能嵌？ ----------</span><br><span class="hljs-comment">// 接口指针、多级指针、未命名类型（[]int、map[string]int）不允许匿名字段。</span><br><br><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> <span class="hljs-string">&quot;fmt&quot;</span><br><br><span class="hljs-comment">// ---------- 1. 不能嵌入指针类型 ----------</span><br><span class="hljs-keyword">type</span> c <span class="hljs-keyword">interface</span>&#123;&#125;<br><span class="hljs-keyword">type</span> d <span class="hljs-keyword">struct</span>&#123;&#125;<br><br><span class="hljs-comment">// type bad1 struct &#123; *c &#125; // 错误：embedded type cannot be a pointer to interface</span><br><span class="hljs-comment">// type bad2 struct &#123; *d &#125; // 错误：embedded type cannot be a pointer</span><br><br><span class="hljs-comment">// ---------- 2. 不能同时嵌入基础类型与其指针 ----------</span><br><span class="hljs-comment">// type bad3 struct &#123;</span><br><span class="hljs-comment">// 	*int</span><br><span class="hljs-comment">// 	int // 错误：duplicate field int（两者隐式名字都是 int）</span><br><span class="hljs-comment">// &#125;</span><br><br><span class="hljs-comment">// ---------- 3. 外层同名字段会“遮蔽”匿名字段成员 ----------</span><br><span class="hljs-keyword">type</span> file <span class="hljs-keyword">struct</span> &#123;<br>	name <span class="hljs-type">string</span><br>&#125;<br><span class="hljs-keyword">type</span> data1 <span class="hljs-keyword">struct</span> &#123;<br>	file        <span class="hljs-comment">// 匿名字段，隐式字段名 file</span><br>	name <span class="hljs-type">string</span> <span class="hljs-comment">// 与 file.name 重名，产生遮蔽</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main1</span><span class="hljs-params">()</span></span> &#123;<br>	d := data1&#123;<br>		name: <span class="hljs-string">&quot;data&quot;</span>,     <span class="hljs-comment">// 给外层 data1.name 赋值</span><br>		file: file&#123;name: <span class="hljs-string">&quot;file&quot;</span>&#125;,<br>	&#125;<br>	d.name = <span class="hljs-string">&quot;data2&quot;</span>      <span class="hljs-comment">// 操作的是 data1.name</span><br>	d.file.name = <span class="hljs-string">&quot;file2&quot;</span> <span class="hljs-comment">// 必须显式指定才能进到内层</span><br>	fmt.Println(d.name, d.file.name)<br>&#125;<br><br><span class="hljs-comment">// ---------- 4. 多个同级匿名字段成员重名 ⇒ 编译器无法确定路径 ----------</span><br><span class="hljs-keyword">type</span> file2 <span class="hljs-keyword">struct</span>&#123; name <span class="hljs-type">string</span> &#125;<br><span class="hljs-keyword">type</span> log  <span class="hljs-keyword">struct</span>&#123; name <span class="hljs-type">string</span> &#125;<br><span class="hljs-keyword">type</span> data2 <span class="hljs-keyword">struct</span> &#123;<br>	file2 <span class="hljs-comment">// 层级 1</span><br>	log   <span class="hljs-comment">// 层级 1  （file2.name 与 log.name 同名）</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main2</span><span class="hljs-params">()</span></span> &#123;<br>	d := data2&#123;&#125;<br>	<span class="hljs-comment">// d.name = &quot;name&quot;     // 错误：ambiguous selector d.name</span><br>	d.file2.name = <span class="hljs-string">&quot;file&quot;</span> <span class="hljs-comment">// 必须显式字段名</span><br>	d.log.name  = <span class="hljs-string">&quot;log&quot;</span><br>	fmt.Println(d.file2.name, d.log.name)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	main1()<br>	main2()<br>&#125;<br></code></pre></td></tr></table></figure>
-
+<p>匿名字段： 支持嵌入其他类型（包括结构体、接口），实现类似继承的功能（直接访问内嵌类型的字段和方法）。</p>
 <p>标签 (Tag)： 字段后的字符串元数据，常用于 JSON 解析或 ORM 映射。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;reflect&quot;</span><br>)<br><br><span class="hljs-comment">// ---------- 1. 定义字段标签（tag） ----------</span><br><span class="hljs-keyword">type</span> user <span class="hljs-keyword">struct</span> &#123;<br>	name <span class="hljs-type">string</span> <span class="hljs-string">`昵称:&quot;real_name&quot; json:&quot;name,omitempty&quot;`</span><br>	sex  <span class="hljs-type">byte</span>  <span class="hljs-string">`昵称:&quot;性别&quot;     json:&quot;sex&quot;`</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	u := user&#123;<span class="hljs-string">&quot;Tom&quot;</span>, <span class="hljs-number">1</span>&#125;<br>	v := reflect.ValueOf(u)<br>	t := v.Type()<br><br>	<span class="hljs-comment">// ---------- 2. 运行期读取标签 ----------</span><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; t.NumField(); i++ &#123;<br>		field := t.Field(i)<br>		fmt.Printf(<span class="hljs-string">&quot;%s:%v\n&quot;</span>, field.Tag.Get(<span class="hljs-string">&quot;昵称&quot;</span>), v.Field(i))<br>	&#125;<br><br>	<span class="hljs-comment">// ---------- 3. 用标准库解析标签 ----------</span><br>	tag := reflect.StructTag(<span class="hljs-string">`json:&quot;name,omitempty&quot; db:&quot;user_name&quot;`</span>)<br>	fmt.Println(<span class="hljs-string">&quot;json tag =&quot;</span>, tag.Get(<span class="hljs-string">&quot;json&quot;</span>)) <span class="hljs-comment">// name,omitempty</span><br>	fmt.Println(<span class="hljs-string">&quot;db   tag =&quot;</span>, tag.Get(<span class="hljs-string">&quot;db&quot;</span>))   <span class="hljs-comment">// user_name</span><br>&#125;<br></code></pre></td></tr></table></figure>
-<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs crmsh">real_name:Tom<br>性别:<span class="hljs-number">1</span><br>json <span class="hljs-keyword">tag</span> <span class="hljs-title">= name</span>,omitempty<br>db   <span class="hljs-keyword">tag</span> <span class="hljs-title">= user_name</span><br></code></pre></td></tr></table></figure>
-
-<p>相等判定：只有在所有字段类型全部支持的时候，才可做相等操作（&#x3D;&#x3D;）</p>
 <p>深度分析：</p>
-<p>内存布局： 结构体内存是连续分配的。字段顺序会影响内存对齐（Alignment），合理的字段排序可以减少内存填充（Padding），节省空间。不管结构体包含多少字段，其内存总是一次性分配的，各字段在相邻的地址空间按定义顺序排列。当然，对于引用类型、字符串和指针，结构内存中只包含其基本(头部)数据。还有，所有匿名字段成员也被包含在内。</p>
+<p>内存布局： 结构体内存是连续分配的。字段顺序会影响内存对齐（Alignment），合理的字段排序可以减少内存填充（Padding），节省空间。</p>
 <p>空结构体 (Empty Struct)： struct{} 长度为 0，不占用内存。指向该类型的指针通常指向 runtime.zerobase（固定地址）。常用于 channel 信号传递或 map 实现 Set（map[string]struct{}）。</p>
 <p>方法集与嵌入： 嵌入类型的方法会被“提升”到外部结构体，但本质上是编译器生成的包装方法。外部结构体可以直接调用内部类型的方法。</p>
 <p>示例代码：</p>
 <figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs stylus">package <span class="hljs-selector-tag">main</span><br><br>import (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;unsafe&quot;</span><br>)<br><br>type flag struct&#123;&#125;<br><br>type data struct &#123;<br>	<span class="hljs-selector-tag">b</span> byte<br>	<span class="hljs-selector-tag">i</span> int32<br>	<span class="hljs-selector-tag">a</span> byte <span class="hljs-comment">// 字段分散定义可能导致更多的内存填充</span><br>&#125;<br><br>func <span class="hljs-selector-tag">main</span>() &#123;<br>	<span class="hljs-selector-tag">var</span> d data<br>	<span class="hljs-comment">// 深度分析：内存对齐与填充</span><br>	fmt<span class="hljs-selector-class">.Printf</span>(<span class="hljs-string">&quot;Size: %d, Align: %d\n&quot;</span>, unsafe<span class="hljs-selector-class">.Sizeof</span>(d), unsafe<span class="hljs-selector-class">.Alignof</span>(d))<br>	<br>	<span class="hljs-comment">// 空结构体，地址通常相同</span><br>	<span class="hljs-selector-tag">var</span> <span class="hljs-selector-tag">a</span>, <span class="hljs-selector-tag">b</span> flag<br>	fmt<span class="hljs-selector-class">.Printf</span>(<span class="hljs-string">&quot;Zero size: %p, %p\n&quot;</span>, &amp;<span class="hljs-selector-tag">a</span>, &amp;b)<br>&#125;<br></code></pre></td></tr></table></figure>
-
-<p>6.番外 什么是结构体的内存排布？<br>把Go 结构体想成“一排依次摆放的箱子”，编译器按字段声明顺序把每个箱子（字段）放进内存，但会在中间插入空白纸板（padding），保证：每个字段的起始地址是其对齐值（align） 的整数倍；整个结构体的总大小是其最大字段对齐值的整数倍（方便数组索引）。</p>
-<table>
-<thead>
-<tr>
-<th>名词</th>
-<th>含义</th>
-<th>决定因素</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>size</strong></td>
-<td>字段本身占多少字节</td>
-<td>类型（int8→1，int64→8 …）</td>
-</tr>
-<tr>
-<td><strong>align</strong></td>
-<td>字段必须对齐到几字节边界</td>
-<td>类型（<em>unsafe.Alignof</em>）</td>
-</tr>
-<tr>
-<td><strong>offset</strong></td>
-<td>字段在结构体中的字节偏移</td>
-<td>顺序 + 对齐规则</td>
-</tr>
-</tbody></table>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> T <span class="hljs-keyword">struct</span> &#123;<br>	a <span class="hljs-type">int8</span>  <span class="hljs-comment">// 1 B</span><br>	b <span class="hljs-type">int64</span> <span class="hljs-comment">// 8 B</span><br>	c <span class="hljs-type">int32</span> <span class="hljs-comment">// 4 B</span><br>&#125;<br></code></pre></td></tr></table></figure>
-
-<p>① 声明顺序：a → b → c<br>② 对齐值：align(a)&#x3D;1，align(b)&#x3D;8，align(c)&#x3D;4<br>③ 放字段 &amp; 插入 padding：</p>
-<table>
-<thead>
-<tr>
-<th>区域</th>
-<th>大小</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>a</td>
-<td>1 B</td>
-<td>放在 offset 0</td>
-</tr>
-<tr>
-<td><strong>padding</strong></td>
-<td>7 B</td>
-<td>保证 b 对齐到 8 的倍数</td>
-</tr>
-<tr>
-<td>b</td>
-<td>8 B</td>
-<td>offset 8</td>
-</tr>
-<tr>
-<td>c</td>
-<td>4 B</td>
-<td>offset 16（已天然 4 对齐）</td>
-</tr>
-<tr>
-<td><strong>尾部 padding</strong></td>
-<td>4 B</td>
-<td>让总大小是 maxAlign&#x3D;8 的倍数</td>
-</tr>
-<tr>
-<td><strong>总大小</strong></td>
-<td><strong>24 B</strong></td>
-<td>unsafe.Sizeof(T{})</td>
-</tr>
-</tbody></table>
-<p>重排字段可省 padding：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> T2 <span class="hljs-keyword">struct</span> &#123; a <span class="hljs-type">int8</span>; c <span class="hljs-type">int32</span>; b <span class="hljs-type">int64</span> &#125; <span class="hljs-comment">// 顺序 1→4→8</span><br><span class="hljs-comment">// offset 0 1 4(padding3) 8  → 共 16 B，节省 33 %</span><br></code></pre></td></tr></table></figure>
-
-<p>对齐规则（64位）</p>
-<table>
-<thead>
-<tr>
-<th>类型</th>
-<th>size</th>
-<th>align</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>bool, int8, uint8</td>
-<td>1</td>
-<td>1</td>
-</tr>
-<tr>
-<td>int16, uint16</td>
-<td>2</td>
-<td>2</td>
-</tr>
-<tr>
-<td>int32, uint32, float32</td>
-<td>4</td>
-<td>4</td>
-</tr>
-<tr>
-<td>int64, uint64, float64, *指针</td>
-<td>8</td>
-<td>8</td>
-</tr>
-<tr>
-<td>complex64</td>
-<td>8</td>
-<td>4</td>
-</tr>
-<tr>
-<td>complex128</td>
-<td>16</td>
-<td>8</td>
-</tr>
-</tbody></table>
-
                 
               </div>
             
             <hr/>
             <div>
               <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go/" class="category-chain-item">go</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
   
   
 </div>
@@ -550,7 +436,7 @@
   <div class="license-box my-3">
     <div class="license-title">
       <div>go数据结构</div>
-      <div>http://example.com/2025/11/29/go数据/</div>
+      <div>http://example.com/2025/11/29/go数据结构/</div>
     </div>
     <div class="license-meta">
       
@@ -594,9 +480,9 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2025/11/30/1590-%E4%BD%BF%E6%95%B0%E7%BB%84%E5%92%8C%E8%83%BD%E8%A2%AB-P-%E6%95%B4%E9%99%A4/" title="1590. 使数组和能被 P 整除">
+                      <a href="/2025/11/29/go%E6%95%B0%E6%8D%AE/" title="go数据结构">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">1590. 使数组和能被 P 整除</span>
+                        <span class="hidden-mobile">go数据结构</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -604,8 +490,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2025/11/29/go%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" title="go数据结构">
-                        <span class="hidden-mobile">go数据结构</span>
+                      <a href="/2025/11/29/3512-%E4%BD%BF%E6%95%B0%E7%BB%84%E5%92%8C%E8%83%BD%E8%A2%AB-K-%E6%95%B4%E9%99%A4%E7%9A%84%E6%9C%80%E5%B0%91%E6%93%8D%E4%BD%9C%E6%AC%A1%E6%95%B0/" title="3512. 使数组和能被 K 整除的最少操作次数">
+                        <span class="hidden-mobile">3512. 使数组和能被 K 整除的最少操作次数</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
