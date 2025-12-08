@@ -19,21 +19,21 @@
   <meta name="author" content="wyz">
   <meta name="keywords" content="">
   
-    <meta name="description" content="在一条无限长的公路上有 n 辆汽车正在行驶。汽车按从左到右的顺序按从 0 到 n - 1 编号，每辆车都在一个 独特的 位置。 给你一个下标从 0 开始的字符串 directions ，长度为 n 。directions[i] 可以是 ‘L’、’R’ 或 ‘S’ 分别表示第 i 辆车是向 左 、向 右 或者 停留 在当前位置。每辆车移动时 速度相同 。 碰撞次数可以按下述方式计算： 当两辆移动方向">
+    <meta name="description" content="给你一个字符串 initialCurrency，表示初始货币类型，并且你一开始拥有 1.0 单位的 initialCurrency。 另给你四个数组，分别表示货币对（字符串）和汇率（实数）： pairs1[i] &#x3D; [startCurrencyi, targetCurrencyi] 表示在 第 1 天，可以按照汇率 rates1[i] 将 startCurrencyi 转换为 targetCurr">
 <meta property="og:type" content="article">
-<meta property="og:title" content="2211. 统计道路上的碰撞次数">
-<meta property="og:url" content="http://example.com/2025/12/04/2211-%E7%BB%9F%E8%AE%A1%E9%81%93%E8%B7%AF%E4%B8%8A%E7%9A%84%E7%A2%B0%E6%92%9E%E6%AC%A1%E6%95%B0/index.html">
+<meta property="og:title" content="3387. 两天自由外汇交易后的最大货币数">
+<meta property="og:url" content="http://example.com/2025/12/08/3387-%E4%B8%A4%E5%A4%A9%E8%87%AA%E7%94%B1%E5%A4%96%E6%B1%87%E4%BA%A4%E6%98%93%E5%90%8E%E7%9A%84%E6%9C%80%E5%A4%A7%E8%B4%A7%E5%B8%81%E6%95%B0/index.html">
 <meta property="og:site_name" content="歪嘴臭狗的狗窝">
-<meta property="og:description" content="在一条无限长的公路上有 n 辆汽车正在行驶。汽车按从左到右的顺序按从 0 到 n - 1 编号，每辆车都在一个 独特的 位置。 给你一个下标从 0 开始的字符串 directions ，长度为 n 。directions[i] 可以是 ‘L’、’R’ 或 ‘S’ 分别表示第 i 辆车是向 左 、向 右 或者 停留 在当前位置。每辆车移动时 速度相同 。 碰撞次数可以按下述方式计算： 当两辆移动方向">
+<meta property="og:description" content="给你一个字符串 initialCurrency，表示初始货币类型，并且你一开始拥有 1.0 单位的 initialCurrency。 另给你四个数组，分别表示货币对（字符串）和汇率（实数）： pairs1[i] &#x3D; [startCurrencyi, targetCurrencyi] 表示在 第 1 天，可以按照汇率 rates1[i] 将 startCurrencyi 转换为 targetCurr">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2025-12-04T04:27:09.000Z">
-<meta property="article:modified_time" content="2025-12-04T04:33:10.690Z">
+<meta property="article:published_time" content="2025-12-08T02:43:42.000Z">
+<meta property="article:modified_time" content="2025-12-08T02:50:34.000Z">
 <meta property="article:author" content="wyz">
 <meta name="twitter:card" content="summary_large_image">
   
   
   
-  <title>2211. 统计道路上的碰撞次数 - 歪嘴臭狗的狗窝</title>
+  <title>3387. 两天自由外汇交易后的最大货币数 - 歪嘴臭狗的狗窝</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -199,7 +199,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="2211. 统计道路上的碰撞次数"></span>
+            <span id="subtitle" data-typed-text="3387. 两天自由外汇交易后的最大货币数"></span>
           
         </div>
 
@@ -210,8 +210,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2025-12-04 12:27" pubdate>
-          2025年12月4日 中午
+        <time datetime="2025-12-08 10:43" pubdate>
+          2025年12月8日 上午
         </time>
       </span>
     
@@ -222,7 +222,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.4k 字
+          2.4k 字
         
       </span>
     
@@ -233,7 +233,7 @@
         
         
         
-          12 分钟
+          20 分钟
         
       </span>
     
@@ -270,47 +270,47 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">2211. 统计道路上的碰撞次数</h1>
+            <h1 id="seo-header">3387. 两天自由外汇交易后的最大货币数</h1>
             
             
               <div class="markdown-body">
                 
-                <p>在一条无限长的公路上有 n 辆汽车正在行驶。汽车按从左到右的顺序按从 0 到 n - 1 编号，每辆车都在一个 独特的 位置。</p>
-<p>给你一个下标从 0 开始的字符串 directions ，长度为 n 。directions[i] 可以是 ‘L’、’R’ 或 ‘S’ 分别表示第 i 辆车是向 左 、向 右 或者 停留 在当前位置。每辆车移动时 速度相同 。</p>
-<p>碰撞次数可以按下述方式计算：</p>
-<pre><code class="hljs">当两辆移动方向 相反 的车相撞时，碰撞次数加 2 。
-当一辆移动的车和一辆静止的车相撞时，碰撞次数加 1 。
+                <p>给你一个字符串 initialCurrency，表示初始货币类型，并且你一开始拥有 1.0 单位的 initialCurrency。</p>
+<p>另给你四个数组，分别表示货币对（字符串）和汇率（实数）：</p>
+<pre><code class="hljs">pairs1[i] = [startCurrencyi, targetCurrencyi] 表示在 第 1 天，可以按照汇率 rates1[i] 将 startCurrencyi 转换为 targetCurrencyi。
+pairs2[i] = [startCurrencyi, targetCurrencyi] 表示在 第 2 天，可以按照汇率 rates2[i] 将 startCurrencyi 转换为 targetCurrencyi。
+此外，每种 targetCurrency 都可以以汇率 1 / rate 转换回对应的 startCurrency。
 </code></pre>
-<p>碰撞发生后，涉及的车辆将无法继续移动并停留在碰撞位置。除此之外，汽车不能改变它们的状态或移动方向。</p>
-<p>返回在这条道路上发生的 碰撞总次数 。</p>
+<p>你可以在 第 1 天 使用 rates1 进行任意次数的兑换（包括 0 次），然后在 第 2 天 使用 rates2 再进行任意次数的兑换（包括 0 次）。</p>
+<p>返回在两天兑换后，最大可能拥有的 initialCurrency 的数量。</p>
+<p>注意：汇率是有效的，并且第 1 天和第 2 天的汇率之间相互独立，不会产生矛盾。</p>
 <p>示例 1：</p>
-<p>输入：directions &#x3D; “RLRSLL”<br>输出：5<br>解释：<br>将会在道路上发生的碰撞列出如下：</p>
-<ul>
-<li>车 0 和车 1 会互相碰撞。由于它们按相反方向移动，碰撞数量变为 0 + 2 &#x3D; 2 。</li>
-<li>车 2 和车 3 会互相碰撞。由于 3 是静止的，碰撞数量变为 2 + 1 &#x3D; 3 。</li>
-<li>车 3 和车 4 会互相碰撞。由于 3 是静止的，碰撞数量变为 3 + 1 &#x3D; 4 。</li>
-<li>车 4 和车 5 会互相碰撞。在车 4 和车 3 碰撞之后，车 4 会待在碰撞位置，接着和车 5 碰撞。碰撞数量变为 4 + 1 &#x3D; 5 。<br>因此，将会在道路上发生的碰撞总次数是 5 。</li>
-</ul>
+<p>输入： initialCurrency &#x3D; “EUR”, pairs1 &#x3D; [[“EUR”,”USD”],[“USD”,”JPY”]], rates1 &#x3D; [2.0,3.0], pairs2 &#x3D; [[“JPY”,”USD”],[“USD”,”CHF”],[“CHF”,”EUR”]], rates2 &#x3D; [4.0,5.0,6.0]</p>
+<p>输出： 720.00000</p>
+<p>解释：</p>
+<p>根据题目要求，需要最大化最终的 EUR 数量，从 1.0 EUR 开始：</p>
+<pre><code class="hljs">第 1 天：
+    将 EUR 换成 USD，得到 2.0 USD。
+    将 USD 换成 JPY，得到 6.0 JPY。
+第 2 天：
+    将 JPY 换成 USD，得到 24.0 USD。
+    将 USD 换成 CHF，得到 120.0 CHF。
+    最后将 CHF 换回 EUR，得到 720.0 EUR。
+</code></pre>
 <p>示例 2：</p>
-<p>输入：directions &#x3D; “LLRR”<br>输出：0<br>解释：<br>不存在会发生碰撞的车辆。因此，将会在道路上发生的碰撞总次数是 0 。</p>
-<p>提示：</p>
-<pre><code class="hljs">1 &lt;= directions.length &lt;= 105
-directions[i] 的值为 &#39;L&#39;、&#39;R&#39; 或 &#39;S&#39;
-</code></pre>
+<p>输入： initialCurrency &#x3D; “NGN”, pairs1 &#x3D; [[“NGN”,”EUR”]], rates1 &#x3D; [9.0], pairs2 &#x3D; [[“NGN”,”EUR”]], rates2 &#x3D; [6.0]</p>
+<p>输出： 1.50000</p>
+<p>解释：</p>
+<p>在第 1 天将 NGN 换成 EUR，并在第 2 天用反向汇率将 EUR 换回 NGN，可以最大化最终的 NGN 数量。</p>
+<p>示例 3：</p>
+<p>输入： initialCurrency &#x3D; “USD”, pairs1 &#x3D; [[“USD”,”EUR”]], rates1 &#x3D; [1.0], pairs2 &#x3D; [[“EUR”,”JPY”]], rates2 &#x3D; [10.0]</p>
+<p>输出： 1.00000</p>
+<p>解释：</p>
+<p>在这个例子中，不需要在任何一天进行任何兑换。</p>
 <p>代码：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">countCollisions</span><span class="hljs-params">(directions <span class="hljs-type">string</span>)</span></span> <span class="hljs-type">int</span> &#123;<br>    res := <span class="hljs-number">0</span><br>    flag := <span class="hljs-number">-1</span><br>    <span class="hljs-keyword">for</span> _,c := <span class="hljs-keyword">range</span> directions&#123;<br>        <span class="hljs-keyword">if</span> c==<span class="hljs-string">&#x27;L&#x27;</span>&#123;<br>            <span class="hljs-keyword">if</span> flag &gt;= <span class="hljs-number">0</span>&#123;<br>                res += flag+<span class="hljs-number">1</span><br>                flag = <span class="hljs-number">0</span><br>            &#125;<br>        &#125;<span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> c==<span class="hljs-string">&#x27;S&#x27;</span>&#123;<br>            <span class="hljs-keyword">if</span> flag&gt;<span class="hljs-number">0</span>&#123;<br>                res+=flag<br>            &#125;<br>            flag=<span class="hljs-number">0</span><br>        &#125;<span class="hljs-keyword">else</span>&#123;<br>            <span class="hljs-keyword">if</span> flag&gt;=<span class="hljs-number">0</span>&#123;<br>                flag++<br>            &#125;<span class="hljs-keyword">else</span>&#123;<br>                flag=<span class="hljs-number">1</span><br>            &#125;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> res<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>模拟即可</p>
-<p>停留的车辆不会计算碰撞次数，只有移动的车辆发生碰撞时才会计算次数。我们从左到右遍历所有车辆，并使用一个变量 flag 来记录左侧车辆的情况。</p>
-<pre><code class="hljs">如果左侧没有车辆，或者左侧车辆全部向左移动，那么 flag 标记为 −1。
-如果左侧有车辆发生碰撞，它们最终某个点停止，那么 flag 标记为 0。
-如果左侧有连续的车辆在向右移动，那么 flag 标记为向右移动的车辆的数量。
-</code></pre>
-<p>这样一来，可分为如下三种情况：</p>
-<pre><code class="hljs">当前车辆向左移动，若 flag≥0，则碰撞次数新增 flag+1 次，然后重新标记 flag 为 0。
-当前车辆停留在当前位置，若 flag&gt;0，则碰撞次数新增 flag 次；标记 flag 为 0。
-当前车辆向右移动，若 flag&lt;0，则令 flag 为 1；否则将 flag 增加 1。
-</code></pre>
-<p>最终返回累计的所有碰撞次数。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> pair <span class="hljs-keyword">struct</span>&#123;<br>    to <span class="hljs-type">string</span><br>    rate <span class="hljs-type">float64</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">calcAmount</span><span class="hljs-params">(pairs [][]<span class="hljs-type">string</span>,rates []<span class="hljs-type">float64</span>,initialCurrency <span class="hljs-type">string</span>)</span></span><span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">float64</span>&#123;<br>    g:=<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>][]pair&#123;&#125;<br>    <span class="hljs-keyword">for</span> i,p:=<span class="hljs-keyword">range</span> pairs&#123;<br>        x,y,r:=p[<span class="hljs-number">0</span>],p[<span class="hljs-number">1</span>],rates[i]<br>        g[x]=<span class="hljs-built_in">append</span>(g[x],pair&#123;y,r&#125;)<br>        g[y]=<span class="hljs-built_in">append</span>(g[y],pair&#123;x,<span class="hljs-number">1</span>/r&#125;)<br>    &#125;<br>    amount:=<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">float64</span>&#123;&#125;<br>    <span class="hljs-keyword">var</span> dfs <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(<span class="hljs-type">string</span>,<span class="hljs-type">float64</span>)</span></span><br>    dfs = <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(x <span class="hljs-type">string</span>,curAmount <span class="hljs-type">float64</span>)</span></span>&#123;<br>        amount[x]=curAmount<br>        <span class="hljs-keyword">for</span> _,e :=<span class="hljs-keyword">range</span> g[x]&#123;<br>            <span class="hljs-keyword">if</span> amount[e.to]==<span class="hljs-number">0</span>&#123;<br>                dfs(e.to,curAmount*e.rate)<br>            &#125;<br>        &#125;<br>    &#125;<br>    dfs(initialCurrency,<span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">return</span> amount<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">maxAmount</span><span class="hljs-params">(initialCurrency <span class="hljs-type">string</span>, pairs1 [][]<span class="hljs-type">string</span>, rates1 []<span class="hljs-type">float64</span>, pairs2 [][]<span class="hljs-type">string</span>, rates2 []<span class="hljs-type">float64</span>)</span></span> <span class="hljs-type">float64</span> &#123;<br>    <span class="hljs-keyword">var</span> ans <span class="hljs-type">float64</span><br>    ans = <span class="hljs-number">0.0</span><br>    day1Amount:=calcAmount(pairs1,rates1,initialCurrency)<br>    day2Amount:=calcAmount(pairs2,rates2,initialCurrency)<br>    <span class="hljs-keyword">for</span> x,a2:=<span class="hljs-keyword">range</span> day2Amount&#123;<br>        ans=max(ans,day1Amount[x]/a2)<br>    &#125;<br>    <span class="hljs-keyword">return</span> ans<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>根据 pairs1​ 和 rates1​ 建图。<br>从 initialCurrency 开始，自顶向下 DFS 这张图，递归的同时维护金额。记录把 initialCurrency 兑换成其他货币的金额 day1Amount。<br>根据 pairs2​ 和 rates2​ 建图。<br>同样地，从 initialCurrency 开始，自顶向下 DFS 这张图，递归的同时维护金额。记录把 initialCurrency 兑换成其他货币的金额 day2Amount。金额的倒数，就是从其他货币兑换成 initialCurrency 的金额。</p>
+<p>枚举中转货币 x，答案为 day2Amount[x]&#x2F;day1Amount[x]​ 的最大值。</p>
 
                 
               </div>
@@ -349,8 +349,8 @@ directions[i] 的值为 &#39;L&#39;、&#39;R&#39; 或 &#39;S&#39;
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>2211. 统计道路上的碰撞次数</div>
-      <div>http://example.com/2025/12/04/2211-统计道路上的碰撞次数/</div>
+      <div>3387. 两天自由外汇交易后的最大货币数</div>
+      <div>http://example.com/2025/12/08/3387-两天自由外汇交易后的最大货币数/</div>
     </div>
     <div class="license-meta">
       
@@ -362,7 +362,7 @@ directions[i] 的值为 &#39;L&#39;、&#39;R&#39; 或 &#39;S&#39;
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2025年12月4日</div>
+          <div>2025年12月8日</div>
         </div>
       
       
@@ -394,9 +394,9 @@ directions[i] 的值为 &#39;L&#39;、&#39;R&#39; 或 &#39;S&#39;
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2025/12/06/3578-%E7%BB%9F%E8%AE%A1%E6%9E%81%E5%B7%AE%E6%9C%80%E5%A4%A7%E4%B8%BA-K-%E7%9A%84%E5%88%86%E5%89%B2%E6%96%B9%E5%BC%8F%E6%95%B0/" title="3578. 统计极差最大为 K 的分割方式数">
+                      <a href="/2025/12/08/2192-%E6%9C%89%E5%90%91%E6%97%A0%E7%8E%AF%E5%9B%BE%E4%B8%AD%E4%B8%80%E4%B8%AA%E8%8A%82%E7%82%B9%E7%9A%84%E6%89%80%E6%9C%89%E7%A5%96%E5%85%88/" title="2192. 有向无环图中一个节点的所有祖先">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">3578. 统计极差最大为 K 的分割方式数</span>
+                        <span class="hidden-mobile">2192. 有向无环图中一个节点的所有祖先</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -404,8 +404,8 @@ directions[i] 的值为 &#39;L&#39;、&#39;R&#39; 或 &#39;S&#39;
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2025/12/03/3625-%E7%BB%9F%E8%AE%A1%E6%A2%AF%E5%BD%A2%E7%9A%84%E6%95%B0%E7%9B%AE-II/" title="3625. 统计梯形的数目 II">
-                        <span class="hidden-mobile">3625. 统计梯形的数目 II</span>
+                      <a href="/2025/12/08/1925-%E7%BB%9F%E8%AE%A1%E5%B9%B3%E6%96%B9%E5%92%8C%E4%B8%89%E5%85%83%E7%BB%84%E7%9A%84%E6%95%B0%E7%9B%AE/" title="1925. 统计平方和三元组的数目">
+                        <span class="hidden-mobile">1925. 统计平方和三元组的数目</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
