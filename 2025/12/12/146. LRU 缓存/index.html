@@ -19,21 +19,21 @@
   <meta name="author" content="wyz">
   <meta name="keywords" content="">
   
-    <meta name="description" content="16 内存管理内置运行时的编程语言通常会抛弃传统的内存分配方式，改由自主管理。这样可以完成类似预分配、内存池等操作，以避开系统调用带来的性能问题。当然，有一个重要原因是为了更好地配合垃圾回收16.1 概述在深人入内存分配算法细节前，我们需要了解一些基本概念，这有助于建立宏观认识基本策略: 1.每次从操作系统申请一大块内存(比如1MB)，以减少系统调用， 2.将申请到的大块内存按照特定大小预先切分成">
+    <meta name="description" content="请你设计并实现一个满足  LRU (最近最少使用) 缓存 约束的数据结构。实现 LRUCache 类： LRUCache(int capacity) 以 正整数 作为容量 capacity 初始化 LRU 缓存 int get(int key) 如果关键字 key 存在于缓存中，则返回关键字的值，否则返回 -1 。 void put(int key, int value) 如果关键字 key 已经">
 <meta property="og:type" content="article">
-<meta property="og:title" content="go源码阅读1">
-<meta property="og:url" content="http://example.com/2025/12/11/go%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB1/index.html">
+<meta property="og:title" content="146.LRU 缓存">
+<meta property="og:url" content="http://example.com/2025/12/12/146.%20LRU%20%E7%BC%93%E5%AD%98/index.html">
 <meta property="og:site_name" content="歪嘴臭狗的狗窝">
-<meta property="og:description" content="16 内存管理内置运行时的编程语言通常会抛弃传统的内存分配方式，改由自主管理。这样可以完成类似预分配、内存池等操作，以避开系统调用带来的性能问题。当然，有一个重要原因是为了更好地配合垃圾回收16.1 概述在深人入内存分配算法细节前，我们需要了解一些基本概念，这有助于建立宏观认识基本策略: 1.每次从操作系统申请一大块内存(比如1MB)，以减少系统调用， 2.将申请到的大块内存按照特定大小预先切分成">
+<meta property="og:description" content="请你设计并实现一个满足  LRU (最近最少使用) 缓存 约束的数据结构。实现 LRUCache 类： LRUCache(int capacity) 以 正整数 作为容量 capacity 初始化 LRU 缓存 int get(int key) 如果关键字 key 存在于缓存中，则返回关键字的值，否则返回 -1 。 void put(int key, int value) 如果关键字 key 已经">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2025-12-11T11:04:21.000Z">
-<meta property="article:modified_time" content="2025-12-12T07:49:34.111Z">
+<meta property="article:published_time" content="2025-12-12T05:07:09.000Z">
+<meta property="article:modified_time" content="2025-12-12T05:09:07.292Z">
 <meta property="article:author" content="wyz">
 <meta name="twitter:card" content="summary_large_image">
   
   
   
-  <title>go源码阅读1 - 歪嘴臭狗的狗窝</title>
+  <title>146.LRU 缓存 - 歪嘴臭狗的狗窝</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -199,7 +199,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="go源码阅读1"></span>
+            <span id="subtitle" data-typed-text="146.LRU 缓存"></span>
           
         </div>
 
@@ -210,8 +210,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2025-12-11 19:04" pubdate>
-          2025年12月11日 晚上
+        <time datetime="2025-12-12 13:07" pubdate>
+          2025年12月12日 下午
         </time>
       </span>
     
@@ -222,7 +222,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.9k 字
+          2.5k 字
         
       </span>
     
@@ -233,7 +233,7 @@
         
         
         
-          25 分钟
+          21 分钟
         
       </span>
     
@@ -270,47 +270,21 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">go源码阅读1</h1>
+            <h1 id="seo-header">146.LRU 缓存</h1>
             
             
               <div class="markdown-body">
                 
-                <p>16 内存管理<br>内置运行时的编程语言通常会抛弃传统的内存分配方式，改由自主管理。这样可以完成类似预分配、内存池等操作，以避开系统调用带来的性能问题。当然，有一个重要原因是为了更好地配合垃圾回收<br>16.1 概述<br>在深人入内存分配算法细节前，我们需要了解一些基本概念，这有助于建立宏观认识基本策略:</p>
-<pre><code class="hljs">1.每次从操作系统申请一大块内存(比如1MB)，以减少系统调用，
-2.将申请到的大块内存按照特定大小预先切分成小块，构成链表
-3.为对象分配内存时，只须从大小合适的链表提取一个小块即可
-4.回收对象内存时，将该小块内存重新归还到原链表，以便复用。
-5.如闲置内存过多，则尝试归还部分内存给操作系统，降低整体开销
+                <p>请你设计并实现一个满足  LRU (最近最少使用) 缓存 约束的数据结构。<br>实现 LRUCache 类：</p>
+<pre><code class="hljs">LRUCache(int capacity) 以 正整数 作为容量 capacity 初始化 LRU 缓存
+int get(int key) 如果关键字 key 存在于缓存中，则返回关键字的值，否则返回 -1 。
+void put(int key, int value) 如果关键字 key 已经存在，则变更其数据值 value ；如果不存在，则向缓存中插入该组 key-value 。如果插入操作导致关键字数量超过 capacity ，则应该 逐出 最久未使用的关键字。
 </code></pre>
-<p>内存分配器只管理内存块，并不关心对象状态。且它不会主动回收内存，垃圾回收器在完成清理操作后，触发内存分配器的回收操作，</p>
-<p>分配器将其管理的内存块分为两种。</p>
-<pre><code class="hljs">span:由多个地址连续的页(page)组成的大块内存
-object:将span 按特定大小切分成多个小块，每个小块可存储一个对象。
-</code></pre>
-<p>按照其用途，span面向内部管理，object面向对象分配分配器按页数来区分不同大小的span。比如，以页数为单位将span存放到管理数组中，需要时就以页数为索引进行查找。当然，span大小并非固定不变。在获取闲置span时，如果没找到大小合适的，那就返回页数更多的，此时会引发裁剪操作，多余部分将构成新的span被放回管理数组。分配器还会尝试将地址相邻的空闲span合并，以构建更大的内存块，减少碎片，提供更灵活的分配策略。</p>
-<p>Go 运行时的内存分配器采用两级隔离策略：小于 32 KiB 的“小对象”由 per-P 的 mcache 缓存，大对象则直接交给全局 mheap。其核心数据结构是 mspan，定义于 runtime&#x2F;mheap.go，它把虚拟地址空间按固定 8 KiB 页面切分，并用双向链表串联。每个 span 记录起始页号 start、连续页数 npages 以及挂在 freelist 上的待分配对象链表，以此实现“按页申请、按对象回收”。<br>为降低碎片化，分配器将对象按 8 字节倍数归并为 67 种 size class，最大小对象阈值为 32 KiB（MaxSmallSize &#x3D; 32 &lt;&lt; 10，见 runtime&#x2F;malloc.go）。初始化阶段，runtime 在 msize.go 中构造四张对照表：class_to_size[i] 给出第 i 类对象的最大字节数，class_to_allocnpages[i] 给出为该类新分配对象时应一次性领取的页数；size_to_class8 与 size_to_class128 则分别将 1 B–1 KiB 与 1 KiB–32 KiB 之间的任意长度映射到对应的 size class。运行时若对象长度落在 17–24 B 之间，即被归入 24 B 的 class，虽然存在内部碎片，却使分配器只需维护有限规格的 span，显著加速复用与回收。<br>当请求长度超过 32 KiB 时，分配器不再走 size class 路径，而是视其为“大对象”，直接向 mheap 申请整数页，单独建立 span 并立即返回。该策略在源码中通过 SizeToClass 函数体现：若入参 n 大于 MaxSmallSize，则返回 0，表示“非小对象”，后续逻辑转入大对象专门处理分支。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-keyword">type</span> mspan <span class="hljs-keyword">struct</span> &#123;<br>    next *mspan   <span class="hljs-comment">// 双向链表</span><br>    prev *mspan<br>    start pageID  <span class="hljs-comment">// 起始页号 = address &gt;&gt; _PageShift</span><br>    npages <span class="hljs-type">uintptr</span><br>    freelist gclinkptr <span class="hljs-comment">// 待分配对象链表</span><br>&#125;<br><span class="hljs-comment">// runtime/malloc.go</span><br>_PageShift = <span class="hljs-number">13</span><br>_PageSize  = <span class="hljs-number">1</span> &lt;&lt; _PageShift <span class="hljs-comment">// 8 KiB</span><br>_NumSizeClasses = <span class="hljs-number">67</span><br>MaxSmallSize = <span class="hljs-number">32</span> &lt;&lt; <span class="hljs-number">10</span>      <span class="hljs-comment">// 32 KiB</span><br><span class="hljs-comment">// runtime/msize.go</span><br><span class="hljs-keyword">var</span> class_to_size [_NumSizeClasses]<span class="hljs-type">int32</span><br><span class="hljs-keyword">var</span> class_to_allocnpages [_NumSizeClasses]<span class="hljs-type">int32</span><br><span class="hljs-keyword">var</span> size_to_class8 [<span class="hljs-number">1024</span>/<span class="hljs-number">8</span> + <span class="hljs-number">1</span>]<span class="hljs-type">int8</span><br><span class="hljs-keyword">var</span> size_to_class128 [(MaxSmallSize<span class="hljs-number">-1024</span>)/<span class="hljs-number">128</span> + <span class="hljs-number">1</span>]<span class="hljs-type">int8</span><br></code></pre></td></tr></table></figure>
-<p>Go 运行时的内存分配器继承并精简了 Google tcmalloc 的三级缓存架构，在性能与利用率之间取得平衡。整个系统由 cache、central、heap 三类组件协作完成：</p>
-<pre><code class="hljs">每个工作线程（P）绑定一个无锁 cache，实现 hot-path 上的快速对象交付；
-central 作为全局中介，按 67 种 size class 维护切分完毕的 span 库存；
-heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
-</code></pre>
-<p>三者的数据结构分别定义在 mcache.go、mcentral.go 与 mheap.go，形成“线程级无锁 → 全局级部分竞争 → 操作系统级批量”逐层放大的资源漏斗。</p>
-<p>分配流程:</p>
-<pre><code class="hljs">1.计算待分配对象对应的规格(sizeclass)
-2.从cache.alloc数组找到规格相同的span。
-3.从 span.freelist链表提取可用 object。
-4.如span.freelist为空，从central 获取新 span。
-5.如 central.nonempty为空，从heap.free/freelarge 获取，并切分成 object链表
-6.如heap没有大小合适的闲置span，向操作系统申请新内存块。
-</code></pre>
-<p>释放流程:</p>
-<pre><code class="hljs">1.将标记为可回收的object交还给所属 span.freelist。
-2.该span被放回central，可供任意cache 重新获取使用
-3.如span已收回全部object，则将其交还给heap，以便重新切分复用
-4.定期扫描 heap里长时间闲置的span，释放其占用的内存。
-</code></pre>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-keyword">type</span> mheap <span class="hljs-keyword">struct</span> &#123;<br>    free [_MaxMHeapList]mspan <span class="hljs-comment">// 页数 ≤127 的闲置 span 链</span><br>    freelarge mspan           <span class="hljs-comment">// 页数 &gt;127 (≥1 MB) 的大 span 链</span><br>    central [_NumSizeClasses]<span class="hljs-keyword">struct</span> &#123;<br>        mcentral mcentral<br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mcentral.go</span><br><span class="hljs-keyword">type</span> mcentral <span class="hljs-keyword">struct</span> &#123;<br>    sizeclass <span class="hljs-type">int32</span><br>    nonempty  mspan <span class="hljs-comment">// 仍含空闲 object 的 span 链</span><br>    empty     mspan <span class="hljs-comment">// 空闲 object 耗尽或已被 cache 取走的 span 链</span><br>&#125;<br><span class="hljs-comment">// runtime/mcache.go</span><br><span class="hljs-keyword">type</span> mcache <span class="hljs-keyword">struct</span> &#123;<br>    alloc [_NumSizeClasses]*mspan <span class="hljs-comment">// 以 size class 为索引的可用 span 指针数组</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>函数 get 和 put 必须以 O(1) 的平均时间复杂度运行。</p>
+<p>示例：</p>
+<p>输入<br>[“LRUCache”, “put”, “put”, “get”, “put”, “get”, “put”, “get”, “get”, “get”]<br>[[2], [1, 1], [2, 2], [1], [3, 3], [2], [4, 4], [1], [3], [4]]<br>输出<br>[null, null, null, 1, null, -1, null, -1, 3, 4]</p>
+<p>解释<br>LRUCache lRUCache &#x3D; new LRUCache(2);<br>lRUCache.put(1, 1); &#x2F;&#x2F; 缓存是 {1&#x3D;1}<br>lRUCache.put(2, 2); &#x2F;&#x2F; 缓存是 {1&#x3D;1, 2&#x3D;2}<br>lRUCache.get(1);    &#x2F;&#x2F; 返回 1<br>lRUCache.put(3, 3); &#x2F;&#x2F; 该操作会使得关键字 2 作废，缓存是 {1&#x3D;1, 3&#x3D;3}<br>lRUCache.get(2);    &#x2F;&#x2F; 返回 -1 (未找到)<br>lRUCache.put(4, 4); &#x2F;&#x2F; 该操作会使得关键字 1 作废，缓存是 {4&#x3D;4, 3&#x3D;3}<br>lRUCache.get(1);    &#x2F;&#x2F; 返回 -1 (未找到)<br>lRUCache.get(3);    &#x2F;&#x2F; 返回 3<br>lRUCache.get(4);    &#x2F;&#x2F; 返回 4</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> LRUCache <span class="hljs-keyword">struct</span> &#123;<br>    size <span class="hljs-type">int</span><br>    capacity <span class="hljs-type">int</span><br>    cache <span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]*DLinkedNode<br>    head, tail *DLinkedNode<br>&#125;<br><br><span class="hljs-keyword">type</span> DLinkedNode <span class="hljs-keyword">struct</span> &#123;<br>    key, value <span class="hljs-type">int</span><br>    prev, next *DLinkedNode<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">initDLinkedNode</span><span class="hljs-params">(key, value <span class="hljs-type">int</span>)</span></span> *DLinkedNode &#123;<br>    <span class="hljs-keyword">return</span> &amp;DLinkedNode&#123;<br>        key: key,<br>        value: value,<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Constructor</span><span class="hljs-params">(capacity <span class="hljs-type">int</span>)</span></span> LRUCache &#123;<br>    l := LRUCache&#123;<br>        cache: <span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]*DLinkedNode&#123;&#125;,<br>        head: initDLinkedNode(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>),<br>        tail: initDLinkedNode(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>),<br>        capacity: capacity,<br>    &#125;<br>    l.head.next = l.tail<br>    l.tail.prev = l.head<br>    <span class="hljs-keyword">return</span> l<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(this *LRUCache)</span></span> Get(key <span class="hljs-type">int</span>) <span class="hljs-type">int</span> &#123;<br>    <span class="hljs-keyword">if</span> _, ok := this.cache[key]; !ok &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span><br>    &#125;<br>    node := this.cache[key]<br>    this.moveToHead(node)<br>    <span class="hljs-keyword">return</span> node.value<br>&#125;<br><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(this *LRUCache)</span></span> Put(key <span class="hljs-type">int</span>, value <span class="hljs-type">int</span>)  &#123;<br>    <span class="hljs-keyword">if</span> _, ok := this.cache[key]; !ok &#123;<br>        node := initDLinkedNode(key, value)<br>        this.cache[key] = node<br>        this.addToHead(node)<br>        this.size++<br>        <span class="hljs-keyword">if</span> this.size &gt; this.capacity &#123;<br>            removed := this.removeTail()<br>            <span class="hljs-built_in">delete</span>(this.cache, removed.key)<br>            this.size--<br>        &#125;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        node := this.cache[key]<br>        node.value = value<br>        this.moveToHead(node)<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(this *LRUCache)</span></span> addToHead(node *DLinkedNode) &#123;<br>    node.prev = this.head<br>    node.next = this.head.next<br>    this.head.next.prev = node<br>    this.head.next = node<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(this *LRUCache)</span></span> removeNode(node *DLinkedNode) &#123;<br>    node.prev.next = node.next<br>    node.next.prev = node.prev<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(this *LRUCache)</span></span> moveToHead(node *DLinkedNode) &#123;<br>    this.removeNode(node)<br>    this.addToHead(node)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(this *LRUCache)</span></span> removeTail() *DLinkedNode &#123;<br>    node := this.tail.prev<br>    this.removeNode(node)<br>    <span class="hljs-keyword">return</span> node<br>&#125;<br></code></pre></td></tr></table></figure>
 
                 
               </div>
@@ -329,7 +303,7 @@ heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
     
       <span class="category-chain">
         
-  <a href="/categories/go/" class="category-chain-item">go</a>
+  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
   
   
 
@@ -349,8 +323,8 @@ heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>go源码阅读1</div>
-      <div>http://example.com/2025/12/11/go源码阅读1/</div>
+      <div>146.LRU 缓存</div>
+      <div>http://example.com/2025/12/12/146. LRU 缓存/</div>
     </div>
     <div class="license-meta">
       
@@ -362,7 +336,7 @@ heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2025年12月11日</div>
+          <div>2025年12月12日</div>
         </div>
       
       
@@ -394,9 +368,9 @@ heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2025/12/12/3433-%E7%BB%9F%E8%AE%A1%E7%94%A8%E6%88%B7%E8%A2%AB%E6%8F%90%E5%8F%8A%E6%83%85%E5%86%B5/" title="3433. 统计用户被提及情况">
+                      <a href="/2025/12/13/3606-%E4%BC%98%E6%83%A0%E5%88%B8%E6%A0%A1%E9%AA%8C%E5%99%A8/" title="3606. 优惠券校验器">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">3433. 统计用户被提及情况</span>
+                        <span class="hidden-mobile">3606. 优惠券校验器</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -404,8 +378,8 @@ heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2025/12/11/3531-%E7%BB%9F%E8%AE%A1%E8%A2%AB%E8%A6%86%E7%9B%96%E7%9A%84%E5%BB%BA%E7%AD%91/" title="3531. 统计被覆盖的建筑">
-                        <span class="hidden-mobile">3531. 统计被覆盖的建筑</span>
+                      <a href="/2025/12/12/3433-%E7%BB%9F%E8%AE%A1%E7%94%A8%E6%88%B7%E8%A2%AB%E6%8F%90%E5%8F%8A%E6%83%85%E5%86%B5/" title="3433. 统计用户被提及情况">
+                        <span class="hidden-mobile">3433. 统计用户被提及情况</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>

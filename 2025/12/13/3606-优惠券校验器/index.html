@@ -19,21 +19,21 @@
   <meta name="author" content="wyz">
   <meta name="keywords" content="">
   
-    <meta name="description" content="16 内存管理内置运行时的编程语言通常会抛弃传统的内存分配方式，改由自主管理。这样可以完成类似预分配、内存池等操作，以避开系统调用带来的性能问题。当然，有一个重要原因是为了更好地配合垃圾回收16.1 概述在深人入内存分配算法细节前，我们需要了解一些基本概念，这有助于建立宏观认识基本策略: 1.每次从操作系统申请一大块内存(比如1MB)，以减少系统调用， 2.将申请到的大块内存按照特定大小预先切分成">
+    <meta name="description" content="给你三个长度为 n 的数组，分别描述 n 个优惠券的属性：code、businessLine 和 isActive。其中，第 i 个优惠券具有以下属性： code[i]：一个 字符串，表示优惠券的标识符。 businessLine[i]：一个 字符串，表示优惠券所属的业务类别。 isActive[i]：一个 布尔值，表示优惠券是否当前有效。  当以下所有条件都满足时，优惠券被认为是 有效的 ： c">
 <meta property="og:type" content="article">
-<meta property="og:title" content="go源码阅读1">
-<meta property="og:url" content="http://example.com/2025/12/11/go%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB1/index.html">
+<meta property="og:title" content="3606. 优惠券校验器">
+<meta property="og:url" content="http://example.com/2025/12/13/3606-%E4%BC%98%E6%83%A0%E5%88%B8%E6%A0%A1%E9%AA%8C%E5%99%A8/index.html">
 <meta property="og:site_name" content="歪嘴臭狗的狗窝">
-<meta property="og:description" content="16 内存管理内置运行时的编程语言通常会抛弃传统的内存分配方式，改由自主管理。这样可以完成类似预分配、内存池等操作，以避开系统调用带来的性能问题。当然，有一个重要原因是为了更好地配合垃圾回收16.1 概述在深人入内存分配算法细节前，我们需要了解一些基本概念，这有助于建立宏观认识基本策略: 1.每次从操作系统申请一大块内存(比如1MB)，以减少系统调用， 2.将申请到的大块内存按照特定大小预先切分成">
+<meta property="og:description" content="给你三个长度为 n 的数组，分别描述 n 个优惠券的属性：code、businessLine 和 isActive。其中，第 i 个优惠券具有以下属性： code[i]：一个 字符串，表示优惠券的标识符。 businessLine[i]：一个 字符串，表示优惠券所属的业务类别。 isActive[i]：一个 布尔值，表示优惠券是否当前有效。  当以下所有条件都满足时，优惠券被认为是 有效的 ： c">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2025-12-11T11:04:21.000Z">
-<meta property="article:modified_time" content="2025-12-12T07:49:34.111Z">
+<meta property="article:published_time" content="2025-12-13T04:25:20.000Z">
+<meta property="article:modified_time" content="2025-12-13T04:29:43.530Z">
 <meta property="article:author" content="wyz">
 <meta name="twitter:card" content="summary_large_image">
   
   
   
-  <title>go源码阅读1 - 歪嘴臭狗的狗窝</title>
+  <title>3606. 优惠券校验器 - 歪嘴臭狗的狗窝</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -199,7 +199,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="go源码阅读1"></span>
+            <span id="subtitle" data-typed-text="3606. 优惠券校验器"></span>
           
         </div>
 
@@ -210,8 +210,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2025-12-11 19:04" pubdate>
-          2025年12月11日 晚上
+        <time datetime="2025-12-13 12:25" pubdate>
+          2025年12月13日 中午
         </time>
       </span>
     
@@ -222,7 +222,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.9k 字
+          2.4k 字
         
       </span>
     
@@ -233,7 +233,7 @@
         
         
         
-          25 分钟
+          20 分钟
         
       </span>
     
@@ -270,48 +270,48 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">go源码阅读1</h1>
+            <h1 id="seo-header">3606. 优惠券校验器</h1>
             
             
               <div class="markdown-body">
                 
-                <p>16 内存管理<br>内置运行时的编程语言通常会抛弃传统的内存分配方式，改由自主管理。这样可以完成类似预分配、内存池等操作，以避开系统调用带来的性能问题。当然，有一个重要原因是为了更好地配合垃圾回收<br>16.1 概述<br>在深人入内存分配算法细节前，我们需要了解一些基本概念，这有助于建立宏观认识基本策略:</p>
-<pre><code class="hljs">1.每次从操作系统申请一大块内存(比如1MB)，以减少系统调用，
-2.将申请到的大块内存按照特定大小预先切分成小块，构成链表
-3.为对象分配内存时，只须从大小合适的链表提取一个小块即可
-4.回收对象内存时，将该小块内存重新归还到原链表，以便复用。
-5.如闲置内存过多，则尝试归还部分内存给操作系统，降低整体开销
+                <p>给你三个长度为 n 的数组，分别描述 n 个优惠券的属性：code、businessLine 和 isActive。其中，第 i 个优惠券具有以下属性：</p>
+<pre><code class="hljs">code[i]：一个 字符串，表示优惠券的标识符。
+businessLine[i]：一个 字符串，表示优惠券所属的业务类别。
+isActive[i]：一个 布尔值，表示优惠券是否当前有效。
 </code></pre>
-<p>内存分配器只管理内存块，并不关心对象状态。且它不会主动回收内存，垃圾回收器在完成清理操作后，触发内存分配器的回收操作，</p>
-<p>分配器将其管理的内存块分为两种。</p>
-<pre><code class="hljs">span:由多个地址连续的页(page)组成的大块内存
-object:将span 按特定大小切分成多个小块，每个小块可存储一个对象。
+<p>当以下所有条件都满足时，优惠券被认为是 有效的 ：</p>
+<pre><code class="hljs">code[i] 不能为空，并且仅由字母数字字符（a-z、A-Z、0-9）和下划线（_）组成。
+businessLine[i] 必须是以下四个类别之一：&quot;electronics&quot;、&quot;grocery&quot;、&quot;pharmacy&quot;、&quot;restaurant&quot;。
+isActive[i] 为 true 。
 </code></pre>
-<p>按照其用途，span面向内部管理，object面向对象分配分配器按页数来区分不同大小的span。比如，以页数为单位将span存放到管理数组中，需要时就以页数为索引进行查找。当然，span大小并非固定不变。在获取闲置span时，如果没找到大小合适的，那就返回页数更多的，此时会引发裁剪操作，多余部分将构成新的span被放回管理数组。分配器还会尝试将地址相邻的空闲span合并，以构建更大的内存块，减少碎片，提供更灵活的分配策略。</p>
-<p>Go 运行时的内存分配器采用两级隔离策略：小于 32 KiB 的“小对象”由 per-P 的 mcache 缓存，大对象则直接交给全局 mheap。其核心数据结构是 mspan，定义于 runtime&#x2F;mheap.go，它把虚拟地址空间按固定 8 KiB 页面切分，并用双向链表串联。每个 span 记录起始页号 start、连续页数 npages 以及挂在 freelist 上的待分配对象链表，以此实现“按页申请、按对象回收”。<br>为降低碎片化，分配器将对象按 8 字节倍数归并为 67 种 size class，最大小对象阈值为 32 KiB（MaxSmallSize &#x3D; 32 &lt;&lt; 10，见 runtime&#x2F;malloc.go）。初始化阶段，runtime 在 msize.go 中构造四张对照表：class_to_size[i] 给出第 i 类对象的最大字节数，class_to_allocnpages[i] 给出为该类新分配对象时应一次性领取的页数；size_to_class8 与 size_to_class128 则分别将 1 B–1 KiB 与 1 KiB–32 KiB 之间的任意长度映射到对应的 size class。运行时若对象长度落在 17–24 B 之间，即被归入 24 B 的 class，虽然存在内部碎片，却使分配器只需维护有限规格的 span，显著加速复用与回收。<br>当请求长度超过 32 KiB 时，分配器不再走 size class 路径，而是视其为“大对象”，直接向 mheap 申请整数页，单独建立 span 并立即返回。该策略在源码中通过 SizeToClass 函数体现：若入参 n 大于 MaxSmallSize，则返回 0，表示“非小对象”，后续逻辑转入大对象专门处理分支。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-keyword">type</span> mspan <span class="hljs-keyword">struct</span> &#123;<br>    next *mspan   <span class="hljs-comment">// 双向链表</span><br>    prev *mspan<br>    start pageID  <span class="hljs-comment">// 起始页号 = address &gt;&gt; _PageShift</span><br>    npages <span class="hljs-type">uintptr</span><br>    freelist gclinkptr <span class="hljs-comment">// 待分配对象链表</span><br>&#125;<br><span class="hljs-comment">// runtime/malloc.go</span><br>_PageShift = <span class="hljs-number">13</span><br>_PageSize  = <span class="hljs-number">1</span> &lt;&lt; _PageShift <span class="hljs-comment">// 8 KiB</span><br>_NumSizeClasses = <span class="hljs-number">67</span><br>MaxSmallSize = <span class="hljs-number">32</span> &lt;&lt; <span class="hljs-number">10</span>      <span class="hljs-comment">// 32 KiB</span><br><span class="hljs-comment">// runtime/msize.go</span><br><span class="hljs-keyword">var</span> class_to_size [_NumSizeClasses]<span class="hljs-type">int32</span><br><span class="hljs-keyword">var</span> class_to_allocnpages [_NumSizeClasses]<span class="hljs-type">int32</span><br><span class="hljs-keyword">var</span> size_to_class8 [<span class="hljs-number">1024</span>/<span class="hljs-number">8</span> + <span class="hljs-number">1</span>]<span class="hljs-type">int8</span><br><span class="hljs-keyword">var</span> size_to_class128 [(MaxSmallSize<span class="hljs-number">-1024</span>)/<span class="hljs-number">128</span> + <span class="hljs-number">1</span>]<span class="hljs-type">int8</span><br></code></pre></td></tr></table></figure>
-<p>Go 运行时的内存分配器继承并精简了 Google tcmalloc 的三级缓存架构，在性能与利用率之间取得平衡。整个系统由 cache、central、heap 三类组件协作完成：</p>
-<pre><code class="hljs">每个工作线程（P）绑定一个无锁 cache，实现 hot-path 上的快速对象交付；
-central 作为全局中介，按 67 种 size class 维护切分完毕的 span 库存；
-heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
+<p>返回所有 有效优惠券的标识符 组成的数组，按照以下规则排序：</p>
+<pre><code class="hljs">先按照其 businessLine 的顺序排序：&quot;electronics&quot;、&quot;grocery&quot;、&quot;pharmacy&quot;、&quot;restaurant&quot;。
+在每个类别内，再按照 标识符的字典序（升序）排序。
 </code></pre>
-<p>三者的数据结构分别定义在 mcache.go、mcentral.go 与 mheap.go，形成“线程级无锁 → 全局级部分竞争 → 操作系统级批量”逐层放大的资源漏斗。</p>
-<p>分配流程:</p>
-<pre><code class="hljs">1.计算待分配对象对应的规格(sizeclass)
-2.从cache.alloc数组找到规格相同的span。
-3.从 span.freelist链表提取可用 object。
-4.如span.freelist为空，从central 获取新 span。
-5.如 central.nonempty为空，从heap.free/freelarge 获取，并切分成 object链表
-6.如heap没有大小合适的闲置span，向操作系统申请新内存块。
+<p>示例 1：</p>
+<p>输入： code &#x3D; [“SAVE20”,””,”PHARMA5”,”SAVE@20”], businessLine &#x3D; [“restaurant”,”grocery”,”pharmacy”,”restaurant”], isActive &#x3D; [true,true,true,true]</p>
+<p>输出： [“PHARMA5”,”SAVE20”]</p>
+<p>解释：</p>
+<pre><code class="hljs">第一个优惠券有效。
+第二个优惠券的标识符为空（无效）。
+第三个优惠券有效。
+第四个优惠券的标识符包含特殊字符 @（无效）。
 </code></pre>
-<p>释放流程:</p>
-<pre><code class="hljs">1.将标记为可回收的object交还给所属 span.freelist。
-2.该span被放回central，可供任意cache 重新获取使用
-3.如span已收回全部object，则将其交还给heap，以便重新切分复用
-4.定期扫描 heap里长时间闲置的span，释放其占用的内存。
+<p>示例 2：</p>
+<p>输入： code &#x3D; [“GROCERY15”,”ELECTRONICS_50”,”DISCOUNT10”], businessLine &#x3D; [“grocery”,”electronics”,”invalid”], isActive &#x3D; [false,true,true]</p>
+<p>输出： [“ELECTRONICS_50”]</p>
+<p>解释：</p>
+<pre><code class="hljs">第一个优惠券无效，因为它未激活。
+第二个优惠券有效。
+第三个优惠券无效，因为其业务类别无效。
 </code></pre>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-keyword">type</span> mheap <span class="hljs-keyword">struct</span> &#123;<br>    free [_MaxMHeapList]mspan <span class="hljs-comment">// 页数 ≤127 的闲置 span 链</span><br>    freelarge mspan           <span class="hljs-comment">// 页数 &gt;127 (≥1 MB) 的大 span 链</span><br>    central [_NumSizeClasses]<span class="hljs-keyword">struct</span> &#123;<br>        mcentral mcentral<br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mcentral.go</span><br><span class="hljs-keyword">type</span> mcentral <span class="hljs-keyword">struct</span> &#123;<br>    sizeclass <span class="hljs-type">int32</span><br>    nonempty  mspan <span class="hljs-comment">// 仍含空闲 object 的 span 链</span><br>    empty     mspan <span class="hljs-comment">// 空闲 object 耗尽或已被 cache 取走的 span 链</span><br>&#125;<br><span class="hljs-comment">// runtime/mcache.go</span><br><span class="hljs-keyword">type</span> mcache <span class="hljs-keyword">struct</span> &#123;<br>    alloc [_NumSizeClasses]*mspan <span class="hljs-comment">// 以 size class 为索引的可用 span 指针数组</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">check</span><span class="hljs-params">(code <span class="hljs-type">string</span>,isActive <span class="hljs-type">bool</span>)</span></span> <span class="hljs-type">bool</span>&#123;<br>    <span class="hljs-keyword">for</span> _,c:=<span class="hljs-keyword">range</span> code&#123;<br>        <span class="hljs-keyword">if</span> c != <span class="hljs-string">&#x27;_&#x27;</span>&amp;&amp; !unicode.IsLetter(c)&amp;&amp;!unicode.IsDigit(c)&#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> isActive<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">validateCoupons</span><span class="hljs-params">(code []<span class="hljs-type">string</span>, businessLine []<span class="hljs-type">string</span>, isActive []<span class="hljs-type">bool</span>)</span></span> []<span class="hljs-type">string</span> &#123;<br>    groups:=<span class="hljs-built_in">make</span>([][]<span class="hljs-type">string</span>,<span class="hljs-number">4</span>)<br>    <span class="hljs-keyword">for</span> i:=<span class="hljs-keyword">range</span> groups&#123;<br>        groups[i]=<span class="hljs-built_in">make</span>([]<span class="hljs-type">string</span>,<span class="hljs-number">0</span>)<br>    &#125;<br>    ans:=<span class="hljs-built_in">make</span>([]<span class="hljs-type">string</span>,<span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">for</span> i:=<span class="hljs-number">0</span>;i&lt;<span class="hljs-built_in">len</span>(code);i++&#123;<br>        <span class="hljs-keyword">if</span>(code[i]!=<span class="hljs-string">&quot;&quot;</span>&amp;&amp;check(code[i],isActive[i]))&#123;<br>			<span class="hljs-keyword">switch</span> businessLine[i] &#123;<br>			<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;electronics&quot;</span>:<br>				groups[<span class="hljs-number">0</span>] = <span class="hljs-built_in">append</span>(groups[<span class="hljs-number">0</span>], code[i])<br>			<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;grocery&quot;</span>:<br>				groups[<span class="hljs-number">1</span>] = <span class="hljs-built_in">append</span>(groups[<span class="hljs-number">1</span>], code[i])<br>			<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;pharmacy&quot;</span>:<br>				groups[<span class="hljs-number">2</span>] = <span class="hljs-built_in">append</span>(groups[<span class="hljs-number">2</span>], code[i])<br>			<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;restaurant&quot;</span>:<br>				groups[<span class="hljs-number">3</span>] = <span class="hljs-built_in">append</span>(groups[<span class="hljs-number">3</span>], code[i])<br>			&#125;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">for</span> _,group:=<span class="hljs-keyword">range</span> groups&#123;<br>        sort.Strings(group)<br>        ans=<span class="hljs-built_in">append</span>(ans,group...)<br>    &#125;<br>    <span class="hljs-keyword">return</span> ans;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>语法题 简单总结一下用到的语法：<br>unicode.IsLetter和unicode.IsDigit可以用来判断是不是字母和数字<br>sort包go1.0就有了，包括sort.Ints sort.Float64s sort.Strings<br>但是slices是包Go1.21 引入的泛型版，零反射、可内联，性能≈手写快排；官方推荐所有新代码优先用它。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span>&#123; Name <span class="hljs-type">string</span>; Age <span class="hljs-type">int</span>; Score <span class="hljs-type">float64</span> &#125;<br><br><span class="hljs-comment">// 按 Score 降序，再按 Age 升序</span><br>slices.SortFunc(users, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(a, b User)</span></span> <span class="hljs-type">int</span> &#123;<br>    <span class="hljs-keyword">return</span> cmp.Or(<br>        cmp.Compare(b.Score, a.Score), <span class="hljs-comment">// 先比分数，降序</span><br>        cmp.Compare(a.Age, b.Age))     <span class="hljs-comment">// 分数相同再比年龄，升序</span><br>&#125;)<br></code></pre></td></tr></table></figure>
 
+<p>或者自己手写比较</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs go">slices.SortFunc(es,<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(a,b User)</span></span> <span class="hljs-type">int</span>&#123;<br>        <span class="hljs-keyword">return</span> cmp.Or(a.Score-b.Score,a.Age-b.Age)<br>    &#125;)<br></code></pre></td></tr></table></figure>
                 
               </div>
             
@@ -329,7 +329,7 @@ heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
     
       <span class="category-chain">
         
-  <a href="/categories/go/" class="category-chain-item">go</a>
+  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
   
   
 
@@ -349,8 +349,8 @@ heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>go源码阅读1</div>
-      <div>http://example.com/2025/12/11/go源码阅读1/</div>
+      <div>3606. 优惠券校验器</div>
+      <div>http://example.com/2025/12/13/3606-优惠券校验器/</div>
     </div>
     <div class="license-meta">
       
@@ -362,7 +362,7 @@ heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2025年12月11日</div>
+          <div>2025年12月13日</div>
         </div>
       
       
@@ -394,18 +394,12 @@ heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2025/12/12/3433-%E7%BB%9F%E8%AE%A1%E7%94%A8%E6%88%B7%E8%A2%AB%E6%8F%90%E5%8F%8A%E6%83%85%E5%86%B5/" title="3433. 统计用户被提及情况">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">3433. 统计用户被提及情况</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2025/12/11/3531-%E7%BB%9F%E8%AE%A1%E8%A2%AB%E8%A6%86%E7%9B%96%E7%9A%84%E5%BB%BA%E7%AD%91/" title="3531. 统计被覆盖的建筑">
-                        <span class="hidden-mobile">3531. 统计被覆盖的建筑</span>
+                      <a href="/2025/12/12/146.%20LRU%20%E7%BC%93%E5%AD%98/" title="146.LRU 缓存">
+                        <span class="hidden-mobile">146.LRU 缓存</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
