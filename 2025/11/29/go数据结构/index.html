@@ -1,0 +1,761 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="5.1 字符串 (String)核心知识点： 定义： 字符串是不可变的字节序列。默认值是 “” 而非 nil。 底层结构： 它不是一个简单的数组，而是一个复合结构（reflect.StringHeader），包含一个指向底层字节数组的指针 str 和长度 len。 struct { str unsafe.Pointer; len int }  特性： 支持索引访问字节（不可寻址，也就是不能&amp;amp">
+<meta property="og:type" content="article">
+<meta property="og:title" content="go数据结构">
+<meta property="og:url" content="http://example.com/2025/11/29/go%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="5.1 字符串 (String)核心知识点： 定义： 字符串是不可变的字节序列。默认值是 “” 而非 nil。 底层结构： 它不是一个简单的数组，而是一个复合结构（reflect.StringHeader），包含一个指向底层字节数组的指针 str 和长度 len。 struct { str unsafe.Pointer; len int }  特性： 支持索引访问字节（不可寻址，也就是不能&amp;amp">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-11-29T01:42:41.000Z">
+<meta property="article:modified_time" content="2025-11-29T03:04:24.000Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>go数据结构 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="go数据结构"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-11-29 09:42" pubdate>
+          2025年11月29日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          63 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">go数据结构</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>5.1 字符串 (String)<br>核心知识点：</p>
+<p>定义： 字符串是不可变的字节序列。默认值是 “” 而非 nil。</p>
+<p>底层结构： 它不是一个简单的数组，而是一个复合结构（reflect.StringHeader），包含一个指向底层字节数组的指针 str 和长度 len。</p>
+<p>struct { str unsafe.Pointer; len int } </p>
+<p>特性：</p>
+<p>支持索引访问字节（不可寻址，也就是不能&amp;获取某个元素的地址）。</p>
+<p>支持切片操作（共享底层内存，内部指针依旧指向原字节数组）。</p>
+<p>for 遍历时，按索引返回 byte，按 range 返回 rune (Unicode字符)。</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs css">for <span class="hljs-selector-tag">i</span>:=<span class="hljs-number">0</span>;<span class="hljs-selector-tag">i</span>&lt;len(s);<span class="hljs-selector-tag">i</span>++&#123;<br>    //按字节访问<br>&#125;<br>for <span class="hljs-selector-tag">i</span>,c:=range s&#123;<br>    //按rune访问<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>要修改字符串，须将其转换为可变类型([]rune或[]byte)，待完成后再转换回来。但不管如何转换，都须重新分配内存，并复制数据。因为字符串只读的特性，转换时重新分配内存很合理</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs stata">s:= <span class="hljs-string">&quot;hello world&quot;</span><br><span class="hljs-keyword">bs</span>:=[]byte(s)<br>s1:=<span class="hljs-built_in">string</span>(<span class="hljs-keyword">bs</span>)<br>rs=[]rune(s)<br>s2:=<span class="hljs-built_in">string</span>(rs)<br><span class="hljs-comment">//s,bs,s1,rs,s2内存都不一样</span><br><br><span class="hljs-comment">//用加法操作符拼接字符串会导致每次都重新分配内存,解决方法是分配足够的内存，避免中途扩张底层数组，string.Join函数会统计所有参数长度并一次性完成内存分配操作</span><br><span class="hljs-keyword">for</span> i:=0;i&lt;100;i++&#123;<br>    s+=&quot;a<br>&#125;<span class="hljs-comment">//slow</span><br><br><span class="hljs-comment">//改进</span><br>s:=make([]string,1000)<br><span class="hljs-keyword">for</span> i:=0;i&lt;100;i++&#123;<br>    s[i]=<span class="hljs-string">&quot;a&quot;</span><br>&#125;<br><span class="hljs-keyword">return</span> string.Join(s,<span class="hljs-string">&quot;&quot;</span>)<span class="hljs-comment">//fast</span><br><br><span class="hljs-comment">//对bytes.Bfer同样道理</span><br><span class="hljs-keyword">var</span> b bytes.Buffer<br>b.grow(1000)<br><span class="hljs-keyword">for</span> i:=0;i&lt;100;i++&#123;<br>    b.WriteString(<span class="hljs-string">&quot;a&quot;</span>)<br>&#125;<br><span class="hljs-keyword">return</span> b.<span class="hljs-built_in">string</span>()<br><br><br><span class="hljs-comment">//utf8字符详细统计</span><br>s:=<span class="hljs-string">&quot;歪嘴.臭狗&quot;</span><br>fmt.Println(s,utf8.ValidString(s))<br></code></pre></td></tr></table></figure>
+
+<p>深度分析：</p>
+<p>转换优化 (Zero-copy)： string 和 []byte 之间的转换通常涉及内存分配和数据复制。但在高性能场景下，可以利用 unsafe.Pointer 和 reflect 包直接转换指针类型，实现“零拷贝”转换，但需注意安全风险（如修改字符串字面量会导致崩溃）。</p>
+<p>性能陷阱： 使用 + 拼接字符串会频繁分配内存（每次都会创建新对象）。对于大量拼接，推荐使用 strings.Join（预计算长度一次分配）或 bytes.Buffer（动态扩容）。</p>
+<p>示例代码：</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs stylus">package <span class="hljs-selector-tag">main</span><br><br>import (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;reflect&quot;</span><br>	<span class="hljs-string">&quot;unsafe&quot;</span><br>)<br><br>func <span class="hljs-selector-tag">main</span>() &#123;<br>	s := <span class="hljs-string">&quot;hello, world!&quot;</span><br>	<br>	<span class="hljs-comment">// 深度分析：查看字符串头部结构</span><br>	<span class="hljs-comment">// 字符串只是个头部信息，包含指针和长度</span><br>	<span class="hljs-selector-tag">p</span> := (*reflect.StringHeader)(unsafe<span class="hljs-selector-class">.Pointer</span>(&amp;s))<br>	fmt<span class="hljs-selector-class">.Printf</span>(<span class="hljs-string">&quot;Data: 0x%x, Len: %d\n&quot;</span>, <span class="hljs-selector-tag">p</span><span class="hljs-selector-class">.Data</span>, <span class="hljs-selector-tag">p</span>.Len)<br><br>	<span class="hljs-comment">// 切片操作，s1 内部指针指向 s 的底层数组，无数据复制</span><br>	s1 := s<span class="hljs-selector-attr">[:5]</span> <br>	fmt<span class="hljs-selector-class">.Println</span>(s1) <span class="hljs-comment">// &quot;hello&quot;</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>5.2 数组 (Array)<br>核心知识点：</p>
+<p>定义： 数组是值类型，长度是类型的一部分（d1:&#x3D;[5]int 和 d2:&#x3D;[10]int 是不同类型 d1&#x3D;d2会爆错）。</p>
+<p>初始化： 支持 [5]int{1,2}、[…]int{1,2,3}（自动推断长度）和指定索引初始化 [5]int{1: 10, 4: 20}，意思是下表为1的位置初始化为10，4处为20。对于结构类型可以使用…省略元素初始化类型标签，多维数组只能在第一维使用…。</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs crmsh"><span class="hljs-keyword">type</span> <span class="hljs-keyword">user</span> <span class="hljs-title">struct</span>&#123;<br>    <br>&#125;<br>d:=[...]user&#123;&#125;<br></code></pre></td></tr></table></figure>
+
+<p>内置函数len和cap都可以返回数组长度（第一维）</p>
+<p>指针： 区分“指针数组”（[2]<em>int，元素是指针）和“数组指针”（</em>[2]int，指向数组的指针）。</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs css"><span class="hljs-attribute">x</span>,<span class="hljs-attribute">y</span>:=<span class="hljs-number">10</span>,<span class="hljs-number">20</span><br>a:=[...]*int&#123;&amp;<span class="hljs-attribute">x</span>,&amp;<span class="hljs-attribute">y</span>&#125;//元素为指针的指针数组 print%T 输出 <span class="hljs-selector-attr">[2]</span>*int<br><span class="hljs-selector-tag">p</span>:=&amp;a//存储数组地址的指针 print%T 输出 *[<span class="hljs-number">2</span>]*int<br></code></pre></td></tr></table></figure>
+
+<p>深度分析：</p>
+<p>值拷贝代价： 数组在赋值或作为函数参数传递时，会复制整个数组的内容。如果数组很大，会造成严重的性能消耗。</p>
+<p>优化建议： 对于大数组，建议传递数组指针 *[_]int 或使用切片 []int 来避免复制底层数据。</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs stylus"><span class="hljs-selector-tag">a</span>:=<span class="hljs-selector-attr">[2]</span>int&#123;<span class="hljs-number">10</span>,<span class="hljs-number">20</span>&#125;<br>b=<span class="hljs-selector-tag">a</span><br>func <span class="hljs-built_in">test</span>(<span class="hljs-attribute">x</span> [<span class="hljs-number">2</span>]int)&#123;<br><br>&#125;<br><span class="hljs-function"><span class="hljs-title">test</span><span class="hljs-params">(a)</span></span><span class="hljs-comment">//slow</span><br><br><span class="hljs-selector-tag">a</span>:=<span class="hljs-selector-attr">[2]</span>int&#123;<span class="hljs-number">10</span>,<span class="hljs-number">20</span>&#125;<br>func <span class="hljs-built_in">test</span>(<span class="hljs-attribute">x</span> *[]int)&#123;<br><br>&#125;<br><span class="hljs-function"><span class="hljs-title">test</span><span class="hljs-params">(&amp;a)</span></span><span class="hljs-comment">//fast</span><br></code></pre></td></tr></table></figure>
+
+<p>示例代码：</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs stylus">package <span class="hljs-selector-tag">main</span><br><br>import <span class="hljs-string">&quot;fmt&quot;</span><br><br>func <span class="hljs-selector-tag">main</span>() &#123;<br>	<span class="hljs-comment">// 定义并初始化</span><br>	<span class="hljs-selector-tag">a</span> := <span class="hljs-selector-attr">[...]</span>int&#123;<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>&#125;<br>	<br>	<span class="hljs-comment">// 深度分析：值拷贝</span><br>	<span class="hljs-selector-tag">b</span> := <span class="hljs-selector-tag">a</span> <span class="hljs-comment">// b 是 a 的完整副本，内存地址不同</span><br>	<span class="hljs-selector-tag">b</span><span class="hljs-selector-attr">[0]</span> = <span class="hljs-number">100</span><br>	<br>	fmt<span class="hljs-selector-class">.Println</span>(a) <span class="hljs-comment">// [1 2 3] - 原数组未变</span><br>	fmt<span class="hljs-selector-class">.Println</span>(b) <span class="hljs-comment">// [100 2 3]</span><br>	<br>	<span class="hljs-comment">// 数组指针</span><br>	<span class="hljs-selector-tag">var</span> <span class="hljs-selector-tag">p</span> *<span class="hljs-selector-attr">[3]</span>int = &amp;<span class="hljs-selector-tag">a</span><br>	<span class="hljs-selector-tag">p</span><span class="hljs-selector-attr">[1]</span> = <span class="hljs-number">200</span>     <span class="hljs-comment">// 可以直接用指针操作元素</span><br>	fmt<span class="hljs-selector-class">.Println</span>(a) <span class="hljs-comment">// [1 200 3] - 原数组改变</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>5.3 切片 (Slice)<br>核心知识点：</p>
+<p>定义： 本身并非动态数组或数组指针，内部通过指针引用底层数组，是底层数组的一个“视图”，本身也是只读结构。</p>
+<p>底层结构： struct { array unsafe.Pointer; len int; cap int }。包含指针、长度和容量。</p>
+<p>cap表示切片所引用数组的真实长度，len用于限定可读的写元素数量。数组必须addressable，比如string就不能[:]。数组只有 len，永远是声明时那个固定长度。切片len 是现在看到的元素数，cap 是不扩容前提下还能往后追加多少元素。</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>数组 <code>[N]T</code></th>
+<th>切片 <code>[]T</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>len</strong></td>
+<td>固定值 <code>N</code>，编译期就确定</td>
+<td>当前 <strong>元素个数</strong>（可运行时变化）</td>
+</tr>
+<tr>
+<td><strong>cap</strong></td>
+<td><strong>无 cap 概念</strong>（就是 <code>N</code>）</td>
+<td>从切片 <strong>起始指针</strong> 到底层数组 <strong>末尾</strong> 还能放多少个元素</td>
+</tr>
+</tbody></table>
+<p>s[low:high:max]看得见的元素：s[low] 到 s[high-1]底层数组能扩到的范围：s[low] 到 s[max-1]</p>
+<figure class="highlight inform7"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs inform7">x := <span class="hljs-comment">[]</span>int&#123;0,1,2,3,4,5,6,7,8,9&#125;<br>x<span class="hljs-comment">[2:5:7]</span>//<span class="hljs-comment">[2,3,4]</span>,s<span class="hljs-comment">[low : high : max]</span>,长度 = 5-2 = 3 → <span class="hljs-comment">[2 3 4]</span> 容量 = 7-2 = 5 low起始下标（含） high结束下标（不含） <br>//max切片容量的结束下标（不含）<br></code></pre></td></tr></table></figure>
+<p>切片只是很小的结构体对象，用来代替数组传参可以避免复制开销。make函数允许运行期间动态指定数组长度，绕开了数组必须使用编译期常量的限制。并非所有时候都适合用切片代替数组，因为切片底层数组可能会在堆上分配内存。而且小数组在栈上拷贝的消耗也未必就比make代价大。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;testing&quot;</span><br>)<br><br><span class="hljs-comment">// 返回固定大小数组（1024 int ≈ 8 KB）</span><br><span class="hljs-comment">// 每次调用会把整个 8 KB 复制给调用者，但**零堆分配**</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">array</span><span class="hljs-params">()</span></span> [<span class="hljs-number">1024</span>]<span class="hljs-type">int</span> &#123;<br>	<span class="hljs-keyword">var</span> x [<span class="hljs-number">1024</span>]<span class="hljs-type">int</span><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-built_in">len</span>(x); i++ &#123;<br>		x[i] = i<br>	&#125;<br>	<span class="hljs-keyword">return</span> x <span class="hljs-comment">// 复制 8 KB</span><br>&#125;<br><br><span class="hljs-comment">// 返回切片（仅 24 字节头）指向运行时分配的底层数组</span><br><span class="hljs-comment">// 只复制 24 字节，但 make 会在堆上申请 8 KB</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">slice</span><span class="hljs-params">()</span></span> []<span class="hljs-type">int</span> &#123;<br>	x := <span class="hljs-built_in">make</span>([]<span class="hljs-type">int</span>, <span class="hljs-number">1024</span>)<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-built_in">len</span>(x); i++ &#123;<br>		x[i] = i<br>	&#125;<br>	<span class="hljs-keyword">return</span> x <span class="hljs-comment">// 复制 24 字节</span><br>&#125;<br><br><span class="hljs-comment">/* ========== 基准测试 ========== */</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">BenchmarkArray</span><span class="hljs-params">(b *testing.B)</span></span> &#123;<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; b.N; i++ &#123;<br>		_ = array()<br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">BenchmarkSlice</span><span class="hljs-params">(b *testing.B)</span></span> &#123;<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; b.N; i++ &#123;<br>		_ = slice()<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th>版本</th>
+<th>每次耗时</th>
+<th>堆内存&#x2F;次</th>
+<th>分配次数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Array</strong></td>
+<td>~1300 ns</td>
+<td>0 B</td>
+<td>0</td>
+<td>栈上 8 KB 复制，<strong>零堆分配</strong></td>
+</tr>
+<tr>
+<td><strong>Slice</strong></td>
+<td>~2700 ns</td>
+<td><strong>8192 B</strong></td>
+<td>1</td>
+<td>只复制 24 B，但<strong>堆上多 8 KB</strong></td>
+</tr>
+</tbody></table>
+<p>编译期大小固定且数据不大时，直接返回数组更快（栈复制 + 无 GC 压力）；<br>需要动态长度或共享&#x2F;追加时，再选切片——用 24 B 的小头指向堆上大数组。</p>
+<p>操作：</p>
+<p>append：追加数据，超过 cap 时自动扩容。</p>
+<p>copy：在两个切片间复制数据。</p>
+<p>reslice：在 cap 范围内调整切片长度。</p>
+<p>深度分析：</p>
+<p>扩容策略： 当 append 导致超出容量时，通常按 2 倍增长（大且复杂切片有不同策略，如 1.25 倍）。扩容意味着重新分配底层数组并复制数据，地址会发生变化。</p>
+<p>Reslice 技巧： 可以基于原切片创建新切片（如 s[:cap(s)]），访问底层数组中不可见但已分配的空间，实现类似于变长缓冲区的效果。</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs stylus">package <span class="hljs-selector-tag">main</span><br><br>import <span class="hljs-string">&quot;fmt&quot;</span><br><br>func <span class="hljs-selector-tag">main</span>() &#123;<br>	<span class="hljs-comment">// 原始切片，长度 4，容量 8</span><br>	data := <span class="hljs-built_in">make</span>(<span class="hljs-selector-attr">[]</span>int, <span class="hljs-number">4</span>, <span class="hljs-number">8</span>)<br>	<span class="hljs-keyword">for</span> <span class="hljs-selector-tag">i</span> := range data &#123;<br>		data<span class="hljs-selector-attr">[i]</span> = <span class="hljs-selector-tag">i</span> + <span class="hljs-number">1</span><br>	&#125;<br>	fmt<span class="hljs-selector-class">.Printf</span>(<span class="hljs-string">&quot;data: %v\tlen=%d\tcap=%d\tptr=%p\n&quot;</span>, data, <span class="hljs-built_in">len</span>(data), <span class="hljs-built_in">cap</span>(data), data)<br><br>	<span class="hljs-comment">/* ---------- reslice：不搬迁 ---------- */</span><br>	<span class="hljs-comment">// 向后“reslice”扩大视图</span><br>	expand := data<span class="hljs-selector-attr">[:6]</span> <span class="hljs-comment">// 长度扩大到 6，容量仍是 8-0=8</span><br>	expand<span class="hljs-selector-attr">[4]</span> = <span class="hljs-number">55</span>     <span class="hljs-comment">// 写入第 5 个元素</span><br>	expand<span class="hljs-selector-attr">[5]</span> = <span class="hljs-number">66</span><br>	fmt<span class="hljs-selector-class">.Printf</span>(<span class="hljs-string">&quot;expand: %v\tlen=%d\tcap=%d\tptr=%p (same array)\n&quot;</span>, expand, <span class="hljs-built_in">len</span>(expand), <span class="hljs-built_in">cap</span>(expand), expand)<br><br>	<span class="hljs-comment">/* ---------- reslice：限制容量 ---------- */</span><br>	<span class="hljs-comment">// 三索引语法限制容量，防止意外越界追加</span><br>	limited := data<span class="hljs-selector-attr">[1:3:4]</span> <span class="hljs-comment">// len=2, cap=3（底层数组索引 1~3 段）</span><br>	fmt<span class="hljs-selector-class">.Printf</span>(<span class="hljs-string">&quot;limited: %v\tlen=%d\tcap=%d\tptr=%p\n&quot;</span>, limited, <span class="hljs-built_in">len</span>(limited), <span class="hljs-built_in">cap</span>(limited), limited)<br><br>	<span class="hljs-comment">/* ---------- 追加导致搬迁 ---------- */</span><br>	<span class="hljs-comment">// 继续追加，超出原 cap，会分配新数组</span><br>	more := <span class="hljs-built_in">append</span>(expand, <span class="hljs-number">77</span>, <span class="hljs-number">88</span>, <span class="hljs-number">99</span>, <span class="hljs-number">999</span>) <span class="hljs-comment">// expand 的 cap=8，再追加 4 个刚好超限</span><br>	fmt<span class="hljs-selector-class">.Printf</span>(<span class="hljs-string">&quot;more: %v\tlen=%d\tcap=%d\tptr=%p (new array!)\n&quot;</span>, more, <span class="hljs-built_in">len</span>(more), <span class="hljs-built_in">cap</span>(more), more)<br><br>	<span class="hljs-comment">// 验证原切片未被修改（expand 与 more 已脱离）</span><br>	fmt<span class="hljs-selector-class">.Printf</span>(<span class="hljs-string">&quot;data after: %v (unchanged)\n&quot;</span>, data)<br>&#125;<br></code></pre></td></tr></table></figure>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs vim">结果：<br>data: [<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span>]          <span class="hljs-built_in">len</span>=<span class="hljs-number">4</span> cap=<span class="hljs-number">8</span> <span class="hljs-keyword">ptr</span>=<span class="hljs-number">0</span>xc0000141a0<br><span class="hljs-built_in">expand</span>: [<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">55</span> <span class="hljs-number">66</span>]  <span class="hljs-built_in">len</span>=<span class="hljs-number">6</span> cap=<span class="hljs-number">8</span> <span class="hljs-keyword">ptr</span>=<span class="hljs-number">0</span>xc0000141a0 (same array)<br>limited: [<span class="hljs-number">2</span> <span class="hljs-number">3</span>]           <span class="hljs-built_in">len</span>=<span class="hljs-number">2</span> cap=<span class="hljs-number">3</span> <span class="hljs-keyword">ptr</span>=<span class="hljs-number">0</span>xc0000141b0<br>more: [<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span> <span class="hljs-number">55</span> <span class="hljs-number">66</span> <span class="hljs-number">77</span> <span class="hljs-number">88</span> <span class="hljs-number">99</span> <span class="hljs-number">999</span>] <span class="hljs-built_in">len</span>=<span class="hljs-number">10</span> cap=<span class="hljs-number">16</span> <span class="hljs-keyword">ptr</span>=<span class="hljs-number">0</span>xc000016240 (<span class="hljs-keyword">new</span> array!)<br>data after: [<span class="hljs-number">1</span> <span class="hljs-number">2</span> <span class="hljs-number">3</span> <span class="hljs-number">4</span>] (unchanged)<br>//reslice 只是调整 <span class="hljs-built_in">len</span>/cap 视图，零拷贝。三索引 s[<span class="hljs-variable">l:h</span>:<span class="hljs-keyword">c</span>] 可显式限制容量，避免意外越界。一旦 <span class="hljs-keyword">append</span> 超出旧容量，Go 会重新分配更大的数组，此时指针变，与原切片脱离。<br></code></pre></td></tr></table></figure>
+
+<p>内存泄漏风险： 如果一个小切片引用了一个很大的底层数组，只要该切片还在，整个底层数组就不会被垃圾回收。建议对大数组只需少部分数据时使用 copy 复制到新切片。</p>
+<p>示例代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> <span class="hljs-string">&quot;fmt&quot;</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	s := <span class="hljs-built_in">make</span>([]<span class="hljs-type">int</span>, <span class="hljs-number">0</span>, <span class="hljs-number">5</span>) <span class="hljs-comment">// len=0, cap=5</span><br>	<br>	<span class="hljs-comment">// 深度分析：append 扩容</span><br>	<span class="hljs-comment">// 初始地址</span><br>	fmt.Printf(<span class="hljs-string">&quot;Addr: %p, Cap: %d\n&quot;</span>, s, <span class="hljs-built_in">cap</span>(s))<br>	<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i++ &#123;<br>		s = <span class="hljs-built_in">append</span>(s, i)<br>		<span class="hljs-comment">// 当 i=5 时，容量不足，触发扩容，底层数组地址改变</span><br>		<span class="hljs-keyword">if</span> i == <span class="hljs-number">5</span> &#123;<br>			fmt.Printf(<span class="hljs-string">&quot;Addr: %p, Cap: %d (Reallocated)\n&quot;</span>, s, <span class="hljs-built_in">cap</span>(s))<br>		&#125;<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>5.4 字典 (Map)<br>核心知识点：</p>
+<p>定义： 无序键值对集合，引用类型。</p>
+<p>要求： Key 必须支持 &#x3D;&#x3D; 和 !&#x3D; 比较运算（切片、函数、包含切片的结构体不能作为 Key）。</p>
+<p>操作： 使用 make 创建，delete 删除。读取不存在的 Key 返回零值，可用 ok-idiom 模式判断是否存在。</p>
+<p>深度分析：</p>
+<p>不可寻址 (Not Addressable)： 字典中的 Value 是不可寻址的。你不能直接获取 m[“key”] 的地址，也不能直接修改 Value 中结构体的字段（如 m[“k”].field &#x3D; 1 会报错）。必须将整个 Value 替换，或让 Value 为指针类型。</p>
+<p>安全性： nil 字典可以读取（返回零值），但写入会 Panic。</p>
+<p>并发不安全： 多协程并发读写 map 会导致运行时 Panic，需使用 sync.RWMutex 保护。</p>
+<p>预分配： 初始化时指定容量 make(map[int]int, 1000) 可减少扩容时的哈希表重建和内存分配开销。</p>
+<p>示例代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> <span class="hljs-string">&quot;fmt&quot;</span><br><br><span class="hljs-keyword">type</span> user <span class="hljs-keyword">struct</span> &#123;<br>	name <span class="hljs-type">string</span><br>	age  <span class="hljs-type">int</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	m := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]user)<br>	m[<span class="hljs-string">&quot;Tom&quot;</span>] = user&#123;name: <span class="hljs-string">&quot;Tom&quot;</span>, age: <span class="hljs-number">10</span>&#125;<br><br>	<span class="hljs-comment">// 深度分析：Value 不可寻址</span><br>	<span class="hljs-comment">// m[&quot;Tom&quot;].age = 11 // Error: cannot assign to struct field</span><br>	<br>	<span class="hljs-comment">// 正确修改方式：整体赋值</span><br>	u := m[<span class="hljs-string">&quot;Tom&quot;</span>]<br>	u.age = <span class="hljs-number">11</span><br>	m[<span class="hljs-string">&quot;Tom&quot;</span>] = u<br>	<br>	fmt.Println(m)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>5.5 结构体 (Struct)<br>核心知识点：</p>
+<p>定义： 字段集合，复合类型。</p>
+<p>匿名字段： 支持嵌入其他类型（包括结构体、接口），实现类似继承的功能（直接访问内嵌类型的字段和方法）。</p>
+<p>标签 (Tag)： 字段后的字符串元数据，常用于 JSON 解析或 ORM 映射。</p>
+<p>深度分析：</p>
+<p>内存布局： 结构体内存是连续分配的。字段顺序会影响内存对齐（Alignment），合理的字段排序可以减少内存填充（Padding），节省空间。</p>
+<p>空结构体 (Empty Struct)： struct{} 长度为 0，不占用内存。指向该类型的指针通常指向 runtime.zerobase（固定地址）。常用于 channel 信号传递或 map 实现 Set（map[string]struct{}）。</p>
+<p>方法集与嵌入： 嵌入类型的方法会被“提升”到外部结构体，但本质上是编译器生成的包装方法。外部结构体可以直接调用内部类型的方法。</p>
+<p>示例代码：</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs stylus">package <span class="hljs-selector-tag">main</span><br><br>import (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;unsafe&quot;</span><br>)<br><br>type flag struct&#123;&#125;<br><br>type data struct &#123;<br>	<span class="hljs-selector-tag">b</span> byte<br>	<span class="hljs-selector-tag">i</span> int32<br>	<span class="hljs-selector-tag">a</span> byte <span class="hljs-comment">// 字段分散定义可能导致更多的内存填充</span><br>&#125;<br><br>func <span class="hljs-selector-tag">main</span>() &#123;<br>	<span class="hljs-selector-tag">var</span> d data<br>	<span class="hljs-comment">// 深度分析：内存对齐与填充</span><br>	fmt<span class="hljs-selector-class">.Printf</span>(<span class="hljs-string">&quot;Size: %d, Align: %d\n&quot;</span>, unsafe<span class="hljs-selector-class">.Sizeof</span>(d), unsafe<span class="hljs-selector-class">.Alignof</span>(d))<br>	<br>	<span class="hljs-comment">// 空结构体，地址通常相同</span><br>	<span class="hljs-selector-tag">var</span> <span class="hljs-selector-tag">a</span>, <span class="hljs-selector-tag">b</span> flag<br>	fmt<span class="hljs-selector-class">.Printf</span>(<span class="hljs-string">&quot;Zero size: %p, %p\n&quot;</span>, &amp;<span class="hljs-selector-tag">a</span>, &amp;b)<br>&#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go/" class="category-chain-item">go</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>go数据结构</div>
+      <div>http://example.com/2025/11/29/go数据结构/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年11月29日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/11/29/go%E6%95%B0%E6%8D%AE/" title="go数据结构">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">go数据结构</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/11/29/3512-%E4%BD%BF%E6%95%B0%E7%BB%84%E5%92%8C%E8%83%BD%E8%A2%AB-K-%E6%95%B4%E9%99%A4%E7%9A%84%E6%9C%80%E5%B0%91%E6%93%8D%E4%BD%9C%E6%AC%A1%E6%95%B0/" title="3512. 使数组和能被 K 整除的最少操作次数">
+                        <span class="hidden-mobile">3512. 使数组和能被 K 整除的最少操作次数</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

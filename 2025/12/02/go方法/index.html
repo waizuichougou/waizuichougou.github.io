@@ -1,0 +1,680 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="6.1 定义 方法是与对象实例绑定的特殊函数。 方法是面向对象编程的基本概念，用于维护和展示对象的自身状态。对象是内敛的，每个实例都有各自不同的独立特征，以属性和方法来暴露对外通信接口。普通函数则专注于算法流程，通过接收参数来完成特定逻辑运算，并返回最终结果。换句话说，方法是有关联状态的，而函数通常没有。 方法和函数定义语法区别的在于前者有前置实例接收参数(receiver)，编译器以此确定方法所">
+<meta property="og:type" content="article">
+<meta property="og:title" content="go方法">
+<meta property="og:url" content="http://example.com/2025/12/02/go%E6%96%B9%E6%B3%95/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="6.1 定义 方法是与对象实例绑定的特殊函数。 方法是面向对象编程的基本概念，用于维护和展示对象的自身状态。对象是内敛的，每个实例都有各自不同的独立特征，以属性和方法来暴露对外通信接口。普通函数则专注于算法流程，通过接收参数来完成特定逻辑运算，并返回最终结果。换句话说，方法是有关联状态的，而函数通常没有。 方法和函数定义语法区别的在于前者有前置实例接收参数(receiver)，编译器以此确定方法所">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-12-02T05:28:39.000Z">
+<meta property="article:modified_time" content="2025-12-23T06:31:47.731Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>go方法 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="go方法"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-12-02 13:28" pubdate>
+          2025年12月2日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          31 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">go方法</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>6.1 定义</p>
+<p>方法是与对象实例绑定的特殊函数。</p>
+<p>方法是面向对象编程的基本概念，用于维护和展示对象的自身状态。对象是内敛的，每个实例都有各自不同的独立特征，以属性和方法来暴露对外通信接口。普通函数则专注于算法流程，通过接收参数来完成特定逻辑运算，并返回最终结果。换句话说，方法是有关联状态的，而函数通常没有。</p>
+<p>方法和函数定义语法区别的在于前者有前置实例接收参数(receiver)，编译器以此确定方法所属类型。在某些语言里，尽管没有显式定义，但会在调用时隐式传递this实例参数。<br>可以为当前包，以及除接口和指针以外的任何类型定义方法。</p>
+<p>方法同样不支持重载(overload)。receiver 参数名没有限制，按例会选用简短有意义的名称(不推荐使用this、self)。如方法内部并不引用实例，可省略参数名，仅保留类型</p>
+<p>方法可看作特殊的函数，那么receiver的类型自然可以是基础类型或指针类型。这会关系到调用时对象实例是否被复制。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> N <span class="hljs-type">int</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(n N)</span></span>toString() <span class="hljs-type">string</span>&#123;<br>    <span class="hljs-keyword">return</span> fmt.Sprintf(<span class="hljs-string">&quot;%#x&quot;</span>,n)<br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(N)</span></span>test()&#123;<br>    <span class="hljs-built_in">println</span>(<span class="hljs-string">&quot;Hi&quot;</span>)<br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-keyword">var</span> a N=<span class="hljs-number">25</span><br>    <span class="hljs-built_in">println</span>(a.toString())<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>可使用实例值或指针调用方法，编译器会根据方法receiver类型自动在基础类型和指针类型间转换。不能使用多级指针调用方法。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(n N)</span></span> value()&#123;<br>    n++<br>    fmt.Printf(<span class="hljs-string">&quot;v:%p,%v\n&quot;</span>,&amp;n,n)<br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(n *N)</span></span> pointer()&#123;<br>    (*n)++<br>    fmt.Printf(<span class="hljs-string">&quot;v:%p,%v\n&quot;</span>,n,*n)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-keyword">var</span> a N=<span class="hljs-number">25</span><br>    p:=&amp;a<br>    a.value()<br>    a.pointer()<br>    p.value()<br>    p.pointer()<br>&#125;<br><span class="hljs-comment">//预计输出</span><br>v:<span class="hljs-number">0xc82000a2c0</span>，<span class="hljs-number">26</span><br>p:<span class="hljs-number">0xc82000a298</span>，<span class="hljs-number">26</span><br>v:<span class="hljs-number">0xe82000a2f0</span>，<span class="hljs-number">27</span><br>p:<span class="hljs-number">0xc82000a298</span>，<span class="hljs-number">27</span><br></code></pre></td></tr></table></figure>
+<p>如何选择方法的receiver类型?</p>
+<p>要修改实例状态，用*T</p>
+<p>无须修改状态的小对象或固定值，建议用T。</p>
+<p>大对象建议用*T，以减少复制成本。引用类型、字符串、函数等指针包装对象，直接用T。</p>
+<p>若包含Mutex等同步字段，用*T，避免因复制造成锁操作无效</p>
+<p>其他无法确定的情况，都用*T。</p>
+<p>6.2匿名字段<br>可以像访问匿名字段成员那样调用其方法，由编译器负责查找。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> data <span class="hljs-keyword">struct</span><br>sync.Mutex<br>buf [<span class="hljs-number">1024</span>]<span class="hljs-type">byte</span><br>fune main()&#123;<br>d :=data&#123;]d.Lock ()<br><span class="hljs-comment">//编译会处理为sync.(*Mutex).Lock()调用</span><br><span class="hljs-keyword">defer</span> d.Unlock()<br></code></pre></td></tr></table></figure>
+<p>方法也会有同名遮蔽问题。但利用这种特性，可实现类似覆盖(override)操作</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> user <span class="hljs-keyword">struct</span>&#123;&#125;<br><span class="hljs-keyword">type</span> manager <span class="hljs-keyword">struct</span> &#123;<br>    user<br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(user)</span></span>tostring()<span class="hljs-type">string</span> <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;user&quot;</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(m manager)</span></span>tostring()<span class="hljs-type">string</span> &#123;<span class="hljs-keyword">return</span> m.user.toString()+<span class="hljs-string">&quot;:manager&quot;</span>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-keyword">var</span> m manager<br>    <span class="hljs-built_in">println</span>(m.tostring())<br>    <span class="hljs-built_in">println</span>(m.user.tostring())<br>&#125;<br><span class="hljs-comment">//输出:</span><br>user; manager<br>user<br></code></pre></td></tr></table></figure>
+<p>尽管能直接访问匿名字段的成员和方法，但它们依然不属于继承关系</p>
+<p>6.3 方法集</p>
+<p>类型有一个与之相关的方法集(methodset)，这决定了它是否实现某个接口。</p>
+<p>类型T方法集包含所有receiverT方法。</p>
+<p>类型*T方法集包含所有receiverT+*T方法</p>
+<p>匿名嵌入S，T方法集包含所有receiverS方法</p>
+<p>匿名嵌人*S，T方法集包含所有receiverS+*S方法</p>
+<p>匿名嵌人S或*S，*T方法集包含所有receiverS+*S方法</p>
+<p>可利用反射(reflect)测试这些规则</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> S <span class="hljs-keyword">struct</span>&#123;&#125;<br><span class="hljs-keyword">type</span> T <span class="hljs-keyword">struct</span>&#123;<br>    S<br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(s)</span></span>sVal ()&#123;&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*S)</span></span>sPtr()&#123;&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(T)</span></span>tVal()&#123;&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*T)</span></span>tPtr()&#123;&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">methodset</span> <span class="hljs-params">(a <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span>&#123;<span class="hljs-comment">//显示方法集里所有方法名字</span><br>    t:= reflect.TypeOf(a)<br>    <span class="hljs-keyword">for</span> i,n:=<span class="hljs-number">0</span>，t.NumMethod();i&lt;n; i++&#123;<br>        m:=t.Method(i)<br>        fmt.Println(m.Name,m.Type)<br>    &#125;   <br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-keyword">var</span> t<br>    methodSet(t)<span class="hljs-comment">// 显示 T方法集</span><br>    methodSet(&amp;t)<span class="hljs-comment">// 显示*T方法集</span><br>&#125;<br><span class="hljs-comment">//预计输出</span><br>sVal <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(main.T)</span></span><br>tVal <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(main.T)</span></span><br>sPtr <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*main.T)</span></span><br>sVal <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*main.T)</span></span><br>tPtr <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*main.T)</span></span><br>tVal <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*main.T)</span></span><br></code></pre></td></tr></table></figure>
+<p>方法集仅影响接口实现和方法表达式转换，与通过实例或实例指针调用方法无关。实例并不使用方法集，而是直接调用(或通过隐式字段名)。</p>
+<p>很显然，匿名字段就是为方法集准备的。嵌入字段最大的好处是把别人的方法“借”到自己的方法集里，从而自动满足某个接口；如果只是省一个字段名，那点儿语法糖根本不值。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> Logger <span class="hljs-keyword">struct</span>&#123;&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(Logger)</span></span> Log(<span class="hljs-type">string</span>) &#123; <span class="hljs-built_in">println</span>(<span class="hljs-string">&quot;log:&quot;</span>, s) &#125;<br><br><span class="hljs-keyword">type</span> Server <span class="hljs-keyword">struct</span> &#123;<br>    Logger <span class="hljs-comment">// 嵌入</span><br>    host   <span class="hljs-type">string</span><br>&#125;<br><br><span class="hljs-comment">// 现在 Server 的方法集里自动就有 Log 方法</span><br><span class="hljs-keyword">var</span> s Server<br>s.Log(<span class="hljs-string">&quot;start&quot;</span>) <span class="hljs-comment">// 等价于 s.Logger.Log(&quot;start&quot;)</span><br><br><span class="hljs-comment">// 更妙的是：Server 现在实现了接口</span><br><span class="hljs-keyword">type</span> Logable <span class="hljs-keyword">interface</span>&#123; Log(<span class="hljs-type">string</span>) &#125;<br><br><span class="hljs-keyword">var</span> _ Logable = Server&#123;&#125; <span class="hljs-comment">// 完全合法，不用写一行转发函数</span><br></code></pre></td></tr></table></figure>
+
+<p>面向对象的三大特征“封装”“继承”和“多态”，Go仅实现了部分特征，它更倾向于’组合优于继承”这种思想。将模块分解成相互独立的更小单元，分别处理不同方面的需求，最后以匿名嵌人方式组合到一起，共同实现对外接口。而且其简短一致的调用方式，更是隐藏了内部实现细节。</p>
+<p>6.4表达式</p>
+<p>接收器（receiver）就是 给函数挂上一个“主人”，让函数变成 方法 的那一段括号。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(m Math)</span></span> Add(x <span class="hljs-type">int</span>) <span class="hljs-type">int</span> &#123; … &#125;<br></code></pre></td></tr></table></figure>
+
+<p>方法和函数都可以作为参数传递。依照具体引用的方式可以分为 expression 和 value 两种状态。编译器会按照“有没有把接收器绑定死”给出两种形态：</p>
+<p>expression（未绑定接收器）<br>形式：T.M 或 (*T).M<br>结果：一个普通函数值，第一个形参就是接收器，你可以晚点再传。</p>
+<p>value（已绑定接收器）<br>形式：x.M（x 是实例或指针）<br>结果：一个闭包函数值，接收器已经固定在 x 上，调用时不用再管接收器。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> Math <span class="hljs-type">int</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(m Math)</span></span> Add(other <span class="hljs-type">int</span>) <span class="hljs-type">int</span> &#123; <span class="hljs-keyword">return</span> <span class="hljs-type">int</span>(m) + other &#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(m *Math)</span></span> Set(v <span class="hljs-type">int</span>)        &#123; *m = Math(v) &#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-comment">// 1. 方法表达式 —— 未绑定（expression）</span><br>    addFn := Math.Add        <span class="hljs-comment">// func(Math, int) int</span><br>    fmt.Println(addFn(<span class="hljs-number">5</span>, <span class="hljs-number">7</span>)) <span class="hljs-comment">// 输出 12</span><br><br>    <span class="hljs-comment">// 2. 方法值 —— 已绑定（value）</span><br>    <span class="hljs-keyword">var</span> x Math = <span class="hljs-number">3</span><br>    xAdd := x.Add            <span class="hljs-comment">// func(int) int，接收器已固定为 x</span><br>    fmt.Println(xAdd(<span class="hljs-number">4</span>))     <span class="hljs-comment">// 输出 7</span><br>&#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go/" class="category-chain-item">go</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>go方法</div>
+      <div>http://example.com/2025/12/02/go方法/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年12月2日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/12/02/go%E6%8E%A5%E5%8F%A3/" title="go接口">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">go接口</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/12/02/3623-%E7%BB%9F%E8%AE%A1%E6%A2%AF%E5%BD%A2%E7%9A%84%E6%95%B0%E7%9B%AE-I/" title="3623. 统计梯形的数目 I">
+                        <span class="hidden-mobile">3623. 统计梯形的数目 I</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

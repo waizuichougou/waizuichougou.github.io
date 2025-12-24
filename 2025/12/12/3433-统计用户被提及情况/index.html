@@ -1,0 +1,706 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="给你一个整数 numberOfUsers 表示用户总数，另有一个大小为 n x 3 的数组 events 。 每个 events[i] 都属于下述两种类型之一： 消息事件（Message Event）：[&quot;MESSAGE&quot;, &quot;timestampi&quot;, &quot;mentions_stringi&quot;]     事件表示在 timestampi 时，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="3433. 统计用户被提及情况">
+<meta property="og:url" content="http://example.com/2025/12/12/3433-%E7%BB%9F%E8%AE%A1%E7%94%A8%E6%88%B7%E8%A2%AB%E6%8F%90%E5%8F%8A%E6%83%85%E5%86%B5/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="给你一个整数 numberOfUsers 表示用户总数，另有一个大小为 n x 3 的数组 events 。 每个 events[i] 都属于下述两种类型之一： 消息事件（Message Event）：[&quot;MESSAGE&quot;, &quot;timestampi&quot;, &quot;mentions_stringi&quot;]     事件表示在 timestampi 时，">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-12-12T03:42:31.000Z">
+<meta property="article:modified_time" content="2025-12-12T04:14:37.000Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>3433. 统计用户被提及情况 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="3433. 统计用户被提及情况"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-12-12 11:42" pubdate>
+          2025年12月12日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          40 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">3433. 统计用户被提及情况</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>给你一个整数 numberOfUsers 表示用户总数，另有一个大小为 n x 3 的数组 events 。</p>
+<p>每个 events[i] 都属于下述两种类型之一：</p>
+<pre><code class="hljs">消息事件（Message Event）：[&quot;MESSAGE&quot;, &quot;timestampi&quot;, &quot;mentions_stringi&quot;]
+    事件表示在 timestampi 时，一组用户被消息提及。
+    mentions_stringi 字符串包含下述标识符之一：
+        id&lt;number&gt;：其中 &lt;number&gt; 是一个区间 [0,numberOfUsers - 1] 内的整数。可以用单个空格分隔 多个 id ，并且 id 可能重复。此外，这种形式可以提及离线用户。
+        ALL：提及 所有 用户。
+        HERE：提及所有 在线 用户。
+离线事件（Offline Event）：[&quot;OFFLINE&quot;, &quot;timestampi&quot;, &quot;idi&quot;]
+    事件表示用户 idi 在 timestampi 时变为离线状态 60 个单位时间。用户会在 timestampi + 60 时自动再次上线。
+</code></pre>
+<p>返回数组 mentions ，其中 mentions[i] 表示  id 为  i 的用户在所有 MESSAGE 事件中被提及的次数。</p>
+<p>最初所有用户都处于在线状态，并且如果某个用户离线或者重新上线，其对应的状态变更将会在所有相同时间发生的消息事件之前进行处理和同步。</p>
+<p>注意 在单条消息中，同一个用户可能会被提及多次。每次提及都需要被 分别 统计。</p>
+<p>示例 1：</p>
+<p>输入：numberOfUsers &#x3D; 2, events &#x3D; [[“MESSAGE”,”10”,”id1 id0”],[“OFFLINE”,”11”,”0”],[“MESSAGE”,”71”,”HERE”]]</p>
+<p>输出：[2,2]</p>
+<p>解释：</p>
+<p>最初，所有用户都在线。</p>
+<p>时间戳 10 ，id1 和 id0 被提及，mentions &#x3D; [1,1]</p>
+<p>时间戳 11 ，id0 离线 。</p>
+<p>时间戳 71 ，id0 再次 上线 并且 “HERE” 被提及，mentions &#x3D; [2,2]</p>
+<p>示例 2：</p>
+<p>输入：numberOfUsers &#x3D; 2, events &#x3D; [[“MESSAGE”,”10”,”id1 id0”],[“OFFLINE”,”11”,”0”],[“MESSAGE”,”12”,”ALL”]]</p>
+<p>输出：[2,2]</p>
+<p>解释：</p>
+<p>最初，所有用户都在线。</p>
+<p>时间戳 10 ，id1 和 id0 被提及，mentions &#x3D; [1,1]</p>
+<p>时间戳 11 ，id0 离线 。</p>
+<p>时间戳 12 ，”ALL” 被提及。这种方式将会包括所有离线用户，所以 id0 和 id1 都被提及，mentions &#x3D; [2,2]</p>
+<p>示例 3：</p>
+<p>输入：numberOfUsers &#x3D; 2, events &#x3D; [[“OFFLINE”,”10”,”0”],[“MESSAGE”,”12”,”HERE”]]</p>
+<p>输出：[0,1]</p>
+<p>解释：</p>
+<p>最初，所有用户都在线。</p>
+<p>时间戳 10 ，id0 离线 。</p>
+<p>时间戳 12 ，”HERE” 被提及。由于 id0 仍处于离线状态，其将不会被提及，mentions &#x3D; [0,1]</p>
+<p>提示：</p>
+<pre><code class="hljs">1 &lt;= numberOfUsers &lt;= 100
+1 &lt;= events.length &lt;= 100
+events[i].length == 3
+events[i][0] 的值为 MESSAGE 或 OFFLINE 。
+1 &lt;= int(events[i][1]) &lt;= 105
+在任意 &quot;MESSAGE&quot; 事件中，以 id&lt;number&gt; 形式提及的用户数目介于 1 和 100 之间。
+0 &lt;= &lt;number&gt; &lt;= numberOfUsers - 1
+题目保证 OFFLINE 引用的用户 id 在事件发生时处于 在线 状态。
+</code></pre>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;cmp&quot;</span><br>	<span class="hljs-string">&quot;strconv&quot;</span><br>	<span class="hljs-string">&quot;strings&quot;</span><br>	<span class="hljs-string">&quot;slices&quot;</span><br>)<br><br><span class="hljs-comment">// countMentions 计算每个用户的总提及次数</span><br><span class="hljs-comment">// 参数：</span><br><span class="hljs-comment">//   numberOfUsers - 用户总数，决定返回数组的长度</span><br><span class="hljs-comment">//   events - 原始事件数组，每个事件是[]string类型，格式为：</span><br><span class="hljs-comment">//            [事件类型标识, 时间戳字符串, 提及内容]</span><br><span class="hljs-comment">// 返回值：</span><br><span class="hljs-comment">//   长度为numberOfUsers的数组，每个元素对应下标用户的总提及次数</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">countMentions</span><span class="hljs-params">(numberOfUsers <span class="hljs-type">int</span>, events [][]<span class="hljs-type">string</span>)</span></span> []<span class="hljs-type">int</span> &#123;<br>	<span class="hljs-comment">// 初始化结果数组，长度为用户数，初始值都为0</span><br>	ans := <span class="hljs-built_in">make</span>([]<span class="hljs-type">int</span>, numberOfUsers)<br><br>	<span class="hljs-comment">// 定义内部事件结构体，用于统一处理各类事件</span><br>	<span class="hljs-comment">// timestamp: 事件发生的时间戳（整数）</span><br>	<span class="hljs-comment">// type_: 事件类型（1=开始统计某用户的在场提及，-1=结束统计，2=在场人数增加）</span><br>	<span class="hljs-comment">// id: 关联的用户ID（type_=2时无意义，设为-1）</span><br>	<span class="hljs-keyword">type</span> event <span class="hljs-keyword">struct</span> &#123;<br>		timestamp <span class="hljs-type">int</span> <span class="hljs-comment">// 时间戳</span><br>		type_     <span class="hljs-type">int</span> <span class="hljs-comment">// 事件类型</span><br>		id        <span class="hljs-type">int</span> <span class="hljs-comment">// 关联用户ID（type_=2时为-1）</span><br>	&#125;<br><br>	<span class="hljs-comment">// 存储所有需要排序和处理的内部事件</span><br>	es := []event&#123;&#125;<br><br>	<span class="hljs-comment">// all 记录全局统一增加的提及次数（所有用户共享）</span><br>	all := <span class="hljs-number">0</span><br><br>	<span class="hljs-comment">// 遍历原始事件数组，解析并转换为内部事件</span><br>	<span class="hljs-keyword">for</span> _, e := <span class="hljs-keyword">range</span> events &#123;<br>		<span class="hljs-comment">// 解析事件时间戳（字符串转整数，忽略转换错误）</span><br>		curT, _ := strconv.Atoi(e[<span class="hljs-number">1</span>])<br>		<span class="hljs-comment">// 提取事件的提及内容</span><br>		mention := e[<span class="hljs-number">2</span>]<br><br>		<span class="hljs-comment">// 分支1：事件类型标识以&#x27;O&#x27;开头（例如&quot;Open&quot;，表示某用户被持续提及60秒）</span><br>		<span class="hljs-keyword">if</span> e[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] == <span class="hljs-string">&#x27;O&#x27;</span> &#123;<br>			<span class="hljs-comment">// 解析被提及的用户ID（忽略转换错误）</span><br>			i, _ := strconv.Atoi(mention)<br>			<span class="hljs-comment">// 添加两个内部事件：</span><br>			<span class="hljs-comment">// 1. 当前时间戳，类型1，标记开始统计该用户的在场提及</span><br>			<span class="hljs-comment">// 2. 当前时间+60秒，类型-1，标记结束统计该用户的在场提及</span><br>			es = <span class="hljs-built_in">append</span>(es, event&#123;curT, <span class="hljs-number">1</span>, i&#125;, event&#123;curT + <span class="hljs-number">60</span>, <span class="hljs-number">-1</span>, i&#125;)<br><br>		<span class="hljs-comment">// 分支2：提及内容以&#x27;A&#x27;开头（例如&quot;All&quot;，表示所有用户提及数+1）</span><br>		&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> mention[<span class="hljs-number">0</span>] == <span class="hljs-string">&#x27;A&#x27;</span> &#123;<br>			all++<br><br>		<span class="hljs-comment">// 分支3：提及内容以&#x27;H&#x27;开头（例如&quot;Here&quot;，表示在场人数+1，且所有用户提及数+1）</span><br>		&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> mention[<span class="hljs-number">0</span>] == <span class="hljs-string">&#x27;H&#x27;</span> &#123;<br>			all++<br>			<span class="hljs-comment">// 添加内部事件：当前时间戳，类型2，标记在场人数增加</span><br>			es = <span class="hljs-built_in">append</span>(es, event&#123;curT, <span class="hljs-number">2</span>, <span class="hljs-number">-1</span>&#125;)<br><br>		<span class="hljs-comment">// 分支4：其他情况（提及内容为多个用户标识，例如&quot;u1 u2 u3&quot;）</span><br>		&#125; <span class="hljs-keyword">else</span> &#123;<br>			<span class="hljs-comment">// 按空格分割提及内容，遍历每个用户标识</span><br>			<span class="hljs-keyword">for</span> _, s := <span class="hljs-keyword">range</span> strings.Split(mention, <span class="hljs-string">&quot; &quot;</span>) &#123;<br>				<span class="hljs-comment">// 提取用户ID（假设格式为&quot;uX&quot;，取s[2:]即X的部分，忽略转换错误）</span><br>				i, _ := strconv.Atoi(s[<span class="hljs-number">2</span>:])<br>				<span class="hljs-comment">// 该用户直接增加1次提及</span><br>				ans[i]++<br>			&#125;<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// 对内部事件排序：</span><br>	<span class="hljs-comment">// 1. 优先按时间戳升序（先发生的事件先处理）</span><br>	<span class="hljs-comment">// 2. 时间戳相同时，按事件类型升序（确保type小的先处理，避免逻辑错误）</span><br>	slices.SortFunc(es, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(a, b event)</span></span> <span class="hljs-type">int</span> &#123;<br>		<span class="hljs-keyword">return</span> cmp.Or(a.timestamp-b.timestamp, a.type_-b.type_)<br>	&#125;)<br><br>	<span class="hljs-comment">// here 记录当前在场人数（影响&#x27;O&#x27;类事件的提及统计）</span><br>	here := <span class="hljs-number">0</span><br><br>	<span class="hljs-comment">// 遍历排序后的内部事件，计算在场人数对应的提及次数</span><br>	<span class="hljs-keyword">for</span> _, e := <span class="hljs-keyword">range</span> es &#123;<br>		<span class="hljs-comment">// 事件类型为2：在场人数增加</span><br>		<span class="hljs-keyword">if</span> e.type_ == <span class="hljs-number">2</span> &#123;<br>			here++<br>		&#125; <span class="hljs-keyword">else</span> &#123;<br>			<span class="hljs-comment">// 事件类型为1/-1：更新对应用户的提及数（type_*here：1=+here，-1=-here）</span><br>			ans[e.id] += e.type_ * here<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// 所有用户统一增加全局提及次数all</span><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> ans &#123;<br>		ans[i] += all<br>	&#125;<br><br>	<span class="hljs-comment">// 返回最终的用户提及次数数组</span><br>	<span class="hljs-keyword">return</span> ans<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ol>
+<li><p>定义event结构体是核心，将原始的多类型事件统一转换为时间戳 + 类型 + 用户 ID 的标准化格式，方便后续排序和批量处理：</p>
+<p> timestamp：事件发生的时间（整数），用于按时间顺序处理；<br> type_：事件行为类型（1 &#x3D; 开始统计、-1 &#x3D; 结束统计、2 &#x3D; 在场人数 + 1）；<br> id：关联的用户 ID（仅 1&#x2F;-1 类型有效，2 类型无意义设为 - 1）。</p>
+</li>
+<li><p>原始事件数组events的每个元素格式为[事件标识, 时间戳字符串, 提及内容]，分 4 类处理：<br>分支条件	业务含义	处理逻辑<br>e[0][0] &#x3D;&#x3D; ‘O’	某用户被持续 60 秒提及	生成 “开始（curT, 1, id）” 和 “结束（curT+60, -1, id）” 两个事件<br>mention[0] &#x3D;&#x3D; ‘A’	所有用户全局 + 1 次提及	直接累加全局变量all<br>mention[0] &#x3D;&#x3D; ‘H’	在场人数 + 1 + 所有用户全局 + 1 提及	累加all，并生成 “在场人数增加（curT, 2, -1）” 事件<br>其他情况	直接指定多个用户各 + 1 次提及	分割提及内容，解析用户 ID 后直接更新ans数组</p>
+</li>
+<li><p>使用slices.SortFunc+cmp.Or实现双关键字排序：</p>
+<p> 第一关键字：timestamp升序（保证事件按时间顺序处理）；<br> 第二关键字：type_升序（时间相同时，先处理type_小的事件，例如先处理 “开始统计（1）” 再处理 “在场人数 + 1（2）”，避免统计漏算）。</p>
+</li>
+<li><p>遍历排序后的内部事件，维护here（当前在场人数）：</p>
+<p> 遇到type_&#x3D;2：在场人数here++；<br> 遇到type_&#x3D;1&#x2F;-1：对应用户的提及数 +&#x3D; type_ * here（开始统计时加当前在场人数，结束时减当前在场人数，实现 “60 秒内按在场人数累计提及”）。</p>
+</li>
+<li><p>所有用户的提及数统一加上all（A和H分支累计的全局提及次数），得到最终结果。</p>
+</li>
+</ol>
+<p>关键代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs go">here:=<span class="hljs-number">0</span><br><span class="hljs-keyword">for</span> _,e:=<span class="hljs-keyword">range</span> es&#123;<br>    <span class="hljs-keyword">if</span> e.type_==<span class="hljs-number">2</span>&#123;<br>        here++<br>    &#125;<span class="hljs-keyword">else</span>&#123;<br>        ans[e.id]+=e.type_*here<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>这一块表示了一个用户从type1到type-1这段时间多计算的时间应该被减去</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>3433. 统计用户被提及情况</div>
+      <div>http://example.com/2025/12/12/3433-统计用户被提及情况/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年12月12日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/12/12/146.%20LRU%20%E7%BC%93%E5%AD%98/" title="146.LRU 缓存">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">146.LRU 缓存</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/12/11/go%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB1/" title="go源码阅读1">
+                        <span class="hidden-mobile">go源码阅读1</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

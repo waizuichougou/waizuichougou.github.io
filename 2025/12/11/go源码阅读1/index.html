@@ -1,0 +1,698 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="16 内存管理内置运行时的编程语言通常会抛弃传统的内存分配方式，改由自主管理。这样可以完成类似预分配、内存池等操作，以避开系统调用带来的性能问题。当然，有一个重要原因是为了更好地配合垃圾回收16.1 概述在深人入内存分配算法细节前，一些基本概念必须要知道: 1.每次从操作系统申请一大块内存(比如1MB)，以减少系统调用， 2.将申请到的大块内存按照特定大小预先切分成小块，构成链表 3.为对象分配内">
+<meta property="og:type" content="article">
+<meta property="og:title" content="go源码阅读1">
+<meta property="og:url" content="http://example.com/2025/12/11/go%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB1/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="16 内存管理内置运行时的编程语言通常会抛弃传统的内存分配方式，改由自主管理。这样可以完成类似预分配、内存池等操作，以避开系统调用带来的性能问题。当然，有一个重要原因是为了更好地配合垃圾回收16.1 概述在深人入内存分配算法细节前，一些基本概念必须要知道: 1.每次从操作系统申请一大块内存(比如1MB)，以减少系统调用， 2.将申请到的大块内存按照特定大小预先切分成小块，构成链表 3.为对象分配内">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-12-11T11:04:21.000Z">
+<meta property="article:modified_time" content="2025-12-16T08:29:10.000Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>go源码阅读1 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="go源码阅读1"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-12-11 19:04" pubdate>
+          2025年12月11日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          17k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          141 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">go源码阅读1</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>16 内存管理<br>内置运行时的编程语言通常会抛弃传统的内存分配方式，改由自主管理。这样可以完成类似预分配、内存池等操作，以避开系统调用带来的性能问题。当然，有一个重要原因是为了更好地配合垃圾回收<br>16.1 概述<br>在深人入内存分配算法细节前，一些基本概念必须要知道:</p>
+<pre><code class="hljs">1.每次从操作系统申请一大块内存(比如1MB)，以减少系统调用，
+2.将申请到的大块内存按照特定大小预先切分成小块，构成链表
+3.为对象分配内存时，只须从大小合适的链表提取一个小块即可
+4.回收对象内存时，将该小块内存重新归还到原链表，以便复用。
+5.如闲置内存过多，则尝试归还部分内存给操作系统，降低整体开销
+</code></pre>
+<p>内存分配器只管理内存块，并不关心对象状态。且它不会主动回收内存，垃圾回收器在完成清理操作后，触发内存分配器的回收操作，</p>
+<p>分配器将其管理的内存块分为两种。</p>
+<pre><code class="hljs">span:由多个地址连续的页(page)组成的大块内存
+object:将span 按特定大小切分成多个小块，每个小块可存储一个对象。
+</code></pre>
+<p>按照其用途，span面向内部管理，object面向对象分配分配器按页数来区分不同大小的span。比如，以页数为单位将span存放到管理数组中，需要时就以页数为索引进行查找。当然，span大小并非固定不变。在获取闲置span时，如果没找到大小合适的，那就返回页数更多的，此时会引发裁剪操作，多余部分将构成新的span被放回管理数组。分配器还会尝试将地址相邻的空闲span合并，以构建更大的内存块，减少碎片，提供更灵活的分配策略。</p>
+<p>Go 运行时的内存分配器采用两级隔离策略：小于 32 KiB 的“小对象”由 per-P 的 mcache 缓存，大对象则直接交给全局 mheap。其核心数据结构是 mspan，定义于 runtime&#x2F;mheap.go，它把虚拟地址空间按固定 8 KiB 页面切分，并用双向链表串联。每个 span 记录起始页号 start、连续页数 npages 以及挂在 freelist 上的待分配对象链表，以此实现“按页申请、按对象回收”。<br>为降低碎片化，分配器将对象按 8 字节倍数归并为 67 种 size class，最大小对象阈值为 32 KiB（MaxSmallSize &#x3D; 32 &lt;&lt; 10，见 runtime&#x2F;malloc.go）。初始化阶段，runtime 在 msize.go 中构造四张对照表：class_to_size[i] 给出第 i 类对象的最大字节数，class_to_allocnpages[i] 给出为该类新分配对象时应一次性领取的页数；size_to_class8 与 size_to_class128 则分别将 1 B–1 KiB 与 1 KiB–32 KiB 之间的任意长度映射到对应的 size class。运行时若对象长度落在 17–24 B 之间，即被归入 24 B 的 class，虽然存在内部碎片，却使分配器只需维护有限规格的 span，显著加速复用与回收。<br>当请求长度超过 32 KiB 时，分配器不再走 size class 路径，而是视其为“大对象”，直接向 mheap 申请整数页，单独建立 span 并立即返回。该策略在源码中通过 SizeToClass 函数体现：若入参 n 大于 MaxSmallSize，则返回 0，表示“非小对象”，后续逻辑转入大对象专门处理分支。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-keyword">type</span> mspan <span class="hljs-keyword">struct</span> &#123;<br>    next *mspan   <span class="hljs-comment">// 双向链表</span><br>    prev *mspan<br>    start pageID  <span class="hljs-comment">// 起始页号 = address &gt;&gt; _PageShift</span><br>    npages <span class="hljs-type">uintptr</span><br>    freelist gclinkptr <span class="hljs-comment">// 待分配对象链表</span><br>&#125;<br><span class="hljs-comment">// runtime/malloc.go</span><br>_PageShift = <span class="hljs-number">13</span><br>_PageSize  = <span class="hljs-number">1</span> &lt;&lt; _PageShift <span class="hljs-comment">// 8 KiB</span><br>_NumSizeClasses = <span class="hljs-number">67</span><br>MaxSmallSize = <span class="hljs-number">32</span> &lt;&lt; <span class="hljs-number">10</span>      <span class="hljs-comment">// 32 KiB</span><br><span class="hljs-comment">// runtime/msize.go</span><br><span class="hljs-keyword">var</span> class_to_size [_NumSizeClasses]<span class="hljs-type">int32</span><br><span class="hljs-keyword">var</span> class_to_allocnpages [_NumSizeClasses]<span class="hljs-type">int32</span><br><span class="hljs-keyword">var</span> size_to_class8 [<span class="hljs-number">1024</span>/<span class="hljs-number">8</span> + <span class="hljs-number">1</span>]<span class="hljs-type">int8</span><br><span class="hljs-keyword">var</span> size_to_class128 [(MaxSmallSize<span class="hljs-number">-1024</span>)/<span class="hljs-number">128</span> + <span class="hljs-number">1</span>]<span class="hljs-type">int8</span><br></code></pre></td></tr></table></figure>
+<p>Go 运行时的内存分配器继承并精简了 Google tcmalloc 的三级缓存架构，在性能与利用率之间取得平衡。整个系统由 cache、central、heap 三类组件协作完成：</p>
+<pre><code class="hljs">每个工作线程（P）绑定一个无锁 cache，实现 hot-path 上的快速对象交付；
+central 作为全局中介，按 67 种 size class 维护切分完毕的 span 库存；
+heap 则统管所有闲置 span，并在必要时向操作系统申请新页。
+</code></pre>
+<p>三者的数据结构分别定义在 mcache.go、mcentral.go 与 mheap.go，形成“线程级无锁 → 全局级部分竞争 → 操作系统级批量”逐层放大的资源漏斗。</p>
+<p>分配流程:</p>
+<pre><code class="hljs">1.计算待分配对象对应的规格(sizeclass)
+2.从cache.alloc数组找到规格相同的span。
+3.从 span.freelist链表提取可用 object。
+4.如span.freelist为空，从central 获取新 span。
+5.如 central.nonempty为空，从heap.free/freelarge 获取，并切分成 object链表
+6.如heap没有大小合适的闲置span，向操作系统申请新内存块。
+</code></pre>
+<p>释放流程:</p>
+<pre><code class="hljs">1.将标记为可回收的object交还给所属 span.freelist。
+2.该span被放回central，可供任意cache 重新获取使用
+3.如span已收回全部object，则将其交还给heap，以便重新切分复用
+4.定期扫描 heap里长时间闲置的span，释放其占用的内存。
+</code></pre>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-keyword">type</span> mheap <span class="hljs-keyword">struct</span> &#123;<br>    free [_MaxMHeapList]mspan <span class="hljs-comment">// 页数 ≤127 的闲置 span 链</span><br>    freelarge mspan           <span class="hljs-comment">// 页数 &gt;127 (≥1 MB) 的大 span 链</span><br>    central [_NumSizeClasses]<span class="hljs-keyword">struct</span> &#123;<br>        mcentral mcentral<br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mcentral.go</span><br><span class="hljs-keyword">type</span> mcentral <span class="hljs-keyword">struct</span> &#123;<br>    sizeclass <span class="hljs-type">int32</span><br>    nonempty  mspan <span class="hljs-comment">// 仍含空闲 object 的 span 链</span><br>    empty     mspan <span class="hljs-comment">// 空闲 object 耗尽或已被 cache 取走的 span 链</span><br>&#125;<br><span class="hljs-comment">// runtime/mcache.go</span><br><span class="hljs-keyword">type</span> mcache <span class="hljs-keyword">struct</span> &#123;<br>    alloc [_NumSizeClasses]*mspan <span class="hljs-comment">// 以 size class 为索引的可用 span 指针数组</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>16.2初始化<br>Go 运行时在进程启动阶段即通过 mmap 预先保留一段连续的虚拟地址空间，为内存分配器与垃圾回收器提供“一次映射、终身复用”的线性连续地址。该空间在逻辑上被拆成三段紧密耦合的数组：</p>
+<pre><code class="hljs">512 MB 的 spans 区存放指向各页的 *mspan 指针，用于 O(1) 定位任意地址所属的管理元数据；
+32 GB 的 bitmap 区为每 8 B 用户内存预留 4 bit，记录指针性质、GC 颜色等标记；
+512 GB 的 arena 区才是真正向用户开放的可分配内存。
+</code></pre>
+<p>三者的基址与递进边界均保存在全局 mheap 中，通过固定偏移量即可由任一用户地址快速索引到对应的 span 与 bitmap 单元，实现“地址→元数据”的常数时间映射。</p>
+<p>初始化流程由 mallocinit 主导：首先调用 initsizes() 构造 67 种 size class 的对照表；随后按 MaxMem 向上对齐页面大小，计算 arena、bitmap、spans 三段区域的理论尺寸；接着以 64 位平台常见的 0x0000c00000000000 为hint，通过 sysReserve 向内核申请一段 PROT_NONE 的匿名映射，仅保留地址而暂不提交物理内存。若内核无法在给定位置安放，则回退至任意可用区域，并记录实际基址与长度。最后，mHeap_Init 完成剩余设置：初始化 free&#x2F;freelarge 等空闲链表、为每个 size class 构造对应的 mcentral、把 h.spans 包装成 slice 供运行期快速访问。至此，整个虚拟地址骨架搭建完毕，后续用户分配、GC 标记、span 合并等操作均在此框架内按需扩张，真正做到了“先留地址、后付内存”，既避免运行时碎片，又保持路径最短。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/malloc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mallocinit</span><span class="hljs-params">()</span></span> &#123;<br>    initsizes()                               <span class="hljs-comment">// 构造 size class 表</span><br>    arenasize := round(MaxMem, _PageSize)     <span class="hljs-comment">// 512 GB</span><br>    bitmapsize := arenasize / (ptrSize*<span class="hljs-number">8</span>/<span class="hljs-number">4</span>)   <span class="hljs-comment">// 32 GB</span><br>    spansize := arenasize / _PageSize * ptrSize <span class="hljs-comment">// 512 MB</span><br>    <span class="hljs-comment">// … 计算完毕，调用 sysReserve 保留地址 …</span><br>&#125;<br><span class="hljs-comment">// runtime/mem_linux.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">sysReserve</span><span class="hljs-params">(v unsafe.Pointer, n <span class="hljs-type">uintptr</span>, reserved *<span class="hljs-type">bool</span>)</span></span> unsafe.Pointer &#123;<br>    <span class="hljs-keyword">if</span> ptrSize == <span class="hljs-number">8</span> &amp;&amp; <span class="hljs-type">uint64</span>(n) &gt; <span class="hljs-number">1</span>&lt;&lt;<span class="hljs-number">32</span> &#123;<br>        p := mmap_fixed(v, <span class="hljs-number">64</span>&lt;&lt;<span class="hljs-number">10</span>, _PROT_NONE, _MAP_ANON|_MAP_PRIVATE, <span class="hljs-number">-1</span>, <span class="hljs-number">0</span>)<br>        <span class="hljs-keyword">if</span> p == v &#123;<br>            munmap(p, <span class="hljs-number">64</span>&lt;&lt;<span class="hljs-number">10</span>)<br>            *reserved = <span class="hljs-literal">false</span><br>            <span class="hljs-keyword">return</span> v<br>        &#125;<br>        <span class="hljs-keyword">if</span> <span class="hljs-type">uintptr</span>(p) &gt; <span class="hljs-number">4096</span> &#123;<br>            munmap(p, <span class="hljs-number">64</span>&lt;&lt;<span class="hljs-number">10</span>)<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mmap_fixed</span><span class="hljs-params">(v unsafe.Pointer, n <span class="hljs-type">uintptr</span>, prot, flags, fd <span class="hljs-type">int32</span>, offset <span class="hljs-type">uint32</span>)</span></span> unsafe.Pointer &#123;<br>    p := mmap(v, n, prot, flags, fd, offset)<br>    <span class="hljs-keyword">if</span> p != v &amp;&amp; addrspace_free(v, n) &#123;<br>        <span class="hljs-keyword">if</span> <span class="hljs-type">uintptr</span>(p) &gt; <span class="hljs-number">4096</span> &#123;<br>            munmap(p, n)<br>        &#125;<br>        p = mmap(v, n, prot, flags|_MAP_FIXED, fd, offset)<br>    &#125;<br>    <span class="hljs-keyword">return</span> p<br>&#125;<br><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-keyword">type</span> mheap <span class="hljs-keyword">struct</span> &#123;<br>    spans        **mspan<br>    spans_mapped <span class="hljs-type">uintptr</span><br>    bitmap       <span class="hljs-type">uintptr</span><br>    bitmap_mapped <span class="hljs-type">uintptr</span><br>    arena_start  <span class="hljs-type">uintptr</span><br>    arena_used   <span class="hljs-type">uintptr</span><br>    arena_end    <span class="hljs-type">uintptr</span><br>    arena_reserved <span class="hljs-type">bool</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mHeap_Init</span><span class="hljs-params">(h *mheap, spans_size <span class="hljs-type">uintptr</span>)</span></span> &#123;<br>    <span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> h.free &#123;<br>        mSpanList_Init(&amp;h.free[i])<br>        mSpanList_Init(&amp;h.busy[i])<br>    &#125;<br>    mSpanList_Init(&amp;h.freelarge)<br>    mSpanList_Init(&amp;h.busylarge)<br>    <span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> h.central &#123;<br>        mCentral_Init(&amp;h.central[i].mcentral, <span class="hljs-type">int32</span>(i))<br>    &#125;<br>    <span class="hljs-comment">// 将全局 h_spans slice 指向 h.spans</span><br>    sp := (*slice)(unsafe.Pointer(&amp;h_spans))<br>    sp.array = unsafe.Pointer(h.spans)<br>    sp.<span class="hljs-built_in">len</span> = <span class="hljs-type">int</span>(spans_size / ptrSize)<br>    sp.<span class="hljs-built_in">cap</span> = <span class="hljs-type">int</span>(spans_size / ptrSize)<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>16.3分配<br>Go 的内存分配路径在编译期即被“逃逸分析”与“内联优化”联合塑形：若变量生命周期被限制于单个栈帧且未发生引用逃逸，即使源码显式调用 new，编译器仍可将对象直接置于栈上，彻底绕过运行时分配器；反之，一旦跨栈传递或存入全局，则必须在堆上安置，并由运行时接管。当对象确实落入堆路径，运行时依据其长度将其划分为微小、小、大三个域，分别采用 cache 级线性分配、size-class 链式分配与页级直接分配三种策略，确保常见尺寸以 O(1) 时间完成，同时保持全局内存利用率与并行度。</p>
+<p>对于小于 16 B 且无指针的微小对象，运行时将其批量打包进 16 B 的 tiny block：当前线程的 mcache 维护一个 tiny 指针与偏移量，每次仅调整偏移即可返回地址；当剩余空间不足时，从 size class 2 的 span 领取新的 16 B object，并比较新旧块剩余容量，保留更优者继续服务，从而将 16 B 内的碎片压至最低。16 B–32 KiB 的小对象则先通过 size_to_class8 或 size_to_class128 查表得到 size class，再从 mcache.alloc[sizeclass] 的 freelist 摘取 object；若 freelist 已空，便进入 mCache_Refill，将当前 span 交还 central 并换取一条已清扫完毕的新 span，全程在系统栈上完成，避免锁竞争。大于 32 KiB 的大对象跳过 central，直接计算所需页数后调用 largeAlloc，由 mheap 在 freelarge 链或新 mmap 区域中划出连续页，返回前初始化 heap bitmap 并视情况触发 GC，保证大块内存亦能在并发场景下及时回收。</p>
+<p>上述三条路径最终均依赖同一套代龄机制：每轮 GC 会递增 mheap.sweepgen，span 的 sweepgen 若落后 2 则待清扫，落后 1 则正被清扫，相等即可投入使用。cache 从 central 提取 span 时，必须确保其代龄已追上当前周期，否则先行清扫；central 为空时，则向 heap 申请已清扫完毕的闲置 span，并切分为 object 链表。通过“cache 无锁快速路径—central 带锁批量补给—heap 全局复用与归还”的三级漏斗，Go 在保持微秒级分配延迟的同时，把多核竞争、内存碎片与系统调用次数一并压至最低，使堆分配路径既能满足高频小对象的性能需求，也能在偶尔的大块申请中保持平滑。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/malloc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">newobject</span><span class="hljs-params">(typ *_type)</span></span> unsafe.Pointer &#123;<br>    <span class="hljs-keyword">return</span> mallocgc(<span class="hljs-type">uintptr</span>(typ.size), typ, flags)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mallocgc</span><span class="hljs-params">(size <span class="hljs-type">uintptr</span>, typ *_type, flags <span class="hljs-type">uint32</span>)</span></span> unsafe.Pointer &#123;<br>    c := gomcache()<br>    <span class="hljs-keyword">if</span> size &lt;= maxSmallSize &#123;<br>        <span class="hljs-keyword">if</span> flags&amp;flagNoScan != <span class="hljs-number">0</span> &amp;&amp; size &lt; maxTinySize &#123;<br>            <span class="hljs-comment">// … tiny 路径，调整偏移并返回 …</span><br>        &#125;<br>        <span class="hljs-comment">// 小对象路径</span><br>        sizeclass := size_to_class8[(size+<span class="hljs-number">7</span>)&gt;&gt;<span class="hljs-number">3</span>] <span class="hljs-comment">// 或 128 表</span><br>        size := <span class="hljs-type">uintptr</span>(class_to_size[sizeclass])<br>        s := c.alloc[sizeclass]<br>        v := s.freelist<br>        <span class="hljs-keyword">if</span> v.ptr() == <span class="hljs-literal">nil</span> &#123;<br>            systemstack(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123; mCache_Refill(c, <span class="hljs-type">int32</span>(sizeclass)) &#125;)<br>            s = c.alloc[sizeclass]<br>            v = s.freelist<br>        &#125;<br>        s.freelist = v.ptr().next<br>        s.ref++<br>        x := unsafe.Pointer(v)<br>        <span class="hljs-keyword">if</span> flags&amp;flagNoZero == <span class="hljs-number">0</span> &#123;<br>            memclr(x, size)<br>        &#125;<br>        <span class="hljs-keyword">return</span> x<br>    &#125;<br>    <span class="hljs-comment">// 大对象路径</span><br>    <span class="hljs-keyword">var</span> s *mspan<br>    systemstack(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123; s = largeAlloc(size, flags) &#125;)<br>    x := unsafe.Pointer(s.start &lt;&lt; _PageShift)<br>    <span class="hljs-keyword">return</span> x<br>&#125;<br><span class="hljs-comment">// runtime/malloc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">largeAlloc</span><span class="hljs-params">(size <span class="hljs-type">uintptr</span>, flag <span class="hljs-type">uint32</span>)</span></span> *mspan &#123;<br>    npages := size &gt;&gt; _PageShift<br>    <span class="hljs-keyword">if</span> size&amp;_PageMask != <span class="hljs-number">0</span> &#123;<br>        npages++<br>    &#125;<br>    s := mHeap_Alloc(&amp;mheap_, npages, <span class="hljs-number">0</span>, <span class="hljs-literal">true</span>, flag&amp;_FlagNoZero == <span class="hljs-number">0</span>)<br>    heapBitsForSpan(s.base()).initSpan(s.layout())<br>    <span class="hljs-keyword">return</span> s<br>&#125;<br><span class="hljs-comment">// runtime/mcache.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mCache_Refill</span><span class="hljs-params">(c *mcache, sizeclass <span class="hljs-type">int32</span>)</span></span> *mspan &#123;<br>    s := c.alloc[sizeclass]<br>    <span class="hljs-keyword">if</span> s != &amp;emptymspan &#123;<br>        s.incache = <span class="hljs-literal">false</span><br>    &#125;<br>    s = mCentral_CacheSpan(&amp;mheap_.central[sizeclass].mcentral)<br>    c.alloc[sizeclass] = s<br>    <span class="hljs-keyword">return</span> s<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>当线程缓存（mcache）无法满足分配请求时，运行时会沿着“central → heap → 操作系统”三级漏斗逐级扩张。central 作为全局中介，优先复用已有 span：先在 nonempty 链表查找已清扫且仍含空闲 object 的节点，若代龄落后两轮则立即执行 mSpan_Sweep 并移入 empty；再在 empty 链表寻找已清扫但 object 已耗尽的节点，同样按需触发清扫。只有当两条链表均无可复用资源时，才调用 mCentral_Grow 向 heap 申请全新 span，并按 size class 切分为 object 链表后挂入 empty，供下次 cache 提取。该策略确保“清扫”与“复用”在同一路径完成，避免额外轮询。</p>
+<p>进入 heap 后，分配核心由 mHeap_AllocSpanLocked 实现：先在 free 数组中以“页数”为索引，从 npage 开始向上遍历，一旦命中即摘下；若 127 页以内无匹配，则转向 freelarge 链表做 best-fit 遍历，挑选页数最小且地址最前者；若仍为空，则一次性 mmap 1 MB 的倍数，构造新 span 并挂入 freelarge，然后重试。成功摘取后，若实际页数大于请求，运行时立即将剩余尾部切为新 span，重新放回合适链表，并同步更新 spans 数组，保证“大段申请、按需剖分、即时返还”的循环，从而将外部碎片率压到最低。</p>
+<p>当整个 heap 仍无法满足时，mHeap_Grow 以 64 KB 为粒度向操作系统申请新内存，先通过 sysMap 在 arena 区映射物理页，再同步扩张 bitmap 与 spans 区，最后把新段包装成 span 挂入 freelarge，完成“地址空间 → 元数据 → 空闲链”的三重登记。自此，大小对象分配殊途同归：小对象经 central 缓存后进入 cache，大对象直接驻留 heap.busy，二者均通过同一套代龄与清扫机制保证复用，实现“无锁快速路径—全局批量补给—操作系统按需扩张”的完整闭环。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mcentral.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mCentral_CacheSpan</span><span class="hljs-params">(c *mcentral)</span></span> *mspan &#123;<br>    sg := mheap_.sweepgen<br>retry:<br>    <span class="hljs-keyword">for</span> s := c.nonempty.next; s != &amp;c.nonempty; s = s.next &#123;<br>        <span class="hljs-keyword">if</span> s.sweepgen == sg<span class="hljs-number">-2</span> &amp;&amp; cas(&amp;s.sweepgen, sg<span class="hljs-number">-2</span>, sg<span class="hljs-number">-1</span>) &#123;<br>            mSpanList_Remove(s)<br>            mSpanList_InsertBack(&amp;c.empty, s)<br>            mSpan_Sweep(s, <span class="hljs-literal">true</span>)<br>            <span class="hljs-keyword">goto</span> havespan<br>        &#125;<br>        <span class="hljs-keyword">if</span> s.sweepgen == sg<span class="hljs-number">-1</span> &#123; <span class="hljs-keyword">continue</span> &#125;<br>        mSpanList_Remove(s)<br>        mSpanList_InsertBack(&amp;c.empty, s)<br>        <span class="hljs-keyword">goto</span> havespan<br>    &#125;<br>    <span class="hljs-keyword">for</span> s := c.empty.next; s != &amp;c.empty; s = s.next &#123;<br>        <span class="hljs-keyword">if</span> s.sweepgen == sg<span class="hljs-number">-2</span> &amp;&amp; cas(&amp;s.sweepgen, sg<span class="hljs-number">-2</span>, sg<span class="hljs-number">-1</span>) &#123;<br>            mSpanList_Remove(s)<br>            mSpanList_InsertBack(&amp;c.empty, s)<br>            mSpan_Sweep(s, <span class="hljs-literal">true</span>)<br>            <span class="hljs-keyword">if</span> s.freelist.ptr() != <span class="hljs-literal">nil</span> &#123; <span class="hljs-keyword">goto</span> havespan &#125;<br>        &#125;<br>        <span class="hljs-keyword">if</span> s.sweepgen == sg<span class="hljs-number">-1</span> &#123; <span class="hljs-keyword">continue</span> &#125;<br>        <span class="hljs-keyword">break</span><br>    &#125;<br>    s := mCentral_Grow(c)<br>    mSpanList_InsertBack(&amp;c.empty, s)<br>havespan:<br>    s.incache = <span class="hljs-literal">true</span><br>    <span class="hljs-keyword">return</span> s<br>&#125;<br><span class="hljs-comment">// runtime/mcentral.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mCentral_Grow</span><span class="hljs-params">(c *mcentral)</span></span> *mspan &#123;<br>    npages := <span class="hljs-type">uintptr</span>(class_to_allocnpages[c.sizeclass])<br>    size   := <span class="hljs-type">uintptr</span>(class_to_size[c.sizeclass])<br>    n      := (npages &lt;&lt; _PageShift) / size<br>    s      := mHeap_Alloc(&amp;mheap_, npages, c.sizeclass, <span class="hljs-literal">false</span>, <span class="hljs-literal">true</span>)<br>    p      := <span class="hljs-type">uintptr</span>(s.start) &lt;&lt; _PageShift<br>    head   := gclinkptr(p)<br>    tail   := head<br>    <span class="hljs-keyword">for</span> i := <span class="hljs-type">uintptr</span>(<span class="hljs-number">1</span>); i &lt; n; i++ &#123;<br>        p += size<br>        tail.ptr().next = gclinkptr(p)<br>        tail = gclinkptr(p)<br>    &#125;<br>    tail.ptr().next = <span class="hljs-number">0</span><br>    s.freelist = head<br>    heapBitsForSpan(s.base()).initSpan(s.layout())<br>    <span class="hljs-keyword">return</span> s<br>&#125;<br><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mHeap_AllocSpanLocked</span><span class="hljs-params">(h *mheap, npage <span class="hljs-type">uintptr</span>)</span></span> *mspan &#123;<br>    <span class="hljs-keyword">for</span> i := <span class="hljs-type">int</span>(npage); i &lt; <span class="hljs-built_in">len</span>(h.free); i++ &#123;<br>        <span class="hljs-keyword">if</span> !mSpanList_IsEmpty(&amp;h.free[i]) &#123;<br>            s := h.free[i].next<br>            <span class="hljs-keyword">goto</span> HaveSpan<br>        &#125;<br>    &#125;<br>    s := mHeap_AllocLarge(h, npage)<br>    <span class="hljs-keyword">if</span> s == <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">if</span> !mHeap_Grow(h, npage) &#123; <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span> &#125;<br>        s = mHeap_AllocLarge(h, npage)<br>        <span class="hljs-keyword">if</span> s == <span class="hljs-literal">nil</span> &#123; <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span> &#125;<br>    &#125;<br>HaveSpan:<br>    mSpanList_Remove(s)<br>    <span class="hljs-keyword">if</span> s.npages &gt; npage &#123;<br>        t := (*mspan)(fixAlloc_Alloc(&amp;h.spanalloc))<br>        mSpan_Init(t, s.start+pageID(npage), s.npages-npage)<br>        s.npages = npage<br>        mHeap_FreeSpanLocked(h, t, <span class="hljs-literal">false</span>, <span class="hljs-literal">false</span>, s.npages)<br>    &#125;<br>    p := <span class="hljs-type">uintptr</span>(s.start)<br>    p -= <span class="hljs-type">uintptr</span>(unsafe.Pointer(h.arena_start)) &gt;&gt; _PageShift<br>    <span class="hljs-keyword">for</span> n := <span class="hljs-type">uintptr</span>(<span class="hljs-number">0</span>); n &lt; npage; n++ &#123;<br>        h.spans[p+n] = s<br>    &#125;<br>    <span class="hljs-keyword">return</span> s<br>&#125;<br><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mHeap_Grow</span><span class="hljs-params">(h *mheap, npage <span class="hljs-type">uintptr</span>)</span></span> <span class="hljs-type">bool</span> &#123;<br>    ask := round(npage*(<span class="hljs-number">64</span>&lt;&lt;<span class="hljs-number">10</span>)/_PageSize, (<span class="hljs-number">64</span>&lt;&lt;<span class="hljs-number">10</span>)/_PageSize) * _PageSize<br>    <span class="hljs-keyword">if</span> ask &lt; _HeapAllocChunk &#123; ask = _HeapAllocChunk &#125;<br>    v := mHeap_SysAlloc(h, ask)<br>    s := (*mspan)(fixAlloc_Alloc(&amp;h.spanalloc))<br>    mSpan_Init(s, pageID(<span class="hljs-type">uintptr</span>(v)&gt;&gt;_PageShift), ask&gt;&gt;_PageShift)<br>    p := <span class="hljs-type">uintptr</span>(s.start) - (<span class="hljs-type">uintptr</span>(unsafe.Pointer(h.arena_start))&gt;&gt;_PageShift)<br>    <span class="hljs-keyword">for</span> i := p; i &lt; p+s.npages; i++ &#123;<br>        h.spans[i] = s<br>    &#125;<br>    mHeap_FreeSpanLocked(h, s, <span class="hljs-literal">false</span>, <span class="hljs-literal">true</span>, <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>16.4 回收<br>Go 运行时的内存回收并非立即向操作系统退还物理页，而是以 span 为粒度完成“对象归并—span 归位—相邻合并”三步，形成可复用的空闲块池。回收触发点位于 GC 的清扫阶段：调度器每执行一次 sweepone，即挑选一个待清扫 span，调用 mSpan_Sweep 将其承载的不可达对象重新串成自由链表；若整 span 已空，则进一步交还 central 乃至 heap，并在 heap 层与左右邻居合并，最终按页数挂回 free&#x2F;freelarge 链表，等待下次分配再次切分。该策略把“清扫”与“回收”合在同一线程栈内完成，避免额外全局遍历，同时通过地址连续检查把碎片率压至最低。</p>
+<p>mSpan_Sweep 首先标记 freelist 中已有对象，防止它们被重复扫描；随后借助 heapBitsSweepSpan 遍历 bitmap，将未标记的不可达单元逐个链接成新链表。若该 span 属于大对象（整 span 即一个 object），则直接置位 freeToHeap 标志；否则把收集到的 nfree 个单元头尾相接，并调用 mCentral_FreeSpan 尝试写回 central。central 层把归还的链表头插到 span-&gt;freelist，递减引用计数；若 span 由空变非空则移回 nonempty，若引用归零则整 span 剥离，交 heap 复用。整个流程通过 sweepgen 代龄做并发保护，确保“正在清扫”与“可被分配”互斥，防止 mutator 读到半废内存。</p>
+<p>一旦 span 回到 heap，mHeap_FreeSpanLocked 立即执行左右邻接合并：通过 spans 数组用页号偏移定位前驱与后继，若二者均处于非使用状态且非栈专属，则把它们的页数、起始地址合并到当前 span，并释放多余 span 对象；合并后的连续块按最终页数插入 free 数组或 freelarge 链表，实现“相邻空闲段自动黏合”。至此，物理页仍未归还内核，仅作为运行时空闲资源等待下次分配；只有当系统长期空闲且进程 RSS 过高时，后台 scavenger 才会把边际页面 munmap，真正退回操作系统。通过“对象→span→连续块”三级回收与即时合并，Go 在保持分配路径 O(1) 的同时，把内存碎片与系统调用次数一并压至最低，使高频小对象与大块内存均能在同一块虚拟地址上循环复用。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mgc sweep.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">sweepone</span><span class="hljs-params">()</span></span> <span class="hljs-type">uintptr</span> &#123;<br>    s := mheap_.sweepSpans[<span class="hljs-number">1</span>-mheap_.sweepgen&amp;<span class="hljs-number">1</span>].pop()<br>    <span class="hljs-keyword">if</span> s == <span class="hljs-literal">nil</span> &#123; <span class="hljs-keyword">return</span> ^<span class="hljs-type">uintptr</span>(<span class="hljs-number">0</span>) &#125;<br>    <span class="hljs-keyword">if</span> mSpan_Sweep(s, <span class="hljs-literal">false</span>) &#123;<br>        <span class="hljs-comment">// 整 span 已空，可复用</span><br>    &#125;<br>    <span class="hljs-keyword">return</span> s.npages &lt;&lt; _PageShift<br>&#125;<br><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mSpan_Sweep</span><span class="hljs-params">(s *mspan, preserve <span class="hljs-type">bool</span>)</span></span> <span class="hljs-type">bool</span> &#123;<br>    <span class="hljs-comment">// 预标记 freelist 中的对象</span><br>    <span class="hljs-keyword">for</span> link := s.freelist; link.ptr() != <span class="hljs-literal">nil</span>; link = link.ptr().next &#123;<br>        heapBitsForAddr(<span class="hljs-type">uintptr</span>(link)).setMarkedNonAtomic()<br>    &#125;<br>    <span class="hljs-keyword">var</span> head, end gclinkptr<br>    nfree := <span class="hljs-number">0</span><br>    cl := <span class="hljs-type">int32</span>(s.sizeclass)<br>    heapBitsSweepSpan(s.base(), s.elemsize, s.nelems,<br>        <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(p <span class="hljs-type">uintptr</span>)</span></span> &#123;<br>            <span class="hljs-keyword">if</span> cl == <span class="hljs-number">0</span> &#123; <span class="hljs-comment">// 大对象</span><br>                heapBitsForSpan(p).initSpan(s.layout())<br>                atomicstore(&amp;s.sweepgen, sweepgen)<br>            &#125; <span class="hljs-keyword">else</span> &#123;<br>                <span class="hljs-keyword">if</span> head.ptr() == <span class="hljs-literal">nil</span> &#123;<br>                    head = gclinkptr(p)<br>                &#125; <span class="hljs-keyword">else</span> &#123;<br>                    end.ptr().next = gclinkptr(p)<br>                &#125;<br>                end = gclinkptr(p)<br>                nfree++<br>            &#125;<br>        &#125;)<br>    <span class="hljs-keyword">if</span> nfree &gt; <span class="hljs-number">0</span> &#123;<br>        mCentral_FreeSpan(&amp;mheap_.central[cl].mcentral, s, <span class="hljs-type">int32</span>(nfree), head, end, preserve)<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> cl == <span class="hljs-number">0</span> &#123;<br>        mHeap_Free(&amp;mheap_, s, <span class="hljs-number">1</span>)<br>    &#125;<br>    <span class="hljs-keyword">return</span> nfree != <span class="hljs-number">0</span> || cl == <span class="hljs-number">0</span><br>&#125;<br><span class="hljs-comment">// runtime/mcentral.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mCentral_FreeSpan</span><span class="hljs-params">(c *mcentral, s *mspan, n <span class="hljs-type">int32</span>, start, end gclinkptr, preserve <span class="hljs-type">bool</span>)</span></span> <span class="hljs-type">bool</span> &#123;<br>    wasempty := s.freelist.ptr() == <span class="hljs-literal">nil</span><br>    end.ptr().next = s.freelist<br>    s.freelist = start<br>    s.ref -= <span class="hljs-type">uint16</span>(n)<br>    <span class="hljs-keyword">if</span> preserve &#123;<br>        atomicstore(&amp;s.sweepgen, mheap_.sweepgen)<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>    &#125;<br>    <span class="hljs-keyword">if</span> wasempty &#123;<br>        mSpanList_Remove(s)<br>        mSpanList_Insert(&amp;c.nonempty, s)<br>    &#125;<br>    <span class="hljs-keyword">if</span> s.ref != <span class="hljs-number">0</span> &#123; <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span> &#125;<br>    mSpanList_Remove(s)<br>    heapBitsForSpan(s.base()).initSpan(s.layout())<br>    mHeap_Free(&amp;mheap_, s, <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>&#125;<br><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mHeap_FreeSpanLocked</span><span class="hljs-params">(h *mheap, s *mspan, acctinuse, acctidle <span class="hljs-type">bool</span>, unusedsince <span class="hljs-type">int64</span>)</span></span> &#123;<br>    mSpanList_Remove(s)<br>    p := <span class="hljs-type">uintptr</span>(s.start) - (<span class="hljs-type">uintptr</span>(unsafe.Pointer(h.arena_start)) &gt;&gt; _PageShift)<br><br>    <span class="hljs-comment">// 合并左侧</span><br>    <span class="hljs-keyword">if</span> p &gt; <span class="hljs-number">0</span> &#123;<br>        t := h.spans[p<span class="hljs-number">-1</span>]<br>        <span class="hljs-keyword">if</span> t != <span class="hljs-literal">nil</span> &amp;&amp; t.state != _MSpanInUse &amp;&amp; t.state != _MSpanStack &#123;<br>            s.start = t.start<br>            s.npages += t.npages<br>            p -= t.npages<br>            h.spans[p] = s<br>            mSpanList_Remove(t)<br>            fixAlloc_Free(&amp;h.spanalloc, unsafe.Pointer(t))<br>        &#125;<br>    &#125;<br>    <span class="hljs-comment">// 合并右侧</span><br>    <span class="hljs-keyword">if</span> (p+s.npages)*ptrSize &lt; h.spans_mapped &#123;<br>        t := h.spans[p+s.npages]<br>        <span class="hljs-keyword">if</span> t != <span class="hljs-literal">nil</span> &amp;&amp; t.state != _MSpanInUse &amp;&amp; t.state != _MSpanStack &#123;<br>            s.npages += t.npages<br>            h.spans[p+s.npages<span class="hljs-number">-1</span>] = s<br>            mSpanList_Remove(t)<br>            fixAlloc_Free(&amp;h.spanalloc, unsafe.Pointer(t))<br>        &#125;<br>    &#125;<br>    <span class="hljs-comment">// 插入合适链表</span><br>    <span class="hljs-keyword">if</span> s.npages &lt; <span class="hljs-type">uintptr</span>(<span class="hljs-built_in">len</span>(h.free)) &#123;<br>        mSpanList_Insert(&amp;h.free[s.npages], s)<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        mSpanList_Insert(&amp;h.freelarge, s)<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>从运行时的角度，整个进程内的对象可分为两类:一种，自然是从arena区域分配的用户对象;另一种，则是运行时自身运行和管理所需的对象，比如管理arena内存片段的mspan，提供无锁分配的mcache等等.管理对象的生命周期并不像用户对象那样复杂，且类型和长度都相对固定，所以算法策略显然不用那么复杂。还有，它们相对较长的生命周期也不适合占用arena区域，否则会导致更多碎片。为此，运行时专门设计了FixAlloc固定分配器来为管理对象分配内存,<br>固定分配器使用相同的算法框架，只有相应参数不同.</p>
+<p>16.5释放<br>Go 运行时将“回收”与“释放”拆为两阶段：前者把空闲 span 重新挂回链表供复用，后者则由后台监控任务 sysmon 定期将长期闲置的物理页归还操作系统。sysmon 以 5 min 为半衰周期，扫描 free 数组与 freelarge 链表，若某 span 的 unusedsince 早于当前时间减去阈值，则调用 sysUnused 向内核提交 MADV_DONTNEED 建议，内核随即解除该虚拟页与物理帧的映射；下次再访问同一地址时触发缺页异常，内核按需补回物理页，实现“零拷贝”式惰性重绑。该策略既保证虚拟地址空间永不被回收，又允许系统在内存紧张时即时瘦身，而分配器只需维护 npreleased 计数即可追踪每段 span 的实占状态，无需重建 mspan 等元数据。</p>
+<p>由于 madvise 仅作用于已提交的物理内存，分配器在 AllocSpanLocked 发现目标 span 的 npreleased 不为零时，会立即调用 sysUsed 把整段重新标记为可写，确保 mutator 访问前物理页已就位；对多数 Unix-like 平台，sysUsed 为空实现，内核已在缺页时自动补页，而 Windows 因缺乏同等机制，需在 VirtualAlloc 时主动补回 MEM_COMMIT。开发者也可通过 runtime&#x2F;debug.FreeOSMemory 强制触发一轮 scavengelist，即时释放所有符合阈值的闲置页。通过“复用优先—延迟释放—按需重补”的三级节拍，Go 在保持毫秒级 GC 延迟的同时，把进程 RSS 的波动压到最低，使长时间运行的服务既能快速回收瞬时峰值，又不会在空闲时段无故占用物理内存。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/proc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">sysmon</span><span class="hljs-params">()</span></span> &#123;<br>    scavengelimit := <span class="hljs-type">int64</span>(<span class="hljs-number">5</span> * <span class="hljs-number">60</span> * <span class="hljs-number">1e9</span>)<br>    <span class="hljs-keyword">for</span> &#123;<br>        usleep(delay)<br>        now := nanotime()<br>        <span class="hljs-keyword">if</span> lastscavenge+scavengelimit/<span class="hljs-number">2</span> &lt; now &#123;<br>            mHeap_Scavenge(<span class="hljs-type">int32</span>(nscavenge), <span class="hljs-type">uint64</span>(now), <span class="hljs-type">uint64</span>(scavengelimit))<br>            lastscavenge = now<br>        &#125;<br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mHeap_Scavenge</span><span class="hljs-params">(k <span class="hljs-type">int32</span>, now, limit <span class="hljs-type">uint64</span>)</span></span> <span class="hljs-type">uintptr</span> &#123;<br>    h := &amp;mheap_<br>    <span class="hljs-keyword">var</span> sumreleased <span class="hljs-type">uintptr</span><br>    <span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-built_in">len</span>(h.free); i++ &#123;<br>        sumreleased += scavengelist(&amp;h.free[i], now, limit)<br>    &#125;<br>    sumreleased += scavengelist(&amp;h.freelarge, now, limit)<br>    <span class="hljs-keyword">return</span> sumreleased<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">scavengelist</span><span class="hljs-params">(list *mspan, now, limit <span class="hljs-type">uint64</span>)</span></span> <span class="hljs-type">uintptr</span> &#123;<br>    <span class="hljs-keyword">var</span> sumreleased <span class="hljs-type">uintptr</span><br>    <span class="hljs-keyword">for</span> s := list.next; s != list; s = s.next &#123;<br>        <span class="hljs-keyword">if</span> <span class="hljs-type">uint64</span>(now-s.unusedsince) &gt; limit &amp;&amp; s.npreleased != s.npages &#123;<br>            released := (s.npages - s.npreleased) &lt;&lt; _PageShift<br>            sumreleased += released<br>            s.npreleased = s.npages<br>            sysUnused(unsafe.Pointer(s.start&lt;&lt;_PageShift), s.npages&lt;&lt;_PageShift)<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> sumreleased<br>&#125;<br><span class="hljs-comment">// runtime/mem_linux.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">sysUnused</span><span class="hljs-params">(v unsafe.Pointer, n <span class="hljs-type">uintptr</span>)</span></span> &#123;<br>    madvise(v, n, _MADV_DONTNEED)<br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">sysUsed</span><span class="hljs-params">(v unsafe.Pointer, n <span class="hljs-type">uintptr</span>)</span></span> &#123;<br>    <span class="hljs-comment">// 多数 Unix 平台为空实现，缺页时内核自动补页</span><br>&#125;<br><span class="hljs-comment">// runtime/mheap.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mHeap_AllocSpanLocked</span><span class="hljs-params">(h *mheap, npage <span class="hljs-type">uintptr</span>)</span></span> *mspan &#123;<br>    <span class="hljs-comment">// … 摘取 s …</span><br>HaveSpan:<br>    <span class="hljs-keyword">if</span> s.npreleased &gt; <span class="hljs-number">0</span> &#123;<br>        sysUsed(unsafe.Pointer(s.start&lt;&lt;_PageShift), s.npages&lt;&lt;_PageShift)<br>        s.npreleased = <span class="hljs-number">0</span><br>    &#125;<br>    <span class="hljs-keyword">return</span> s<br>&#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go/" class="category-chain-item">go</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>go源码阅读1</div>
+      <div>http://example.com/2025/12/11/go源码阅读1/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年12月11日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/12/12/3433-%E7%BB%9F%E8%AE%A1%E7%94%A8%E6%88%B7%E8%A2%AB%E6%8F%90%E5%8F%8A%E6%83%85%E5%86%B5/" title="3433. 统计用户被提及情况">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">3433. 统计用户被提及情况</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/12/11/3531-%E7%BB%9F%E8%AE%A1%E8%A2%AB%E8%A6%86%E7%9B%96%E7%9A%84%E5%BB%BA%E7%AD%91/" title="3531. 统计被覆盖的建筑">
+                        <span class="hidden-mobile">3531. 统计被覆盖的建筑</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

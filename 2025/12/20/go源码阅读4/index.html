@@ -1,0 +1,660 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="19通道 19.1创建和收发Go 语言中的 channel 是实现 CSP（Communicating Sequential Processes）并发模型的核心机制，其设计哲学强调“通过通信共享内存，而非通过共享内存进行通信”。这一理念深刻影响了 Go 的并发编程范式，使得 goroutine 之间的数据交换变得安全且直观。channel 作为 goroutine 之间传递数据的管道，不仅支持同步">
+<meta property="og:type" content="article">
+<meta property="og:title" content="go源码阅读4">
+<meta property="og:url" content="http://example.com/2025/12/20/go%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB4/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="19通道 19.1创建和收发Go 语言中的 channel 是实现 CSP（Communicating Sequential Processes）并发模型的核心机制，其设计哲学强调“通过通信共享内存，而非通过共享内存进行通信”。这一理念深刻影响了 Go 的并发编程范式，使得 goroutine 之间的数据交换变得安全且直观。channel 作为 goroutine 之间传递数据的管道，不仅支持同步">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-12-20T11:45:10.000Z">
+<meta property="article:modified_time" content="2025-12-18T11:53:37.221Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>go源码阅读4 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="go源码阅读4"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-12-20 19:45" pubdate>
+          2025年12月20日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          13k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          109 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">go源码阅读4</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>19通道</p>
+<p>19.1创建和收发<br>Go 语言中的 channel 是实现 CSP（Communicating Sequential Processes）并发模型的核心机制，其设计哲学强调“通过通信共享内存，而非通过共享内存进行通信”。这一理念深刻影响了 Go 的并发编程范式，使得 goroutine 之间的数据交换变得安全且直观。channel 作为 goroutine 之间传递数据的管道，不仅支持同步和异步两种模式，还具备缓冲区功能，能够在发送方与接收方速率不一致时起到平滑作用。channel 的创建过程由 makechan 函数完成，该函数根据用户指定的数据类型和缓冲区大小分配内存并初始化结构体，其中关键字段包括 buf 指向缓冲区的指针、dataqsiz 表示缓冲区容量、elemtype 存储元素类型信息以及 elemsize 记录单个元素的字节数。为了防止内存溢出，Go 对 channel 中每个元素的大小进行了限制，不允许超过 64KB，否则会抛出错误。</p>
+<p>在实际使用中，channel 的收发操作涉及复杂的调度逻辑，尤其是在无缓冲或缓冲已满的情况下，需要将等待的 goroutine 暂停并放入等待队列。为此，Go 运行时引入了 sudog 结构体来封装处于阻塞状态的 goroutine，它不仅保存了 goroutine 的引用，还携带了待传输的数据项以及唤醒标志等状态信息。每个 channel 维护两个独立的等待队列：sendq 用于存放等待发送的 goroutine，recvq 则用于存放等待接收的 goroutine。当一个 goroutine 尝试向一个已满的缓冲 channel 发送数据时，它会被包装成 sudog 并加入 sendq 队列；类似地，当另一个 goroutine 尝试从一个空的缓冲 channel 接收数据时，也会被包装并加入 recvq 队列。这种设计确保了即使在高并发场景下，channel 也能正确处理多个 goroutine 的竞争关系。</p>
+<p>为了提高性能，Go 运行时为 sudog 实现了一套高效的二级缓存复用体系。每个 P（处理器）维护一个本地的 sudogcache 缓存池，当需要创建新的 sudog 时，优先从本地缓存中获取，避免频繁的内存分配开销。如果本地缓存为空，则尝试从全局的 sched.sudogcache 获取，若仍无可用对象则调用 new(sudog) 创建新实例。释放 sudog 时，同样遵循先归还到本地缓存的原则，只有当本地缓存达到上限时才将其移至全局缓存。这种策略显著减少了垃圾回收的压力，并提升了 channel 操作的整体效率。此外，acquireSudog 和 releaseSudog 函数负责管理这些缓存的操作，保证了资源的合理利用。</p>
+<p>对于同步 channel（即未设置缓冲区大小），其收发逻辑相对简单但关键在于匹配机制。当一个 goroutine 执行 ch &lt;- x 操作时，运行时首先检查是否有等待接收的 goroutine 在 recvq 队列中。如果有，则直接将数据复制给对方，并唤醒该 goroutine 继续执行；如果没有，则将当前 goroutine 包装成 sudog 放入 sendq 队列并阻塞。反之，当执行 &lt;- ch 操作时，流程相反：先查找是否有等待发送的 goroutine，若有则直接获取数据并唤醒对方；若无则自身进入 recvq 队列等待。值得注意的是，在唤醒过程中，运行时会通过 gp.param 字段传递唤醒来源的信息，以便后续判断是否为合法唤醒，防止误唤醒导致的问题。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// chan.go</span><br><br><span class="hljs-keyword">type</span> hchan <span class="hljs-keyword">struct</span> &#123;<br>	qcount   <span class="hljs-type">uint</span>           <span class="hljs-comment">// 缓冲槽有效数据项数量</span><br>	dataqsiz <span class="hljs-type">uint</span>           <span class="hljs-comment">// 缓冲槽大小（可存储数据项数量）</span><br>	buf      unsafe.Pointer <span class="hljs-comment">// 缓冲槽指针</span><br>	elemsize <span class="hljs-type">uint16</span>         <span class="hljs-comment">// 数据项大小</span><br>	elemtype *_type         <span class="hljs-comment">// 数据项类型</span><br>	closed   <span class="hljs-type">uint32</span>         <span class="hljs-comment">// 是否关闭</span><br>	sendx    <span class="hljs-type">uint</span>           <span class="hljs-comment">// 缓冲槽发送位置索引</span><br>.recvq   waitq            <span class="hljs-comment">// 接收者等待队列</span><br>.sendq   waitq            <span class="hljs-comment">// 发送者等待队列</span><br>&#125;<br><br><span class="hljs-keyword">type</span> waitq <span class="hljs-keyword">struct</span> &#123;<br>	first *sudog<br>	last  *sudog<br>&#125;<br><span class="hljs-comment">// chan.go</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">makechan</span><span class="hljs-params">(t *chantype, size <span class="hljs-type">int64</span>)</span></span> *hchan &#123;<br>	elem := t.elem<br><br>	<span class="hljs-comment">// 数据项不能超过 64KB</span><br>	<span class="hljs-keyword">if</span> elem.size &gt; <span class="hljs-number">1</span>&lt;&lt;<span class="hljs-number">16</span> &#123;<br>		throw(<span class="hljs-string">&quot;makechan: invalid channel element type&quot;</span>)<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> size &lt; <span class="hljs-number">0</span> || <span class="hljs-type">int64</span>(<span class="hljs-type">uintptr</span>(size)) != size ||<br>		(elem.size &gt; <span class="hljs-number">0</span> &amp;&amp; <span class="hljs-type">uintptr</span>(size) &gt; (MaxMem-hchanSize)/<span class="hljs-type">uintptr</span>(elem.size)) &#123;<br>		<span class="hljs-built_in">panic</span>(<span class="hljs-string">&quot;makechan: size out of range&quot;</span>)<br>	&#125;<br><br>	<span class="hljs-keyword">var</span> c *hchan<br><br>	<span class="hljs-comment">// 受垃圾回收器限制，指针类型缓冲槽须单独分配内存</span><br>	<span class="hljs-keyword">if</span> elem.kinds&amp;KindNoPointers != <span class="hljs-number">0</span> || size == <span class="hljs-number">0</span> &#123;<br>		c = (*hchan)(mallocgc(hchanSize+<span class="hljs-type">uintptr</span>(size)*<span class="hljs-type">uintptr</span>(elem.size), <span class="hljs-literal">nil</span>, flagNoScan))<br>		<span class="hljs-keyword">if</span> size &gt; <span class="hljs-number">0</span> &amp;&amp; elem.size != <span class="hljs-number">0</span> &#123;<br>			c.buf = add(unsafe.Pointer(c), hchanSize)<br>		&#125; <span class="hljs-keyword">else</span> &#123;<br>			c.buf = unsafe.Pointer(c)<br>		&#125;<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		c = <span class="hljs-built_in">new</span>(hchan)<br>		c.buf = newarray(elem, <span class="hljs-type">uintptr</span>(size))<br>	&#125;<br><br>	<span class="hljs-comment">// 设置属性</span><br>	c.elemsize = <span class="hljs-type">uint16</span>(elem.size)<br>	c.elemtype = elem<br>	c.dataqsiz = <span class="hljs-type">uint</span>(size)<br><br>	<span class="hljs-keyword">return</span> c<br>&#125;<br><span class="hljs-comment">// runtime2.go</span><br><br><span class="hljs-keyword">type</span> g <span class="hljs-keyword">struct</span> &#123;<br>	param unsafe.Pointer <span class="hljs-comment">// 传递唤醒参数</span><br>&#125;<br><br><span class="hljs-keyword">type</span> sudog <span class="hljs-keyword">struct</span> &#123;<br>	g       *g<br>	elem    unsafe.Pointer <span class="hljs-comment">// 数据存储空间指针</span><br>&#125;<br><br><span class="hljs-keyword">type</span> p <span class="hljs-keyword">struct</span> &#123;<br>	sudogcache []*sudog <span class="hljs-comment">// 在 procesize new(p) 时指向 sudogbuf</span><br>	sudogbuf   [<span class="hljs-number">128</span>]*sudog<br>&#125;<br><br><span class="hljs-keyword">type</span> schedt <span class="hljs-keyword">struct</span> &#123;<br>	sudogcache *sudog<br>&#125;<br><span class="hljs-comment">// proc.go</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">acquireSudog</span><span class="hljs-params">()</span></span> *sudog &#123;<br>	pp := mp.p.ptr()<br><br>	<span class="hljs-comment">// 如果本地缓存为空</span><br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(pp.sudogcache) == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">if</span> sched.sudogcache != <span class="hljs-literal">nil</span> &#123;<br>			s := sched.sudogcache<br>			sched.sudogcache = s.next<br>			s.next = <span class="hljs-literal">nil</span><br>			pp.sudogcache = <span class="hljs-built_in">append</span>(pp.sudogcache, s)<br>		&#125; <span class="hljs-keyword">else</span> &#123;<br>			pp.sudogcache = <span class="hljs-built_in">append</span>(pp.sudogcache, <span class="hljs-built_in">new</span>(sudog))<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// 从尾部提取，并调整本地缓存</span><br>	n := <span class="hljs-built_in">len</span>(pp.sudogcache)<br>	s := pp.sudogcache[n<span class="hljs-number">-1</span>]<br>	pp.sudogcache[n<span class="hljs-number">-1</span>] = <span class="hljs-literal">nil</span><br>	pp.sudogcache = pp.sudogcache[:n<span class="hljs-number">-1</span>]<br><br>	<span class="hljs-keyword">return</span> s<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">releaseSudog</span><span class="hljs-params">(s *sudog)</span></span> &#123;<br>	pp := mp.p.ptr()<br><br>	<span class="hljs-comment">// 如果本地缓存已满</span><br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(pp.sudogcache) == <span class="hljs-built_in">cap</span>(pp.sudogcache) &#123;<br>		<span class="hljs-comment">// 转移一半到全局</span><br>		<span class="hljs-keyword">var</span> first, last *sudog<br>		<span class="hljs-keyword">for</span> <span class="hljs-built_in">len</span>(pp.sudogcache) &gt; <span class="hljs-built_in">cap</span>(pp.sudogcache)/<span class="hljs-number">2</span> &#123;<br>			n := <span class="hljs-built_in">len</span>(pp.sudogcache)<br>			p := pp.sudogcache[n<span class="hljs-number">-1</span>]<br>			pp.sudogcache = pp.sudogcache[:n<span class="hljs-number">-1</span>]<br>			<span class="hljs-keyword">if</span> first == <span class="hljs-literal">nil</span> &#123;<br>				first = p<br>			&#125; <span class="hljs-keyword">else</span> &#123;<br>				last.next = p<br>			&#125;<br>			last = p<br>		&#125;<br>		last.next = sched.sudogcache<br>		sched.sudogcache = first<br>	&#125;<br><br>	pp.sudogcache = <span class="hljs-built_in">append</span>(pp.sudogcache, s)<br>&#125;<br><span class="hljs-comment">// chan.go</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">chansend1</span><span class="hljs-params">(t *chantype, c *hchan, elem unsafe.Pointer)</span></span> &#123;<br>	chansend(t, c, elem, <span class="hljs-literal">true</span>, getcallerpc(unsafe.Pointer(&amp;t)))<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">chansend</span><span class="hljs-params">(t *chantype, c *hchan, ep unsafe.Pointer, block <span class="hljs-type">bool</span>, callerpc <span class="hljs-type">uintptr</span>)</span></span> <span class="hljs-type">bool</span> &#123;<br>	<span class="hljs-comment">// 同步模式</span><br>	<span class="hljs-keyword">if</span> c.dataqsiz == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-comment">// 从等待队列获取接收者</span><br>		sg := c.recvq.dequeue()<br>		<span class="hljs-keyword">if</span> sg != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-comment">// 直接用 memmove 将数据项复制给接收者</span><br>			<span class="hljs-keyword">if</span> ep != <span class="hljs-literal">nil</span> &#123;<br>				typedmemmove(c.elemtype, sg.elem, ep)<br>			&#125;<br>			sg.elem = <span class="hljs-literal">nil</span><br>			gp := sg.g<br>			gp.param = unsafe.Pointer(sg)<br>			<span class="hljs-comment">// 唤醒接收者</span><br>			goready(gp, <span class="hljs-number">3</span>)<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>		&#125;<br><br>		<span class="hljs-comment">// 如果没有接收者，打包成 sudog</span><br>		gp := getg()<br>		mysg := acquireSudog()<br>		mysg.elem = ep<br>		mysg.g = gp<br>		gp.param = <span class="hljs-literal">nil</span><br><br>		<span class="hljs-comment">// 将发送 sudog 放入等待队列，休眠，等待被接收者唤醒</span><br>		c.sendq.enqueue(mysg)<br>		goparkunlock(&amp;c.lock, <span class="hljs-string">&quot;chan send&quot;</span>, traceEvGoBlockSend, <span class="hljs-number">3</span>)<br><br>		<span class="hljs-comment">// 被唤醒</span><br>		gp.waiting = <span class="hljs-literal">nil</span><br>		haveData := gp.param != <span class="hljs-literal">nil</span><br>		gp.param = <span class="hljs-literal">nil</span><br><br>		<span class="hljs-comment">// 将 sudog 放回复用缓存</span><br>		releaseSudog(mysg)<br><br>		<span class="hljs-keyword">if</span> haveData &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// 异步模式逻辑省略...</span><br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">chanrecv</span><span class="hljs-params">(t *chantype, c *hchan, ep unsafe.Pointer, block <span class="hljs-type">bool</span>)</span></span> (selected, received <span class="hljs-type">bool</span>) &#123;<br>	<span class="hljs-comment">// 同步模式</span><br>	<span class="hljs-keyword">if</span> c.dataqsiz == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-comment">// 从等待队列获取发送者</span><br>		sg := c.sendq.dequeue()<br>		<span class="hljs-keyword">if</span> sg != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-comment">// 从发送者复制数据</span><br>			<span class="hljs-keyword">if</span> ep != <span class="hljs-literal">nil</span> &#123;<br>				typedmemmove(c.elemtype, ep, sg.elem)<br>			&#125;<br>			sg.elem = <span class="hljs-literal">nil</span><br>			gp := sg.g<br>			gp.param = unsafe.Pointer(sg)<br>			<span class="hljs-comment">// 唤醒发送者，解除其阻塞</span><br>			goready(gp, <span class="hljs-number">3</span>)<br><br>			selected = <span class="hljs-literal">true</span><br>			received = <span class="hljs-literal">true</span><br>			<span class="hljs-keyword">return</span><br>		&#125;<br><br>		<span class="hljs-comment">// 如果没有发送者，打包成 sudog</span><br>		gp := getg()<br>		mysg := acquireSudog()<br>		mysg.elem = ep<br>		mysg.g = gp<br>		gp.param = <span class="hljs-literal">nil</span><br><br>		<span class="hljs-comment">// 放入等待队列，休眠，等待被发送者唤醒</span><br>		c.recvq.enqueue(mysg)<br>		goparkunlock(&amp;c.lock, <span class="hljs-string">&quot;chan receive&quot;</span>, traceEvGoBlockRecv, <span class="hljs-number">3</span>)<br><br>		<span class="hljs-comment">// 被唤醒</span><br>		gp.waiting = <span class="hljs-literal">nil</span><br>		haveData := gp.param != <span class="hljs-literal">nil</span><br>		gp.param = <span class="hljs-literal">nil</span><br><br>		<span class="hljs-comment">// 将 sudog 放回复用缓存</span><br>		releaseSudog(mysg)<br><br>		<span class="hljs-keyword">if</span> haveData &#123;<br>			selected = <span class="hljs-literal">true</span><br>			received = <span class="hljs-literal">true</span><br>			<span class="hljs-keyword">return</span><br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// 异步模式逻辑省略...</span><br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">false</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在 Go 语言中，channel 的异步模式是实现高并发通信的关键机制之一。与同步模式不同，异步模式允许发送者和接收者在没有直接匹配的情况下进行操作，其核心在于缓冲槽（buffer）的使用。当一个 channel 被创建时，如果指定了缓冲区大小，则该 channel 就进入了异步模式。在这种模式下，发送操作不会立即阻塞，而是首先尝试将数据写入缓冲槽；只有当缓冲槽已满时，才会将当前 goroutine 包装成 sudog 并放入 sendq 队列等待。同样地，接收操作也优先从缓冲槽中读取数据，仅当缓冲槽为空时才进入等待状态。这种设计使得 channel 可以在发送方和接收方速率不一致的情况下平滑运行，避免了频繁的上下文切换。</p>
+<p>异步模式的核心逻辑体现在 chansend 和 chanrecv 函数中。对于发送操作，运行时首先检查缓冲槽是否还有空位。如果有，则直接通过 typedmemmove 将数据复制到缓冲槽中，并更新 sendx 指针和 qcount 计数器。随后，系统会检查是否有等待接收的 goroutine 存在于 recvq 队列中，若有则唤醒其中一个并将其从队列中移除，从而完成一次完整的通信过程。整个过程中，c.qcount 表示当前缓冲槽中有效数据项的数量，而 c.dataqsiz 则表示缓冲槽的最大容量。这两个字段共同决定了是否可以继续写入或读取数据。值得注意的是，为了防止无限循环，Go 运行时引入了 futile 标志，在检测到无意义的操作（如反复尝试发送但始终无法成功）时触发 traceEvUtilWakeUp 事件，提示调度器可能需要干预。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// chan.go</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">chansend</span><span class="hljs-params">(t *chantype, c *hchan, ep unsafe.Pointer, block <span class="hljs-type">bool</span>, callerpc <span class="hljs-type">uintptr</span>)</span></span> <span class="hljs-type">bool</span> &#123;<br>	<span class="hljs-comment">// 异步模式</span><br>	<span class="hljs-keyword">if</span> c.dataqsiz &gt; <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">for</span> futile := <span class="hljs-type">byte</span>(<span class="hljs-number">0</span>); c.qcount &gt;= c.dataqsiz; futile = traceFutileWakeUp &#123;<br>			<span class="hljs-comment">// 打包成 sudog</span><br>			gp := getg()<br>			mysg := acquireSudog()<br>			mysg.g = gp<br>			mysg.elem = <span class="hljs-literal">nil</span><br><br>			<span class="hljs-comment">// 放入发送者等待队列，休眠，等待有空位时被唤醒</span><br>			c.sendq.enqueue(mysg)<br>			goparkunlock(&amp;c.lock, <span class="hljs-string">&quot;chan send&quot;</span>, traceEvGoBlockSend|futile, <span class="hljs-number">3</span>)<br><br>			<span class="hljs-comment">// 唤醒后，如果 qcount &lt; dataqsiz 表示有空位，跳出循环</span><br>			releaseSudog(mysg)<br>		&#125;<br><br>		<span class="hljs-comment">// 将数据复制到缓冲槽</span><br>		typedmemmove(c.elemtype, chanbuf(c, c.sendx), ep)<br><br>		<span class="hljs-comment">// 调整缓冲槽队列索引和数据项计数</span><br>		c.sendx++<br>		<span class="hljs-keyword">if</span> c.sendx == c.dataqsiz &#123;<br>			c.sendx = <span class="hljs-number">0</span><br>		&#125;<br>		c.qcount++<br><br>		<span class="hljs-comment">// 现在缓冲槽不为空，唤醒某个排队的接收者从槽中获取数据</span><br>		sg := c.recvq.dequeue()<br>		<span class="hljs-keyword">if</span> sg != <span class="hljs-literal">nil</span> &#123;<br>			recvg := sg.g<br>			goready(recvg, <span class="hljs-number">3</span>)<br>		&#125;<br><br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>	&#125;<br><br>	<span class="hljs-comment">// 同步模式逻辑省略...</span><br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>&#125;<br><span class="hljs-comment">// chan.go</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">chanrecv</span><span class="hljs-params">(t *chantype, c *hchan, ep unsafe.Pointer, block <span class="hljs-type">bool</span>)</span></span> (selected, received <span class="hljs-type">bool</span>) &#123;<br>	<span class="hljs-comment">// 异步模式</span><br>	<span class="hljs-keyword">if</span> c.dataqsiz &gt; <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">for</span> futile := <span class="hljs-type">byte</span>(<span class="hljs-number">0</span>); c.qcount &lt;= <span class="hljs-number">0</span>; futile = traceFutileWakeUp &#123;<br>			<span class="hljs-comment">// 打包成 sudog</span><br>			gp := getg()<br>			mysg := acquireSudog()<br>			mysg.g = gp<br>			mysg.elem = <span class="hljs-literal">nil</span><br><br>			<span class="hljs-comment">// 放入接收等待队列，休眠，等待有数据项时被唤醒</span><br>			c.recvq.enqueue(mysg)<br>			goparkunlock(&amp;c.lock, <span class="hljs-string">&quot;chan receive&quot;</span>, traceEvGoBlockRecv|futile, <span class="hljs-number">3</span>)<br><br>			<span class="hljs-comment">// 唤醒后，qcount &gt; 0，跳过循环</span><br>			releaseSudog(mysg)<br>		&#125;<br><br>		<span class="hljs-comment">// 从缓冲槽复制数据项</span><br>		<span class="hljs-keyword">if</span> ep != <span class="hljs-literal">nil</span> &#123;<br>			typedmemmove(c.elemtype, ep, chanbuf(c, c.recvx))<br>		&#125;<br><br>		<span class="hljs-comment">// 清零。调整缓冲槽队列索引及计数</span><br>		memclr(chanbuf(c, c.recvx), <span class="hljs-type">uintptr</span>(c.elemsize))<br>		c.recvx++<br>		<span class="hljs-keyword">if</span> c.recvx == c.dataqsiz &#123;<br>			c.recvx = <span class="hljs-number">0</span><br>		&#125;<br>		c.qcount--<br><br>		<span class="hljs-comment">// 现在有空位了，唤醒某个排队的发送者向槽中发送数据</span><br>		sg := c.sendq.dequeue()<br>		<span class="hljs-keyword">if</span> sg != <span class="hljs-literal">nil</span> &#123;<br>			gp := sg.g<br>			goready(gp, <span class="hljs-number">3</span>)<br>		&#125;<br><br>		selected = <span class="hljs-literal">true</span><br>		received = <span class="hljs-literal">true</span><br>		<span class="hljs-keyword">return</span><br>	&#125;<br><br>	<span class="hljs-comment">// 同步模式逻辑省略...</span><br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">false</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>关闭 channel 是 Go 中一个重要的控制操作，它标志着该 channel 不再接受新的数据，并且所有等待的 goroutine 都会被唤醒。closechan 函数负责执行这一操作，其主要职责包括设置 c.closed 标志为 1，表示 channel 已关闭；然后依次从 recvq 和 sendq 队列中取出所有等待的 goroutine，并通过 goready 将它们重新加入就绪队列。这些被唤醒的 goroutine 在后续执行 recv 或 send 操作时，会发现 channel 已关闭，从而做出相应处理。特别需要注意的是，一旦 channel 被关闭，任何对它的写入操作都会导致 panic，因为这是非法行为。此外，从已关闭的 channel 读取数据将返回零值，且不会阻塞，这保证了程序能够安全地结束对 channel 的使用。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// chan.go</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">closechan</span><span class="hljs-params">(c *hchan)</span></span> &#123;<br>	<span class="hljs-comment">// 不能重复关闭</span><br>	<span class="hljs-keyword">if</span> c.closed != <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-built_in">panic</span>(<span class="hljs-string">&quot;close of closed channel&quot;</span>)<br>	&#125;<br><br>	<span class="hljs-comment">// 设置关闭标志</span><br>	c.closed = <span class="hljs-number">1</span><br><br>	<span class="hljs-comment">// 释放所有接收者</span><br>	<span class="hljs-keyword">for</span> &#123;<br>		sg := c.recvq.dequeue()<br>		<span class="hljs-keyword">if</span> sg == <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">break</span><br>		&#125;<br>		gp := sg.g<br>		sg.elem = <span class="hljs-literal">nil</span><br>		<span class="hljs-comment">// 这个参数表明唤醒者是 closechan</span><br>		gp.param = <span class="hljs-literal">nil</span><br>		goready(gp, <span class="hljs-number">3</span>)<br>	&#125;<br><br>	<span class="hljs-comment">// 释放所有发送者</span><br>	<span class="hljs-keyword">for</span> &#123;<br>		sg := c.sendq.dequeue()<br>		<span class="hljs-keyword">if</span> sg == <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">break</span><br>		&#125;<br>		gp := sg.g<br>		sg.elem = <span class="hljs-literal">nil</span><br>		<span class="hljs-comment">// closechan 唤醒</span><br>		gp.param = <span class="hljs-literal">nil</span><br>		goready(gp, <span class="hljs-number">3</span>)<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>19.3选择<br>Go 语言中的 select 语句是一种用于处理多个 channel 操作的并发控制结构，其核心目标是从多个可能就绪的 channel 操作中随机选择一个执行。若所有操作均不可用且存在 default 分支，则执行 default；否则当前 goroutine 将被阻塞，直到某个 channel 变得可用。这种机制使得 select 成为实现非阻塞 I&#x2F;O、超时控制和多路复用的关键工具。</p>
+<p>在编译阶段，Go 编译器并不会将 select 视为普通的控制流语句，而是将其转换为对运行时函数的一系列调用。例如，select 块会被翻译成先调用 newselect 初始化一个 select 控制结构，然后依次调用 selectsend、selectrecv 或 selectdefault 来注册各个 case，最后通过 selectgo 执行实际的选择逻辑。这种设计将高层语法与底层调度解耦，使运行时能够统一管理复杂的并发行为。</p>
+<p>select 的底层数据结构是 hselect，它是一个变长结构体，包含 case 总数（tcase）、已初始化的 case 数量（ncase）、用于乱序遍历的 pollorder 数组、按 channel 地址排序以避免重复加锁的 lockorder 数组，以及一个动态长度的 scase 数组。每个 scase 描述了一个具体的 channel 操作，包括操作类型（发送、接收或 default）、关联的 channel 指针、数据元素地址、返回地址（pc）、是否已被选中标志（so）等字段。这种结构允许运行时灵活支持任意数量的 case，并高效地进行调度和内存管理。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> hselect <span class="hljs-keyword">struct</span> &#123;<br>	tcase     <span class="hljs-type">uint16</span><br>	ncase     <span class="hljs-type">uint16</span><br>	pollorder *<span class="hljs-type">uint16</span><br>	lockorder **hchan<br>	scase     [<span class="hljs-number">1</span>]scase <span class="hljs-comment">// 实际长度由 tcase 决定</span><br>&#125;<br><br><span class="hljs-keyword">type</span> scase <span class="hljs-keyword">struct</span> &#123;<br>	elem        unsafe.Pointer<br>	c           *hchan<br>	pc          <span class="hljs-type">uintptr</span><br>	kind        <span class="hljs-type">uint16</span> <span class="hljs-comment">// caseNil, caseRecv, caseSend, caseDefault</span><br>	so          <span class="hljs-type">uint16</span><br>	receivedp   *<span class="hljs-type">bool</span><br>	releasetime <span class="hljs-type">int64</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>初始化 select 结构由 newselect 函数完成，它根据传入的 case 数量计算所需内存大小，并一次性分配包含 header 和所有 scase 的连续内存块。同时设置 pollorder 和 lockorder 的起始地址，确保后续可以正确访问这些辅助数组。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">newselect</span><span class="hljs-params">(sel *hselect, size <span class="hljs-type">int32</span>)</span></span> &#123;<br>	sel.tcase = <span class="hljs-type">uint16</span>(size)<br>	sel.ncase = <span class="hljs-number">0</span><br>	<span class="hljs-comment">// 计算 pollorder 和 lockorder 的偏移位置</span><br>	pollOff := unsafe.Offsetof(sel.scase) + <span class="hljs-type">uintptr</span>(size)*unsafe.Sizeof(scase&#123;&#125;)<br>	lockOff := pollOff + <span class="hljs-type">uintptr</span>(size)*<span class="hljs-number">2</span><br>	sel.pollorder = (*<span class="hljs-type">uint16</span>)(add(unsafe.Pointer(sel), pollOff))<br>	sel.lockorder = (**hchan)(add(unsafe.Pointer(sel), lockOff))<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>每个 case 的注册通过对应的运行时函数完成：selectsend 设置发送操作，selectrecv 设置接收操作，selectdefault 标记 default 分支。这些函数仅填充 scase 字段，不立即执行任何 channel 操作。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">selectsend</span><span class="hljs-params">(sel *hselect, c *hchan, elem unsafe.Pointer)</span></span> &#123;<br>	<span class="hljs-keyword">if</span> sel.ncase &gt;= sel.tcase &#123;<br>		throw(<span class="hljs-string">&quot;selectsend: too many cases&quot;</span>)<br>	&#125;<br>	sc := &amp;sel.scase[sel.ncase]<br>	sc.kind = caseSend<br>	sc.c = c<br>	sc.elem = elem<br>	sel.ncase++<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">selectrecv</span><span class="hljs-params">(sel *hselect, c *hchan, elem unsafe.Pointer, received *<span class="hljs-type">bool</span>)</span></span> &#123;<br>	<span class="hljs-keyword">if</span> sel.ncase &gt;= sel.tcase &#123;<br>		throw(<span class="hljs-string">&quot;selectrecv: too many cases&quot;</span>)<br>	&#125;<br>	sc := &amp;sel.scase[sel.ncase]<br>	sc.kind = caseRecv<br>	sc.c = c<br>	sc.elem = elem<br>	sc.receivedp = received<br>	sel.ncase++<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">selectdefault</span><span class="hljs-params">(sel *hselect)</span></span> &#123;<br>	<span class="hljs-keyword">if</span> sel.ncase &gt;= sel.tcase &#123;<br>		throw(<span class="hljs-string">&quot;selectdefault: too many cases&quot;</span>)<br>	&#125;<br>	sc := &amp;sel.scase[sel.ncase]<br>	sc.kind = caseDefault<br>	sel.ncase++<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>真正的调度逻辑由 selectgo 实现。该函数首先对所有 case 进行乱序排列（通过 pollorder），以保证随机性；然后逐个检查是否有可立即执行的操作（如缓冲 channel 有空位或数据、同步 channel 有匹配的对方 goroutine）。若找到就绪 case，则直接执行对应的数据拷贝并返回。若无就绪 case 但存在 default，则跳过阻塞直接返回 default。若既无可执行 case 也无 default，则将当前 goroutine 包装为 sudog 并加入所有相关 channel 的等待队列，随后调用 gopark 阻塞自身。当被其他 goroutine 唤醒后，selectgo 会重新进入循环，再次尝试执行，直至成功。</p>
+<p>为了避免对同一 channel 多次加锁导致死锁或性能下降，selectgo 在操作前会根据 lockorder 对所有涉及的 channel 按地址排序，并依次加锁；操作完成后逆序解锁。这一策略确保了即使多个 case 操作同一个 channel，也只会加锁一次。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">selectgo</span><span class="hljs-params">(sel *hselect)</span></span> (chosen <span class="hljs-type">int</span>, recvOK <span class="hljs-type">bool</span>) &#123;<br>	<span class="hljs-comment">// Step 1: 初始化 pollorder 为 0..tcase-1 的乱序排列</span><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> pollorder[:sel.tcase] &#123;<br>		pollorder[i] = <span class="hljs-type">uint16</span>(i)<br>	&#125;<br>	fastrandshuffle(pollorder[:sel.tcase])<br><br>	<span class="hljs-comment">// Step 2: 构建 lockorder 并去重排序</span><br>	<span class="hljs-keyword">var</span> lockorder []*hchan<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> sel.scase[:sel.ncase] &#123;<br>		<span class="hljs-keyword">if</span> sel.scase[i].c != <span class="hljs-literal">nil</span> &#123;<br>			lockorder = <span class="hljs-built_in">append</span>(lockorder, sel.scase[i].c)<br>		&#125;<br>	&#125;<br>	sortlockorder(lockorder)<br><br>	<span class="hljs-comment">// Step 3: 加锁</span><br>	<span class="hljs-keyword">for</span> _, c := <span class="hljs-keyword">range</span> lockorder &#123;<br>		lock(&amp;c.lock)<br>	&#125;<br><br>	<span class="hljs-comment">// Step 4: 遍历 pollorder 查找就绪 case</span><br>	<span class="hljs-keyword">for</span> _, i := <span class="hljs-keyword">range</span> pollorder[:sel.ncase] &#123;<br>		sc := &amp;sel.scase[i]<br>		<span class="hljs-keyword">switch</span> sc.kind &#123;<br>		<span class="hljs-keyword">case</span> caseRecv:<br>			<span class="hljs-keyword">if</span> sc.c.qcount &gt; <span class="hljs-number">0</span> || !sc.c.sendq.empty() &#123;<br>				<span class="hljs-comment">// 执行接收</span><br>				recvOK = chanrecv(sc.c, sc.elem, <span class="hljs-literal">false</span>)<br>				chosen = <span class="hljs-type">int</span>(i)<br>				<span class="hljs-keyword">goto</span> done<br>			&#125;<br>		<span class="hljs-keyword">case</span> caseSend:<br>			<span class="hljs-keyword">if</span> sc.c.qcount &lt; sc.c.dataqsiz || !sc.c.recvq.empty() &#123;<br>				<span class="hljs-comment">// 执行发送</span><br>				chansend(sc.c, sc.elem, <span class="hljs-literal">false</span>, <span class="hljs-number">0</span>)<br>				chosen = <span class="hljs-type">int</span>(i)<br>				<span class="hljs-keyword">goto</span> done<br>			&#125;<br>		<span class="hljs-keyword">case</span> caseDefault:<br>			chosen = <span class="hljs-type">int</span>(i)<br>			<span class="hljs-keyword">goto</span> done<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// Step 5: 若无就绪 case 且有 default，执行 default</span><br>	<span class="hljs-keyword">for</span> _, i := <span class="hljs-keyword">range</span> pollorder[:sel.ncase] &#123;<br>		<span class="hljs-keyword">if</span> sel.scase[i].kind == caseDefault &#123;<br>			chosen = <span class="hljs-type">int</span>(i)<br>			<span class="hljs-keyword">goto</span> done<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// Step 6: 阻塞等待</span><br>	<span class="hljs-comment">// 将当前 g 加入所有 channel 的等待队列</span><br>	<span class="hljs-keyword">for</span> _, sc := <span class="hljs-keyword">range</span> sel.scase[:sel.ncase] &#123;<br>		<span class="hljs-keyword">if</span> sc.kind == caseRecv &#123;<br>			sc.c.recvq.enqueue(sudogForG(sc))<br>		&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> sc.kind == caseSend &#123;<br>			sc.c.sendq.enqueue(sudogForG(sc))<br>		&#125;<br>	&#125;<br>	gopark(<span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, waitReasonSelect, traceEvGoBlockSelect, <span class="hljs-number">1</span>)<br><br>	<span class="hljs-comment">// 被唤醒后重新执行 selectgo（实际通过 goready 触发）</span><br>	<span class="hljs-comment">// 此处简化，真实实现中会记录 chosen 并返回</span><br><br>done:<br>	<span class="hljs-comment">// 解锁</span><br>	<span class="hljs-keyword">for</span> i := <span class="hljs-built_in">len</span>(lockorder) - <span class="hljs-number">1</span>; i &gt;= <span class="hljs-number">0</span>; i-- &#123;<br>		unlock(&amp;lockorder[i].lock)<br>	&#125;<br>	<span class="hljs-keyword">return</span> chosen, recvOK<br>&#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go/" class="category-chain-item">go</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>go源码阅读4</div>
+      <div>http://example.com/2025/12/20/go源码阅读4/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年12月20日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/12/22/960-%E5%88%A0%E5%88%97%E9%80%A0%E5%BA%8F-III/" title="960. 删列造序 III">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">960. 删列造序 III</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/12/19/1019-%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E4%B8%8B%E4%B8%80%E4%B8%AA%E6%9B%B4%E5%A4%A7%E8%8A%82%E7%82%B9/" title="1019. 链表中的下一个更大节点">
+                        <span class="hidden-mobile">1019. 链表中的下一个更大节点</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

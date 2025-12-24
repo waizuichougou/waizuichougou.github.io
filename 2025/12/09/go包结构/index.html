@@ -1,0 +1,661 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="9.1工作空间在 Go 语言的设计中，工作空间（Workspace）是一个核心概念，通常由环境变量 GOPATH 定义。一个标准的工作空间包含三个关键目录：src 用于存放源代码，是我们日常编写代码的地方；bin 用于存放编译后生成的可执行文件；pkg 则用于存放编译后的包对象，这有助于加快后续的编译速度。除了 GOPATH，还有 GOROOT 用于指向 Go 开发工具链和标准库的安装位置，以及">
+<meta property="og:type" content="article">
+<meta property="og:title" content="go包结构">
+<meta property="og:url" content="http://example.com/2025/12/09/go%E5%8C%85%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="9.1工作空间在 Go 语言的设计中，工作空间（Workspace）是一个核心概念，通常由环境变量 GOPATH 定义。一个标准的工作空间包含三个关键目录：src 用于存放源代码，是我们日常编写代码的地方；bin 用于存放编译后生成的可执行文件；pkg 则用于存放编译后的包对象，这有助于加快后续的编译速度。除了 GOPATH，还有 GOROOT 用于指向 Go 开发工具链和标准库的安装位置，以及">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-12-09T03:58:25.000Z">
+<meta property="article:modified_time" content="2025-12-09T04:24:45.000Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>go包结构 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="go包结构"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-12-09 11:58" pubdate>
+          2025年12月9日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          31 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">go包结构</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>9.1工作空间<br>在 Go 语言的设计中，工作空间（Workspace）是一个核心概念，通常由环境变量 GOPATH 定义。一个标准的工作空间包含三个关键目录：src 用于存放源代码，是我们日常编写代码的地方；bin 用于存放编译后生成的可执行文件；pkg 则用于存放编译后的包对象，这有助于加快后续的编译速度。除了 GOPATH，还有 GOROOT 用于指向 Go 开发工具链和标准库的安装位置，以及 GOBIN 用于强制指定 go install 生成文件的存放路径，虽然 Go 开发更多使用 Go Modules。</p>
+<p>9.2导入包<br>代码的组织形式是以“包（Package）”为单位的。在同一个目录下的源文件属于同一个包，包名通常与目录名一致。在编写代码时，我们需要通过 import 关键字来导入其他包。导入的方式多种多样：最常见的是默认导入，直接使用包名访问内容；如果遇到包名冲突，可以使用别名导入来重命名；如果不希望在调用时写包名，可以使用点号导入，但这种方式容易混淆，不推荐在正式项目中使用；还有一种特殊的下划线导入，它只触发生效被导入包的初始化函数，而不引入具体的包内容，常用于注册数据库驱动等场景。在路径引用上，标准做法是使用从 src 开始的绝对路径，虽然工具链支持相对路径，但这通常仅限于本地测试。</p>
+<p>Go 语言的权限控制设计得非常简洁，完全依赖于标识符的首字母大小写。如果你定义的一个变量、函数或结构体字段的首字母是大写的，那么它就是公开的（Public），可以被其他包访问；如果是小写的，它就是私有（Private）的，仅限当前包内部使用。这种“所见即所得”的设计避免了 public、private 等繁琐的关键字。不过在特殊情况下，可以通过 unsafe 包利用指针偏移来强制读取私有字段，但这属于非安全的方式，在实际开发中应严厉禁止。</p>
+<p>对于程序初始化流程， Go 语言为每个包提供了 init() 函数作为初始化钩子。当程序启动时，编译器会确保在执行 main 函数之前，先完成所有依赖包的初始化。具体的执行顺序是：先初始化导入的依赖包，然后初始化当前包的全局变量，接着执行当前包的 init 函数，最后才进入 main 函数。这种机制保证了我们在使用任何包及其变量时，它们都已处于就绪状态。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-comment">// 1. 标准导入：引入 fmt 包用于输出</span><br>	<span class="hljs-comment">// 2. 下划线导入：仅为了触发 mylib 包的 init 函数</span><br>    <span class="hljs-comment">// 3. 别名导入 import nix &quot;github.com/linux/lib&quot;</span><br>	_ <span class="hljs-string">&quot;image/png&quot;</span><br>)<br><br><span class="hljs-comment">// 模拟一个简单的结构体，演示可见性规则</span><br><span class="hljs-keyword">type</span> User <span class="hljs-keyword">struct</span> &#123;<br>	Name <span class="hljs-type">string</span> <span class="hljs-comment">// 首字母大写：公开字段，外部可访问</span><br>	age  <span class="hljs-type">int</span>    <span class="hljs-comment">// 首字母小写：私有字段，仅当前包内可见</span><br>&#125;<br><br><span class="hljs-comment">// 模拟一个包级别的变量</span><br><span class="hljs-keyword">var</span> globalVar = initVar()<br><br><span class="hljs-comment">// 辅助函数，用于验证变量初始化顺序</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">initVar</span><span class="hljs-params">()</span></span> <span class="hljs-type">int</span> &#123;<br>	fmt.Println(<span class="hljs-string">&quot;[1] 全局变量正在初始化...&quot;</span>)<br>	<span class="hljs-keyword">return</span> <span class="hljs-number">100</span><br>&#125;<br><br><span class="hljs-comment">// init 函数：在 main 函数执行前自动运行</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">init</span><span class="hljs-params">()</span></span> &#123;<br>	fmt.Println(<span class="hljs-string">&quot;[2] init 函数正在执行...&quot;</span>)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	fmt.Println(<span class="hljs-string">&quot;[3] main 函数开始执行&quot;</span>)<br><br>	<span class="hljs-comment">// 创建对象</span><br>	u := User&#123;Name: <span class="hljs-string">&quot;3&quot;</span>, age: <span class="hljs-number">3</span>&#125;<br>	<br>	<span class="hljs-comment">// 访问公开字段</span><br>	fmt.Println(<span class="hljs-string">&quot;用户名称:&quot;</span>, u.Name)<br>	<br>	<span class="hljs-comment">// 在同一个包内（main包），我们可以访问私有的 age 字段</span><br>	<span class="hljs-comment">// 如果 User 定义在其他包中，u.age 就会报错</span><br>	fmt.Println(<span class="hljs-string">&quot;用户年龄:&quot;</span>, u.age)<br>&#125;<br></code></pre></td></tr></table></figure>
+<pre><code class="hljs">[1] 全局变量正在初始化...
+[2] init 函数正在执行...
+[3] main 函数开始执行
+用户名称: 3
+用户年龄: 3
+</code></pre>
+<p>9.3组织结构<br>在基础的包管理之外，Go 语言为了更好地支持代码重构和模块化，引入了一种特殊的权限控制机制，即 internal 包。通常情况下首字母大写只能控制包内的成员是否对外可见，但这对于大型项目来说有时显得过于粗放。如果我们希望某些包只能被项目内部特定的模块使用，而不是向所有用户公开，就可以将它们放在名为 internal 的目录下。规则非常明确，所有保存在 internal 目录下的包，只能被其父目录下的包（包含所有层次的子目录）所访问。这相当于在原本的“公开&#x2F;私有”二元权限上，增加了一种“项目内可见”的中间状态，非常适合隐藏那些不希望对外暴露的实现细节。</p>
+<p>关于程序的初始化，init 函数拥有一些非常特殊的性质。init 函数是完全由运行时系统自动调用的，开发者无法在代码中显式调用它，否则会报 undefined: init 错误。一个包内可以定义多个 init 函数，甚至一个源文件中也可以有多个，编译器会自动生成包装函数来确保它们在单一线程上执行，且仅执行一次。执行顺序有着严格的规定，首先初始化当前包的全局变量，然后才开始执行 init 函数，最后等到所有依赖包和当前包都准备就绪后，才会进入 main 函数。虽然同一个包内的多个源文件初始化顺序与文件名有关，但这属于编译器实现的细节，极其不稳定，因此我们在编写代码时，绝对不应依赖于 init 函数之间的特定执行顺序，也不应在其中编写复杂的逻辑关联，最好只处理当前文件的初始化操作。此外，init 函数中允许启动 goroutine，但要注意主程序可能在这些 goroutine 执行结束前就已经开始运行甚至退出了。</p>
+<p>在包的物理组织上，Go 语言规定包是由同一目录下的源码文件组成的，这个目录就定义了包的作用域。虽然通常建议包名和目录名保持一致，但这并非强制要求，包名完全可以和目录名不同（例如目录叫 service 但包名定义为 myservice），但在导入时必须使用目录路径。不过同一个目录下的所有源码文件，必须声明属于同一个包名，否则会导致编译错误。此外，还有一些保留的特殊包名如 main（可执行入口）、std（标准库）等，在命名时需要避开。通过 unsafe.Pointer 绕过权限限制读取私有字段的操作验证 Go 的权限控制主要是在编译期进行的，运行时依然可以通过操作内存地址来“越界”。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;time&quot;</span><br>)<br><br><span class="hljs-comment">// 1. 全局变量初始化：这是最早发生的动作</span><br><span class="hljs-comment">// 即使 variableInitCheck 定义在 init 函数之后，它也会先执行</span><br><span class="hljs-keyword">var</span> globalVar = variableInitCheck()<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">variableInitCheck</span><span class="hljs-params">()</span></span> <span class="hljs-type">int</span> &#123;<br>	fmt.Println(<span class="hljs-string">&quot;[1] 全局变量正在初始化...&quot;</span>)<br>	<span class="hljs-keyword">return</span> <span class="hljs-number">100</span><br>&#125;<br><br><span class="hljs-comment">// 2. init 函数：在全局变量初始化之后自动执行</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">init</span><span class="hljs-params">()</span></span> &#123;<br>	fmt.Println(<span class="hljs-string">&quot;[2] init 函数自动执行中...&quot;</span>)<br>	<br>	<span class="hljs-comment">// 在 init 中可以启动 goroutine，但要小心主程序退出的问题</span><br>	<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		fmt.Println(<span class="hljs-string">&quot;[异步] init 中启动的 goroutine 正在运行&quot;</span>)<br>	&#125;()<br>&#125;<br><br><span class="hljs-comment">// 演示：一个文件可以有多个 init，但顺序不应被依赖</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">init</span><span class="hljs-params">()</span></span> &#123;<br>	fmt.Println(<span class="hljs-string">&quot;[2b] 第二个 init 函数执行&quot;</span>)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	fmt.Println(<span class="hljs-string">&quot;[3] main 函数开始执行&quot;</span>)<br>	<br>	<span class="hljs-comment">// 验证全局变量已被赋值</span><br>	fmt.Printf(<span class="hljs-string">&quot;全局变量值: %d\n&quot;</span>, globalVar)<br><br>	<span class="hljs-comment">// 尝试手动调用 init 会导致编译错误：</span><br>	<span class="hljs-comment">// init() // undefined: init</span><br><br>	<span class="hljs-comment">// 为了让 init 中的 goroutine 有机会输出，稍微等待一下</span><br>	time.Sleep(<span class="hljs-number">100</span> * time.Millisecond)<br>&#125;<br></code></pre></td></tr></table></figure>
+<pre><code class="hljs">[1] 全局变量正在初始化...
+[2] init 函数自动执行中...
+[2b] 第二个 init 函数执行
+[3] main 函数开始执行
+全局变量值: 100
+[异步] init 中启动的 goroutine 正在运行
+</code></pre>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go/" class="category-chain-item">go</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>go包结构</div>
+      <div>http://example.com/2025/12/09/go包结构/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年12月9日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/12/09/3583-%E7%BB%9F%E8%AE%A1%E7%89%B9%E6%AE%8A%E4%B8%89%E5%85%83%E7%BB%84/" title="3583. 统计特殊三元组">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">3583. 统计特殊三元组</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/12/08/go%E5%B9%B6%E5%8F%91/" title="go并发">
+                        <span class="hidden-mobile">go并发</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

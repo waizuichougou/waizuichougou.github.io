@@ -1,0 +1,660 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="17垃圾回收17.1概述Go 的垃圾回收器以“非分代、非紧缩、并发标记、写屏障清扫”为总纲，将“抑制堆膨胀”与“保留 CPU 资源”作为双重优化目标。算法采用经典的三色抽象：回收伊始所有对象均为白色；根集扫描完成后，灰队列持续扩散，将可达对象逐步染黑；用户代码在并发阶段对指针的每一次写操作，均由写屏障捕获，把被覆盖的白色指针重新拉回灰色队列，从而保证“黑对象不指向白对象”的不变式。当灰队列为空且所">
+<meta property="og:type" content="article">
+<meta property="og:title" content="go源码阅读2">
+<meta property="og:url" content="http://example.com/2025/12/16/go%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB2/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="17垃圾回收17.1概述Go 的垃圾回收器以“非分代、非紧缩、并发标记、写屏障清扫”为总纲，将“抑制堆膨胀”与“保留 CPU 资源”作为双重优化目标。算法采用经典的三色抽象：回收伊始所有对象均为白色；根集扫描完成后，灰队列持续扩散，将可达对象逐步染黑；用户代码在并发阶段对指针的每一次写操作，均由写屏障捕获，把被覆盖的白色指针重新拉回灰色队列，从而保证“黑对象不指向白对象”的不变式。当灰队列为空且所">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-12-16T07:40:34.000Z">
+<meta property="article:modified_time" content="2025-12-16T08:13:47.000Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>go源码阅读2 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="go源码阅读2"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-12-16 15:40" pubdate>
+          2025年12月16日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          16k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          137 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">go源码阅读2</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>17垃圾回收<br>17.1概述<br>Go 的垃圾回收器以“非分代、非紧缩、并发标记、写屏障清扫”为总纲，将“抑制堆膨胀”与“保留 CPU 资源”作为双重优化目标。算法采用经典的三色抽象：回收伊始所有对象均为白色；根集扫描完成后，灰队列持续扩散，将可达对象逐步染黑；用户代码在并发阶段对指针的每一次写操作，均由写屏障捕获，把被覆盖的白色指针重新拉回灰色队列，从而保证“黑对象不指向白对象”的不变式。当灰队列为空且所有 P 的本地任务被耗尽时，运行时短暂停全世界（STW）完成根集再扫描，随后进入并发清扫阶段，把仍呈白色的对象挂回对应 span 的 freelist，实现“边分配、边标记、边回收”的流水线作业。</p>
+<p>为避免“分配快于标记”导致堆恶性膨胀，运行时引入 GC 控制器与辅助回收（assist）机制。控制器以反馈算法动态估算下一轮 next_gc 阈值，使堆增长率与并发标记所需 CPU 时间相匹配；当某 Goroutine 的分配量超过其被分配的“标记债务”时，该 Goroutine 必须进入 assist，就地执行灰色对象的扫描，以“工作即偿债”的方式平衡分配与回收。后台标记 worker 与前台 assist 共同占用约 25 % GOMAXPROCS 的算力，既防止回收饥饿，又保障业务延迟。通过“三色不变式 + 写屏障 + 控制器反馈 + 用户协程 assist”四级联动，Go 在毫秒级 STW 的前提下，把百 GB 级堆的回收延迟压到亚毫秒级，实现高吞吐与低延迟的兼得。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mgc.go</span><br><span class="hljs-keyword">type</span> gcController <span class="hljs-keyword">struct</span> &#123;<br>    next_gc        <span class="hljs-type">uint64</span> <span class="hljs-comment">// 下轮触发阈值</span><br>    last_heap_live <span class="hljs-type">uint64</span> <span class="hljs-comment">// 上轮存活量</span><br>    gc_percent     <span class="hljs-type">int32</span>  <span class="hljs-comment">// GOGC 百分比</span><br>    <span class="hljs-comment">// 反馈控制参数，用于计算 assist 速率与并发 worker 数量</span><br>&#125;<br><span class="hljs-comment">// runtime/malloc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mallocgc</span><span class="hljs-params">(size <span class="hljs-type">uintptr</span>, typ *_type, flags <span class="hljs-type">uint32</span>)</span></span> unsafe.Pointer &#123;<br>    <span class="hljs-comment">// 快速路径省略 ...</span><br>    <span class="hljs-comment">// 若已超出自身 assist 信用，需先偿还标记债务</span><br>    <span class="hljs-keyword">if</span> assistG := getg(); assistG.m.gcing != <span class="hljs-number">0</span> &#123;<br>        gcAssistAlloc(assistG, size)<br>    &#125;<br>    <span class="hljs-comment">// 真正分配</span><br>    <span class="hljs-keyword">return</span> c.alloc[sizeclass].freelist.ptr()<br>&#125;<br><span class="hljs-comment">// runtime/mgcmark.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gcDrain</span><span class="hljs-params">(gcw *gcWork, flags gcDrainFlags)</span></span> &#123;<br>    <span class="hljs-keyword">for</span> &#123;<br>        b := gcw.get()<br>        <span class="hljs-keyword">if</span> b == <span class="hljs-number">0</span> &#123; <span class="hljs-keyword">break</span> &#125;<br>        scanobject(b, gcw) <span class="hljs-comment">// 染黑对象，把子指针压入灰队列</span><br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mgc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gcAssistAlloc</span><span class="hljs-params">(gp *g, size <span class="hljs-type">uintptr</span>)</span></span> &#123;<br>    debt := gp.gcAssistBytes + <span class="hljs-type">int64</span>(size)<br>    <span class="hljs-keyword">for</span> debt &gt; <span class="hljs-number">0</span> &#123;<br>        scanWork := gcAssistWork()<br>        debt -= scanWork<br>    &#125;<br>    gp.gcAssistBytes = debt<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>17.2 初始化与启动<br>Go 的垃圾回收启动逻辑围绕“何时触发”与“如何并发”两条主线展开。初始化阶段，gcinit 读取环境变量 GOGC（默认 100），将 next_gc 设为 4 MB，作为首次触发水位；运行期控制器以 heap_live 增长倍率为反馈，动态抬高或压低 next_gc，使堆膨胀速度与并发标记所需 CPU 时间相匹配。mallocgc 在每次成功分配后，通过 shouldtriggergc 检测“堆存活量 ≥ next_gc 且后台未在工作”这一条件，若成立则唤醒 backgroundgc G，进入并发标记周期；若后台已在运行但当前 G 分配过快，则调用 gcAssistAlloc 就地偿还“标记债务”，防止分配线程领先标记线程导致堆失控。用户亦可通过 GODEBUG&#x3D;gctrace&#x3D;1 观察各阶段耗时，或通过 runtime.GC 强制进入同步模式，以阻塞方式完成全周期。</p>
+<p>并发周期内部被精密切分为 SCAN、MARK、MARK TERMINATION、SWEEP 四个节拍，仅在首尾两点短暂 STW。SCAN 阶段运行时先 stopTheWorld 完成根集快照，随即 startTheWorld 释放所有 P，后台 mark worker 与用户代码并行，将灰对象扩散为黑；写屏障全程开启，确保新写入的指针不会破坏“黑不指白”不变式。两轮 mark 结束后，运行时再短暂冻结，完成 data&#x2F;bss 再扫描与全局队列归并，随后进入并发清扫。整个过程中 BlackenEnabled 开关精准控制“仅标记线程可染黑”这一临界属性，bgMark1&#x2F;2 信号则协调根集与增量对象的两轮收敛，使 STW 总时长压至亚毫秒级。通过“反馈控制器 + 协程 assist + 分段并发”三级联动，Go 在保持百 GB 级堆高吞吐的同时，把最长停顿控制在 1 ms 以内，实现实时敏感场景下的平滑回收。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mgc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gcinit</span><span class="hljs-params">()</span></span> &#123;<br>    work.markfor = parforalloc(_MaxGcproc)<br>    setGCPercent(readgogc())          <span class="hljs-comment">// 默认 100</span><br>    memstats.next_gc = heapminimum    <span class="hljs-comment">// 4 MB</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">readgogc</span><span class="hljs-params">()</span></span> <span class="hljs-type">int32</span> &#123;<br>    p := gogetenv(<span class="hljs-string">&quot;GOGC&quot;</span>)<br>    <span class="hljs-keyword">if</span> p == <span class="hljs-string">&quot;&quot;</span> &#123; <span class="hljs-keyword">return</span> <span class="hljs-number">100</span> &#125;<br>    <span class="hljs-keyword">if</span> p == <span class="hljs-string">&quot;off&quot;</span> &#123; <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span> &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-type">int32</span>(atoi(p))<br>&#125;<br><span class="hljs-comment">// runtime/malloc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mallocgc</span><span class="hljs-params">(size <span class="hljs-type">uintptr</span>, typ *_type, flags <span class="hljs-type">uint32</span>)</span></span> unsafe.Pointer &#123;<br>    <span class="hljs-keyword">if</span> gcphase == _GCmarktermination || gcBlackenPromptly &#123;<br>        systemstack(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123; gcmarknewobject_m(<span class="hljs-type">uintptr</span>(x), size) &#125;)<br>    &#125;<br>    <span class="hljs-keyword">if</span> shouldhelpgc &amp;&amp; shouldtriggergc() &#123;<br>        startGC(gcBackgroundMode, <span class="hljs-literal">false</span>)<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> gcBlackenEnabled != <span class="hljs-number">0</span> &#123;<br>        gcAssistAlloc(size, shouldhelpgc)<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> shouldhelpgc &amp;&amp; bggc.working != <span class="hljs-number">0</span> &#123;<br>        Gosched()<br>    &#125;<br>    <span class="hljs-keyword">return</span> x<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">shouldtriggergc</span><span class="hljs-params">()</span></span> <span class="hljs-type">bool</span> &#123;<br>    <span class="hljs-keyword">return</span> memstats.heap_live &gt;= memstats.next_gc &amp;&amp; atomicloaduint(&amp;bggc.working) == <span class="hljs-number">0</span><br>&#125;<br><span class="hljs-comment">// runtime/mgc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">startGC</span><span class="hljs-params">(mode <span class="hljs-type">int</span>, forceTrigger <span class="hljs-type">bool</span>)</span></span> &#123;<br>    <span class="hljs-keyword">if</span> mode != gcBackgroundMode &#123;<br>        gc(mode)<br>        <span class="hljs-keyword">return</span><br>    &#125;<br>    <span class="hljs-keyword">if</span> !(forceTrigger || shouldtriggergc()) &#123; <span class="hljs-keyword">return</span> &#125;<br>    <span class="hljs-keyword">if</span> !bggc.started &#123;<br>        bggc.working = <span class="hljs-number">1</span><br>        bggc.started = <span class="hljs-literal">true</span><br>        <span class="hljs-keyword">go</span> backgroundgc()<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> atomicloaduint(&amp;bggc.working) == <span class="hljs-number">0</span> &#123;<br>        bggc.working = <span class="hljs-number">1</span><br>        ready(bggc.g, <span class="hljs-number">0</span>)<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">backgroundgc</span><span class="hljs-params">()</span></span> &#123;<br>    bggc.g = getg()<br>    <span class="hljs-keyword">for</span> &#123;<br>        gc(gcBackgroundMode)<br>        bggc.working = <span class="hljs-number">0</span><br>        goparkunlock(&amp;bggc.lock, <span class="hljs-string">&quot;Concurrent GC wait&quot;</span>, traceEvGoBlock, <span class="hljs-number">1</span>)<br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mgc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gc</span><span class="hljs-params">(mode <span class="hljs-type">int</span>)</span></span> &#123;<br>    <span class="hljs-keyword">if</span> mode == gcBackgroundMode &#123;<br>        gcBgMarkStartWorkers()<br>    &#125;<br>    systemstack(stopTheWorldWithSema)<br>    finishsweep_m()<br>    clearpools()<br>    gcResetMarkState()<br>    <span class="hljs-keyword">if</span> mode == gcBackgroundMode &#123;<br>        gcController.startCycle()<br>        setGCPhase(_GCscan)<br>        gcBgMarkPrepare()<br>        atomicstore(&amp;gcBlackenEnabled, <span class="hljs-number">1</span>)<br>        startTheWorldWithSema()        <span class="hljs-comment">// --- SCAN 结束，并发 MARK 开始</span><br>        work.bgMark1.wait()<br>        markroot(<span class="hljs-literal">nil</span>, RootData, RootBss)<br>        gcBlackenPromptly = <span class="hljs-literal">true</span><br>        work.bgMark2.wait()<br>        systemstack(stopTheWorldWithSema)<br>    &#125;<br>    gcFlushGCWork()<br>    gcController.endCycle()<br>    atomicstore(&amp;gcBlackenEnabled, <span class="hljs-number">0</span>)<br>    gcBlackenPromptly = <span class="hljs-literal">false</span><br>    setGCPhase(_GCmarktermination)<br>    gcMark(startTime)<br>    setGCPhase(_GCoff)<br>    gcsweep(mode)<br>    startTheWorldWithSema()<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>17.4标记<br>Go 的并发标记阶段以“扫描”与“标记”两级流水线推进：扫描仅由当前线程在 STW 快照内完成，负责把全局根与全部 G 的栈一次性压入全局灰队列；随后启动的标记阶段则由绑定到各 P 的 MarkWorker 并行执行，它们不断从本地或全局队列取出灰色对象，调用 scanobject 将其子指针染灰、自身染黑，直至全队列为空。整个过程通过 gcWork 的 lock-free 双端队列实现任务窃取，保证负载均衡；写屏障则确保用户代码在并发期间对指针的每一次写操作都不会破坏三色不变式，使“标记”与“赋值”得以真正重叠执行。</p>
+<p>扫描函数 gcscan_m 借助 parfor 框架顺序处理 _RootCount+allgs 个任务单元，依次扫描 data、bss、finalizer、cache 刷新以及每个 G 的栈；scanblock 按位图逐字确认合法指针，通过 greyobject 把未标记单元推入 gcw，最终统一上交 work.full 全局队列。gcResetGState 为每个 G 重置 gcscanvalid 与 goscandone 标志，避免重复扫描；若处于 mark termination 阶段，还会顺带执行 shrinkstack 压缩栈空间，确保根集精准且轻量。</p>
+<p>标记阶段由三种模式的 MarkWorker 协同：Dedicated 模式独占 P 全力染黑直至全局队列为空；Fractional 与 Idle 模式则允许被抢占，在无法偷取任务时主动退出，把算力及时归还给调度器。gcDrain 循环调用 gcw.get() 获取对象地址，交由 scanobject 按 span 位图展开其子指针，再次写回 gcw；当 work.nwait&gt;0 且全局队列告急时，gcw.balance() 会把本地缓存切一半给空转 Worker，以加速收敛。两轮 mark 信号 bgMark1&#x2F;2 分别对应“根集扩散完成”与“增量对象处理完成”，只有 Dedicated Worker 在观察到全局队列为空且 nproc 等待计数归零后，才会向控制器发送对应信号，触发后续 STW 终结与清扫。通过“根集快照—并发扩散—任务窃取—信号同步”四级节拍，Go 在保持亚毫秒级停顿的同时，可把百 GB 级堆的标记时间均摊到业务线程之中，实现高吞吐与低延迟兼得。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mgcmark.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gcscan_m</span><span class="hljs-params">()</span></span> &#123;<br>    local_allglen := gcResetGState()<br>    useOneP := <span class="hljs-type">uint32</span>(<span class="hljs-number">1</span>)<br>    parforsetup(work.markfor, useOneP, <span class="hljs-type">uint32</span>(_RootCount+local_allglen), <span class="hljs-literal">false</span>, markroot)<br>    parfordo(work.markfor)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">markroot</span><span class="hljs-params">(desc *parfor, i <span class="hljs-type">uint32</span>)</span></span> &#123;<br>    <span class="hljs-keyword">var</span> gcw gcWork<br>    <span class="hljs-keyword">switch</span> i &#123;<br>    <span class="hljs-keyword">case</span> _RootData, _RootBss, _RootFinalizers, _RootSpans, _RootFlushCaches:<br>        <span class="hljs-keyword">if</span> gcphase == _GCscan &#123; flushallmcaches() &#125;<br>    <span class="hljs-keyword">default</span>:<br>        gp := allgs[i-_RootCount]<br>        <span class="hljs-keyword">if</span> gcphase == _GCmarktermination &#123; shrinkstack(gp) &#125;<br>        scang(gp)<br>    &#125;<br>    gcw.dispose()<br>&#125;<br><span class="hljs-comment">// runtime/mgcmark.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">scanblock</span><span class="hljs-params">(b0, n0 <span class="hljs-type">uintptr</span>, ptrmask *<span class="hljs-type">uint8</span>, gcw *gcWork)</span></span> &#123;<br>    <span class="hljs-keyword">for</span> i := <span class="hljs-type">uintptr</span>(<span class="hljs-number">0</span>); i &lt; n0; &#123;<br>        bits := <span class="hljs-type">uint32</span>(*addb(ptrmask, i/(ptrSize*<span class="hljs-number">8</span>)))<br>        <span class="hljs-keyword">for</span> j := <span class="hljs-number">0</span>; j &lt; <span class="hljs-number">8</span> &amp;&amp; i &lt; n0; j++ &#123;<br>            <span class="hljs-keyword">if</span> bits&amp;<span class="hljs-number">1</span> != <span class="hljs-number">0</span> &#123;<br>                obj := *(*<span class="hljs-type">uintptr</span>)(unsafe.Pointer(b0 + i))<br>                <span class="hljs-keyword">if</span> obj != <span class="hljs-number">0</span> &amp;&amp; arena_start &lt;= obj &amp;&amp; obj &lt; arena_used &#123;<br>                    <span class="hljs-keyword">if</span> obj, hbits, span := heapBitsForObject(obj); obj != <span class="hljs-number">0</span> &#123;<br>                        greyobject(obj, b0, i, hbits, span, gcw)<br>                    &#125;<br>                &#125;<br>            &#125;<br>            bits &gt;&gt;= <span class="hljs-number">1</span><br>            i += ptrSize<br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">greyobject</span><span class="hljs-params">(obj, base, off <span class="hljs-type">uintptr</span>, hbits heapBits, span *mspan, gcw *gcWork)</span></span> &#123;<br>    <span class="hljs-keyword">if</span> hbits.isMarked() &#123; <span class="hljs-keyword">return</span> &#125;<br>    hbits.setMarked()<br>    gcw.put(obj)<br>&#125;<br><span class="hljs-comment">// runtime/mgc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gcBgMarkWorker</span><span class="hljs-params">(p *p)</span></span> &#123;<br>    gp := getg()<br>    p.gcBgMarkWorker = gp<br>    notewakeup(&amp;work.bgMarkReady)<br>    <span class="hljs-keyword">for</span> &#123;<br>        gopark(..., <span class="hljs-string">&quot;mark worker (idle)&quot;</span>, ..., <span class="hljs-number">0</span>)<br>        <span class="hljs-keyword">if</span> gcBlackenEnabled == <span class="hljs-number">0</span> &#123; throw(<span class="hljs-string">&quot;blackening not enabled&quot;</span>) &#125;<br>        <span class="hljs-keyword">switch</span> p.gcMarkWorkerMode &#123;<br>        <span class="hljs-keyword">case</span> gcMarkWorkerDedicatedMode:<br>            gcDrain(&amp;p.gcw, gcBgCreditSlack)<br>            done = <span class="hljs-literal">true</span><br>        <span class="hljs-keyword">case</span> gcMarkWorkerFractionalMode, gcMarkWorkerIdleMode:<br>            gcDrainUntilPreempt(&amp;p.gcw, gcBgCreditSlack)<br>            p.gcw.dispose()<br>            done = xadd(&amp;work.nwait, +<span class="hljs-number">1</span>) == work.nproc &amp;&amp; work.full == <span class="hljs-number">0</span> &amp;&amp; work.partial == <span class="hljs-number">0</span><br>        &#125;<br>        <span class="hljs-keyword">if</span> done &#123;<br>            <span class="hljs-keyword">if</span> gcBlackenPromptly &#123;<br>                work.bgMark2.complete()<br>            &#125; <span class="hljs-keyword">else</span> &#123;<br>                work.bgMark1.complete()<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mgcmark.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gcDrain</span><span class="hljs-params">(gcw *gcWork, flushScanCredit <span class="hljs-type">int64</span>)</span></span> &#123;<br>    <span class="hljs-keyword">for</span> &#123;<br>        <span class="hljs-keyword">if</span> work.nwait &gt; <span class="hljs-number">0</span> &amp;&amp; work.full == <span class="hljs-number">0</span> &#123; gcw.balance() &#125;<br>        b := gcw.get()<br>        <span class="hljs-keyword">if</span> b == <span class="hljs-number">0</span> &#123; <span class="hljs-keyword">break</span> &#125;<br>        scanobject(b, gcw)<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>并发标记阶段，Go 把“扫描”与“标记”拆成两条时间线：扫描仅在首轮 STW 里由当前线程串行完成，负责把根集一次性压入全局队列；随后的标记则交由与 P 绑定的 MarkWorker 并行执行，它们不断调用 scanobject 将灰色对象展开为黑色，并把新发现的子指针写回 gcWork，实现“边染黑、边扩散”的流水线。scanobject 不关心目标真实类型，仅按 span 的 elemsize 与 heap bitmap 按字长步进：一旦发现指针位被置位，即通过 heapBitsForObject 取得子对象地址，若未标记则立即 greyobject 入队；当前对象遍历完毕即被视为黑色，从队列隐式移除。该策略保证任意对象只需一次顺序扫描，且全程无锁访问 bitmap，兼顾速度与安全。</p>
+<p>当写屏障或抢占标志触发，gcDrain 会主动调用 gcw.balance() 把本地缓存的一半任务上交，确保空闲 P 能及时偷取；tryGet 失败即立即退出，让 Dedicated 模式以外的 Worker 可被抢占。两轮 mark 信号 bgMark1&#x2F;2 分别对应“根集扩散完成”与“增量对象收敛完成”，只有最后一个完成任务的 Worker 才会向 GC 线程发送对应信号，触发后续 STW 终结。</p>
+<p>若用户通过 GODEBUG 禁用并发标记，运行时退回到阻塞模式 gcMark：在 STW 内一次性唤醒 nproc 个 M，所有 CPU 同时执行 parfor 框架下的 markroot 与 gcDrain，完成全图标记。helpgc 按序为额外 M 绑定 P 并设置 helpgc 标志，被唤醒的 M 在 stopm→gchelper 路径中参与同一 parfor，最后通过 notesleep&#x2F;notesleep 配对等待全部完成。无论并发还是阻塞，标记结束后控制器都会根据 heap_reachable 与 triggerRatio 重新计算 next_gc，使下一轮回收阈值随存活量动态漂移，实现“回收越快、阈值越高、CPU 越省”的自适应闭环。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mgcmark.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">scanobject</span><span class="hljs-params">(b <span class="hljs-type">uintptr</span>, gcw *gcWork)</span></span> &#123;<br>    hbits := heapBitsForAddr(b)<br>    s   := spanOfUnchecked(b)<br>    n   := s.elemsize<br>    <span class="hljs-keyword">for</span> i := <span class="hljs-type">uintptr</span>(<span class="hljs-number">0</span>); i &lt; n; i += ptrSize &#123;<br>        bits := hbits.bits()<br>        <span class="hljs-keyword">if</span> i &gt;= <span class="hljs-number">2</span>*ptrSize &amp;&amp; bits&amp;bitMarked == <span class="hljs-number">0</span> &#123;<br>            <span class="hljs-keyword">break</span> <span class="hljs-comment">// 后续无指针</span><br>        &#125;<br>        <span class="hljs-keyword">if</span> bits&amp;bitPointer == <span class="hljs-number">0</span> &#123;<br>            <span class="hljs-keyword">continue</span><br>        &#125;<br>        obj := *(*<span class="hljs-type">uintptr</span>)(unsafe.Pointer(b + i))<br>        <span class="hljs-keyword">if</span> obj != <span class="hljs-number">0</span> &amp;&amp; arena_start &lt;= obj &amp;&amp; obj &lt; arena_used &amp;&amp; obj-b &gt;= n &#123;<br>            <span class="hljs-keyword">if</span> obj, hbits, span := heapBitsForObject(obj); obj != <span class="hljs-number">0</span> &#123;<br>                greyobject(obj, b, i, hbits, span, gcw)<br>            &#125;<br>        &#125;<br>        bits &gt;&gt;= <span class="hljs-number">1</span><br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mgcmark.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gcDrain</span><span class="hljs-params">(gcw *gcWork, flushScanCredit <span class="hljs-type">int64</span>)</span></span> &#123;<br>    <span class="hljs-keyword">for</span> &#123;<br>        <span class="hljs-keyword">if</span> gp.preempt &#123; <span class="hljs-keyword">break</span> &#125;<br>        <span class="hljs-keyword">if</span> work.full == <span class="hljs-number">0</span> &amp;&amp; work.partial == <span class="hljs-number">0</span> &#123; <span class="hljs-comment">// 全局空，主动上交</span><br>            gcw.balance()<br>        &#125;<br>        b := gcw.tryGet()<br>        <span class="hljs-keyword">if</span> b == <span class="hljs-number">0</span> &#123; <span class="hljs-keyword">break</span> &#125;<br>        scanobject(b, gcw)<br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mgc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gcMark</span><span class="hljs-params">(startTime <span class="hljs-type">int64</span>)</span></span> &#123;<br>    gcFlushGCWork()<br>    work.nproc = <span class="hljs-type">uint32</span>(gcprocs(<span class="hljs-number">0</span>))<br>    parforsetup(work.markfor, work.nproc, <span class="hljs-type">uint32</span>(_RootCount+allglen), <span class="hljs-literal">false</span>, markroot)<br>    <span class="hljs-keyword">if</span> work.nproc &gt; <span class="hljs-number">1</span> &#123;<br>        noteclear(&amp;work.alldone)<br>        helpgc(<span class="hljs-type">int32</span>(work.nproc))   <span class="hljs-comment">// 唤醒额外 M</span><br>    &#125;<br>    gchelperstart()               <span class="hljs-comment">// 当前 M 也参与</span><br>    parfordo(work.markfor)<br>    <span class="hljs-keyword">var</span> gcw gcWork<br>    gcDrain(&amp;gcw, <span class="hljs-number">-1</span>)<br>    gcw.dispose()<br>    <span class="hljs-keyword">if</span> work.nproc &gt; <span class="hljs-number">1</span> &#123;<br>        notesleep(&amp;work.alldone)  <span class="hljs-comment">// 等待全部完成</span><br>    &#125;<br>    memstats.next_gc = <span class="hljs-type">uint64</span>(<span class="hljs-type">float64</span>(memstats.heap_reachable) * (<span class="hljs-number">1</span> + gcController.triggerRatio))<br>    <span class="hljs-keyword">if</span> memstats.next_gc &lt; heapminimum &#123;<br>        memstats.next_gc = heapminimum<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>17.4清理和监控<br>标记终止后，Go 立即进入并发清理阶段。与标记的复杂协作相比，清理只做一件简单的事：遍历所有 span，把其中未被染黑的白色对象挂回各自 freelist，供下次分配复用。运行时为此维护一个专门的清扫 goroutine（bgsweep），它在 gcenable 阶段即被创建，平时处于 gopark 休眠；当 GC 把 sweepgen 加 2 后，gcSweep 通过 ready 将其唤醒，bgsweep 便循环调用 sweepone，直到全部 span 处理完毕再次休眠。若用户通过 GODEBUG 禁用并发清扫，运行时退回到阻塞模式，在 STW 内一次性把所有 span 扫光，再返回用户代码。</p>
+<p>sweepone 按索引顺序遍历 h_allspans，跳过非 MSpanInUse 以及已清扫的节点，对剩余 span 执行 mSpanSweep；该函数参考第 16 章所述，把可回收对象串成链表后交还 central 或 heap，并返回已释放页数。若某次调用返回 0，表示全部 span 已扫完，mheap_.sweepdone 被置 1，bgsweep 在 Gosched 让权后再次休眠。由于清扫与分配可并行，运行时不做任何加锁，仅依赖 sweepgen 代龄区分“待扫”与“已扫”，使清扫延迟对 mutator 几乎不可见。</p>
+<p>为防止“瞬时巨分配”把 next_gc 推得过高、导致长期不触发 GC 的“隐性泄漏”，sysmon 每 2 min 强制检查一次：若距上次回收已超过 forcegcperiod 且后台未在工作，便把 forcegc.g 注入全局队列，以 forceTrigger&#x3D;true 启动一轮完整 GC。该“保险丝”机制与并发清扫共同构成 Go 的内存未尾防线，无论业务如何突发，都能保证闲置内存在分钟级内被回收、物理页在必要时由 scavenger 退还给内核，实现“秒级分配、分钟级回收、亚毫秒级停顿”的稳态循环。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/mgc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">gcSweep</span><span class="hljs-params">(mode <span class="hljs-type">int</span>)</span></span> &#123;<br>    gcCopySpans()<br>    mheap_.sweepgen += <span class="hljs-number">2</span><br>    mheap_.sweepdone = <span class="hljs-number">0</span><br>    sweep.spanidx = <span class="hljs-number">0</span><br>    <span class="hljs-keyword">if</span> !ConcurrentSweep || mode == gcForceBlockMode &#123;<br>        <span class="hljs-keyword">for</span> gosweepone() != ^<span class="hljs-type">uintptr</span>(<span class="hljs-number">0</span>) &#123;<br>            sweep.npausesweep++<br>        &#125;<br>        <span class="hljs-keyword">return</span><br>    &#125;<br>    <span class="hljs-keyword">if</span> sweep.parked &#123;<br>        sweep.parked = <span class="hljs-literal">false</span><br>        ready(sweep.g, <span class="hljs-number">0</span>)<br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mgcsweep.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">bgsweep</span><span class="hljs-params">(c <span class="hljs-keyword">chan</span> <span class="hljs-type">int</span>)</span></span> &#123;<br>    sweep.g = getg()<br>    sweep.parked = <span class="hljs-literal">true</span><br>    c &lt;- <span class="hljs-number">1</span><br>    goparkunlock(&amp;sweep.lock, <span class="hljs-string">&quot;GC sweep wait&quot;</span>, traceEvGoBlock, <span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">for</span> &#123;<br>        <span class="hljs-keyword">for</span> gosweepone() == ^<span class="hljs-type">uintptr</span>(<span class="hljs-number">0</span>) &#123;<br>            Gosched()<br>        &#125;<br>        <span class="hljs-keyword">if</span> !gosweepdone() &#123; <span class="hljs-keyword">continue</span> &#125;<br>        sweep.parked = <span class="hljs-literal">true</span><br>        goparkunlock(&amp;sweep.lock, <span class="hljs-string">&quot;GC sweep wait&quot;</span>, traceEvGoBlock, <span class="hljs-number">1</span>)<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">sweepone</span><span class="hljs-params">()</span></span> <span class="hljs-type">uintptr</span> &#123;<br>    sg := mheap_.sweepgen<br>    <span class="hljs-keyword">for</span> &#123;<br>        idx := xadd(&amp;sweep.spanidx, <span class="hljs-number">1</span>) - <span class="hljs-number">1</span><br>        <span class="hljs-keyword">if</span> idx &gt;= <span class="hljs-type">uint32</span>(<span class="hljs-built_in">len</span>(work.spans)) &#123;<br>            atomicstore(&amp;mheap_.sweepdone, <span class="hljs-number">1</span>)<br>            <span class="hljs-keyword">return</span> ^<span class="hljs-type">uintptr</span>(<span class="hljs-number">0</span>)<br>        &#125;<br>        s := work.spans[idx]<br>        <span class="hljs-keyword">if</span> s.state != mSpanInUse &#123; s.sweepgen = sg; <span class="hljs-keyword">continue</span> &#125;<br>        <span class="hljs-keyword">if</span> s.sweepgen != sg<span class="hljs-number">-2</span> || !cas(&amp;s.sweepgen, sg<span class="hljs-number">-2</span>, sg<span class="hljs-number">-1</span>) &#123; <span class="hljs-keyword">continue</span> &#125;<br>        npages := s.npages<br>        <span class="hljs-keyword">if</span> mSpanSweep(s, <span class="hljs-literal">false</span>) &#123; npages = <span class="hljs-number">0</span> &#125;<br>        <span class="hljs-keyword">return</span> npages<br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/proc.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">sysmon</span><span class="hljs-params">()</span></span> &#123;<br>    forcegcperiod := <span class="hljs-type">int64</span>(<span class="hljs-number">2</span> * <span class="hljs-number">60</span> * <span class="hljs-number">1e9</span>)<br>    <span class="hljs-keyword">for</span> &#123;<br>        now := nanotime()<br>        lastgc := <span class="hljs-type">int64</span>(atomicload64(&amp;memstats.last_gc))<br>        <span class="hljs-keyword">if</span> lastgc != <span class="hljs-number">0</span> &amp;&amp; now-lastgc &gt; forcegcperiod &amp;&amp;<br>           atomicload(&amp;forcegc.idle) != <span class="hljs-number">0</span> &amp;&amp; atomicloaduint(&amp;bggc.working) == <span class="hljs-number">0</span> &#123;<br>            injectglist(forcegc.g)<br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">init</span><span class="hljs-params">()</span></span> &#123; <span class="hljs-keyword">go</span> forcegchelper() &#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">forcegchelper</span><span class="hljs-params">()</span></span> &#123;<br>    forcegc.g = getg()<br>    <span class="hljs-keyword">for</span> &#123;<br>        atomicstore(&amp;forcegc.idle, <span class="hljs-number">1</span>)<br>        goparkunlock(&amp;forcegc.lock, <span class="hljs-string">&quot;force gc (idle)&quot;</span>, traceEvGoBlock, <span class="hljs-number">1</span>)<br>        startGC(gcBackgroundMode, <span class="hljs-literal">true</span>) <span class="hljs-comment">// forceTrigger = true</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>Go 在垃圾回收的“扫描-标记-清理”主路径之外，还内置了三套辅助设施：并行任务框架 parfor、无锁任务队列 gcWork、以及细粒度内存统计 mstats。parfor 将“根集 + 全 G 栈”平分到最多 GOMAXPROCS 个线程，支持忙线程从慢线程偷取一半任务，保证 STW 快照在最短时间内完成；gcWork 以“本地缓存 ⇄ 全局 lock-free 栈”两级结构缓存灰色对象，put&#x2F;get 优先操作本线程的 workbuf，填满或耗尽时再与 work.full&#x2F;empty 批量交换，即避免全局争用，又保留窃取弹性。无锁栈采用 pointer+counter 打包成 64 bit 流水号，利用 Double-CAS 消除 ABA，使 push&#x2F;pop 在百核环境仍线性扩展。最后，mstats 在每次 span 分配&#x2F;回收、栈扩容&#x2F;收缩时即时更新，ReadMemStats 仅做一次性内存拷贝，并把栈占用从堆指标中剔除，向用户提供“逻辑堆”视角，方便定位业务层面的内存泄漏或分配热点。</p>
+<p>parfor 在初始化阶段把 n 个任务编号按区间均分到每个线程的 thr[pos] 字段；parfordo 先顺序消费本地区间，完成后随机挑选 victim 线程，通过 CAS 把对方剩余任务的后半段“剪”到自己名下，并累加 nsteal 计数。该策略使最晚结束的线程最多偷 O(log n) 次，即可让总完工时间逼近理论最小值。</p>
+<p>gcWork 的 putfull&#x2F;putempty 采用 lfstackpush，把 workbuf 当节点挂入 work.full&#x2F;empty 链表；get 时优先 getfull 取回一整块缓存，一次性提取 256 个灰色指针，减少全局访问次数。workbuf 大小固定在 2 kB 左右，恰好占满一条 cache-line，兼顾容量与局部性。<br>mstats 中的 heap_live 仅统计黑色及新分配对象，不含白色垃圾，因此 next_gc 以 heap_live×(1+GOGC&#x2F;100) 计算，可真实反映“存活增长”而非“瞬时峰值”；heap_idle、heap_released 分别记录虚拟地址与已归还物理页，配合 scavenger 日志，可一眼看出进程 RSS 与 VMA 的差值，判断是否需要调大 GOGC 或降低触发频率。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runtime/parfor.go</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">parforSetup</span><span class="hljs-params">(desc *parfor, nthr, n <span class="hljs-type">uint32</span>, wait <span class="hljs-type">bool</span>, body <span class="hljs-keyword">func</span>(*parfor, <span class="hljs-type">uint32</span>)</span></span>) &#123;<br>    desc.body = body<br>    desc.nthr = nthr<br>    desc.cnt = n<br>    <span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> desc.thr &#123;<br>        begin := <span class="hljs-type">uint64</span>(n) * <span class="hljs-type">uint64</span>(i) / <span class="hljs-type">uint64</span>(nthr)<br>        end := <span class="hljs-type">uint64</span>(n) * <span class="hljs-type">uint64</span>(i+<span class="hljs-number">1</span>) / <span class="hljs-type">uint64</span>(nthr)<br>        desc.thr[i].pos = <span class="hljs-type">uint64</span>(begin) | <span class="hljs-type">uint64</span>(end)&lt;&lt;<span class="hljs-number">32</span><br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">parforDo</span><span class="hljs-params">(desc *parfor)</span></span> &#123;<br>    tid := xadd(&amp;desc.thrseq, <span class="hljs-number">1</span>) - <span class="hljs-number">1</span><br>    body := desc.body<br>    <span class="hljs-keyword">if</span> desc.nthr == <span class="hljs-number">1</span> &#123;<br>        <span class="hljs-keyword">for</span> i := <span class="hljs-type">uint32</span>(<span class="hljs-number">0</span>); i &lt; desc.cnt; i++ &#123; body(desc, i) &#125;<br>        <span class="hljs-keyword">return</span><br>    &#125;<br>    me := &amp;desc.thr[tid]<br>    <span class="hljs-keyword">for</span> &#123;<br>        <span class="hljs-keyword">for</span> &#123;<br>            pos := xadd64(&amp;me.pos, <span class="hljs-number">1</span>)<br>            begin, end := <span class="hljs-type">uint32</span>(pos<span class="hljs-number">-1</span>), <span class="hljs-type">uint32</span>(pos&gt;&gt;<span class="hljs-number">32</span>)<br>            <span class="hljs-keyword">if</span> begin &lt; end &#123; body(desc, begin); <span class="hljs-keyword">continue</span> &#125;<br>            <span class="hljs-keyword">break</span><br>        &#125;<br>        <span class="hljs-comment">// 偷任务逻辑</span><br>        victim := fastrand1() % (desc.nthr - <span class="hljs-number">1</span>)<br>        <span class="hljs-keyword">if</span> victim &gt;= tid &#123; victim++ &#125;<br>        victimpos := &amp;desc.thr[victim].pos<br>        <span class="hljs-keyword">for</span> &#123;<br>            pos := atomicload64(victimpos)<br>            begin, end := <span class="hljs-type">uint32</span>(pos), <span class="hljs-type">uint32</span>(pos&gt;&gt;<span class="hljs-number">32</span>)<br>            <span class="hljs-keyword">if</span> begin+<span class="hljs-number">1</span> &gt;= end &#123; <span class="hljs-keyword">break</span> &#125;<br>            begin2 := begin + (end-begin)/<span class="hljs-number">2</span><br>            newpos := <span class="hljs-type">uint64</span>(begin) | <span class="hljs-type">uint64</span>(begin2)&lt;&lt;<span class="hljs-number">32</span><br>            <span class="hljs-keyword">if</span> cas64(victimpos, pos, newpos) &#123;<br>                atomicstore64(&amp;me.pos, <span class="hljs-type">uint64</span>(begin2)|<span class="hljs-type">uint64</span>(end)&lt;&lt;<span class="hljs-number">32</span>)<br>                me.nsteal++<br>                <span class="hljs-keyword">goto</span> havework<br>            &#125;<br>        &#125;<br>        <span class="hljs-comment">// 偷不到则打卡下班</span><br>        <span class="hljs-keyword">if</span> xadd(&amp;desc.done, <span class="hljs-number">1</span>)+<span class="hljs-number">1</span> == desc.nthr &#123; <span class="hljs-keyword">return</span> &#125;<br>        <span class="hljs-comment">// 等待全部完成</span><br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mgcwork.go</span><br><span class="hljs-keyword">type</span> gcWork <span class="hljs-keyword">struct</span>&#123; wbuf wbufptr &#125;<br><br><span class="hljs-keyword">type</span> workbuf <span class="hljs-keyword">struct</span> &#123;<br>    workbufhdr<br>    obj [_Workbufsize/ptrSize]<span class="hljs-type">uintptr</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ww *gcWork)</span></span> put(obj <span class="hljs-type">uintptr</span>) &#123;<br>    w := (*gcWork)(noescape(unsafe.Pointer(ww)))<br>    wbuf := w.wbuf.ptr()<br>    <span class="hljs-keyword">if</span> wbuf == <span class="hljs-literal">nil</span> &#123;<br>        wbuf = getpartialorempty(<span class="hljs-number">42</span>)<br>        w.wbuf = wbufptrOf(wbuf)<br>    &#125;<br>    wbuf.obj[wbuf.nobj] = obj<br>    wbuf.nobj++<br>    <span class="hljs-keyword">if</span> wbuf.nobj == <span class="hljs-built_in">len</span>(wbuf.obj) &#123;<br>        putfull(wbuf, <span class="hljs-number">50</span>)<br>        w.wbuf = <span class="hljs-number">0</span><br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ww *gcWork)</span></span> get() <span class="hljs-type">uintptr</span> &#123;<br>    w := (*gcWork)(noescape(unsafe.Pointer(ww)))<br>    wbuf := w.wbuf.ptr()<br>    <span class="hljs-keyword">if</span> wbuf == <span class="hljs-literal">nil</span> &#123;<br>        wbuf = getfull(<span class="hljs-number">103</span>)<br>        <span class="hljs-keyword">if</span> wbuf == <span class="hljs-literal">nil</span> &#123; <span class="hljs-keyword">return</span> <span class="hljs-number">0</span> &#125;<br>        w.wbuf = wbufptrOf(wbuf)<br>    &#125;<br>    wbuf.nobj--<br>    obj := wbuf.obj[wbuf.nobj]<br>    <span class="hljs-keyword">if</span> wbuf.nobj == <span class="hljs-number">0</span> &#123;<br>        putempty(wbuf, <span class="hljs-number">115</span>)<br>        w.wbuf = <span class="hljs-number">0</span><br>    &#125;<br>    <span class="hljs-keyword">return</span> obj<br>&#125;<br><span class="hljs-comment">// runtime/lfstack.go</span><br><span class="hljs-keyword">type</span> lfnode <span class="hljs-keyword">struct</span>&#123; next <span class="hljs-type">uint64</span> &#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">lfstackPush</span><span class="hljs-params">(head *<span class="hljs-type">uint64</span>, node *lfnode)</span></span> &#123;<br>    node.pushcnt++<br>    <span class="hljs-built_in">new</span> := lfstackPack(node, node.pushcnt)<br>    <span class="hljs-keyword">for</span> &#123;<br>        old := atomicload64(head)<br>        node.next = old<br>        <span class="hljs-keyword">if</span> cas64(head, old, <span class="hljs-built_in">new</span>) &#123; <span class="hljs-keyword">break</span> &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">lfstackPop</span><span class="hljs-params">(head *<span class="hljs-type">uint64</span>)</span></span> unsafe.Pointer &#123;<br>    <span class="hljs-keyword">for</span> &#123;<br>        old := atomicload64(head)<br>        <span class="hljs-keyword">if</span> old == <span class="hljs-number">0</span> &#123; <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span> &#125;<br>        node, _ := lfstackUnpack(old)<br>        next := atomicload64(&amp;node.next)<br>        <span class="hljs-keyword">if</span> cas64(head, old, next) &#123; <span class="hljs-keyword">return</span> unsafe.Pointer(node) &#125;<br>    &#125;<br>&#125;<br><span class="hljs-comment">// runtime/mstats.go</span><br><span class="hljs-keyword">type</span> mstats <span class="hljs-keyword">struct</span> &#123;<br>    alloc       <span class="hljs-type">uint64</span><br>    total_alloc <span class="hljs-type">uint64</span><br>    sys         <span class="hljs-type">uint64</span><br>    nmalloc     <span class="hljs-type">uint64</span><br>    nfree       <span class="hljs-type">uint64</span><br>    heap_alloc  <span class="hljs-type">uint64</span><br>    heap_sys    <span class="hljs-type">uint64</span><br>    heap_idle   <span class="hljs-type">uint64</span><br>    heap_inuse  <span class="hljs-type">uint64</span><br>    heap_released <span class="hljs-type">uint64</span><br>    heap_objects <span class="hljs-type">uint64</span><br>    stacks_inuse <span class="hljs-type">uint64</span><br>    mspan_inuse  <span class="hljs-type">uint64</span><br>    mcache_inuse <span class="hljs-type">uint64</span><br>    next_gc      <span class="hljs-type">uint64</span><br>    last_gc      <span class="hljs-type">uint64</span><br>    pause_total_ns <span class="hljs-type">uint64</span><br>    pause_ns     [<span class="hljs-number">256</span>]<span class="hljs-type">uint64</span><br>    pause_end    [<span class="hljs-number">256</span>]<span class="hljs-type">uint64</span><br>    numgc        <span class="hljs-type">uint32</span><br>    gc_cpu_fraction <span class="hljs-type">float64</span><br>    heap_live    <span class="hljs-type">uint64</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ReadMemStats</span><span class="hljs-params">(m *MemStats)</span></span> &#123;<br>    stopTheWorld(<span class="hljs-string">&quot;read mem stats&quot;</span>)<br>    systemstack(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123; readmemstats_m(m) &#125;)<br>    startTheWorld()<br>&#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go/" class="category-chain-item">go</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>go源码阅读2</div>
+      <div>http://example.com/2025/12/16/go源码阅读2/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年12月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/12/18/3652-%E6%8C%89%E7%AD%96%E7%95%A5%E4%B9%B0%E5%8D%96%E8%82%A1%E7%A5%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E6%97%B6%E6%9C%BA/" title="3652. 按策略买卖股票的最佳时机">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">3652. 按策略买卖股票的最佳时机</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/12/16/3562-%E6%8A%98%E6%89%A3%E4%BB%B7%E4%BA%A4%E6%98%93%E8%82%A1%E7%A5%A8%E7%9A%84%E6%9C%80%E5%A4%A7%E5%88%A9%E6%B6%A6/" title="3562. 折扣价交易股票的最大利润">
+                        <span class="hidden-mobile">3562. 折扣价交易股票的最大利润</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
