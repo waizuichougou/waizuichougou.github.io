@@ -228,6 +228,114 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2026/01/14/bitcask%E5%90%88%E5%B9%B6%E6%93%8D%E4%BD%9C/" target="_self">
+          bitcask合并操作
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/14/bitcask%E5%90%88%E5%B9%B6%E6%93%8D%E4%BD%9C/" target="_self">
+        <div>
+          merge操作主要是清理磁盘上的无用数据，避免由于数据增加无用数据一直占据数据目录的空间。 merge主要包括两个操作，一个是清理旧的数据文件，重写有效的数据。另一个是生成包含索引的hint文件。在执行merge操作的时候，我们要尽量保证不对前台的正常读写造成很大影响。 为避免清理无效数据时与主实例竞争资源，可采用隔离重写策略，在独立目录中启动临时数据库实例，逐一读取原数据文件，仅将内存索引验证有
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-14 15:37" pubdate>
+              2026-01-14
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/01/13/bitcask%E5%86%99%E6%95%B0%E6%8D%AE/" target="_self">
+          bitcask写数据
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/13/bitcask%E5%86%99%E6%95%B0%E6%8D%AE/" target="_self">
+        <div>
+          事务的ACID，一批数据要么全部写入成功，要么全部回滚。常用的方式包括WAL以及redo undo log。可以回CSP复习。 隔离性是最难实现的。 读未提交(存在的问题:脏读) 读提交(存在的问题:不可重复读) 可重复读(存在的问题:幻读) 串行化  并发控制的实现主要围绕事务隔离性展开，旨在确保多个事务并发执行时不会因交叉操作导致数据不一致。早期方案采用两阶段锁机制，即在事务执行过程中对操作对
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-13 13:45" pubdate>
+              2026-01-13
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2026/01/13/bitcask%E6%95%B0%E6%8D%AE%E6%96%87%E4%BB%B6/" target="_self">
           bitcask数据文件
         </a>
@@ -624,114 +732,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2026-01-04 16:55" pubdate>
               2026-01-04
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/31/1970-%E4%BD%A0%E8%83%BD%E7%A9%BF%E8%BF%87%E7%9F%A9%E9%98%B5%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%A4%A9/" target="_self">
-          1970. 你能穿过矩阵的最后一天
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/31/1970-%E4%BD%A0%E8%83%BD%E7%A9%BF%E8%BF%87%E7%9F%A9%E9%98%B5%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%A4%A9/" target="_self">
-        <div>
-          给你一个下标从 1 开始的二进制矩阵，其中 0 表示陆地，1 表示水域。同时给你 row 和 col 分别表示矩阵中行和列的数目。 一开始在第 0 天，整个 矩阵都是 陆地 。但每一天都会有一块新陆地被 水 淹没变成水域。给你一个下标从 1 开始的二维数组 cells ，其中 cells[i] &#x3D; [ri, ci] 表示在第 i 天，第 ri 行 ci 列（下标都是从 1 开始）的陆地会
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-31 11:46" pubdate>
-              2025-12-31
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/30/840-%E7%9F%A9%E9%98%B5%E4%B8%AD%E7%9A%84%E5%B9%BB%E6%96%B9/" target="_self">
-          840. 矩阵中的幻方
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/30/840-%E7%9F%A9%E9%98%B5%E4%B8%AD%E7%9A%84%E5%B9%BB%E6%96%B9/" target="_self">
-        <div>
-          3 x 3 的幻方是一个填充有 从 1 到 9  的不同数字的 3 x 3 矩阵，其中每行，每列以及两条对角线上的各数之和都相等。 给定一个由整数组成的row x col 的 grid，其中有多少个 3 × 3 的 “幻方” 子矩阵？ 注意：虽然幻方只能包含 1 到 9 的数字，但 grid 可以包含最多15的数字。 示例 1： 输入: grid &#x3D; [[4,3,8,4],[9,5,1,
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-30 12:54" pubdate>
-              2025-12-30
             </time>
           </div>
         
