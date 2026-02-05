@@ -1,0 +1,685 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="之前已经定义好了IOManager的接口，封装这一层主要是为了屏蔽上层调用者，并且可以后续接入不同IO类型比如MMap接下来实现如何打开数据文件，根据文件id和offset就可以读取写入 12345678910111213141516171819202122const (	DataFileNameSuffix    &#x3D; &quot;.data&quot;	HintFileName">
+<meta property="og:type" content="article">
+<meta property="og:title" content="bitcask数据文件">
+<meta property="og:url" content="http://example.com/2026/01/13/bitcask%E6%95%B0%E6%8D%AE%E6%96%87%E4%BB%B6/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="之前已经定义好了IOManager的接口，封装这一层主要是为了屏蔽上层调用者，并且可以后续接入不同IO类型比如MMap接下来实现如何打开数据文件，根据文件id和offset就可以读取写入 12345678910111213141516171819202122const (	DataFileNameSuffix    &#x3D; &quot;.data&quot;	HintFileName">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-01-13T02:32:27.000Z">
+<meta property="article:modified_time" content="2026-01-14T08:18:16.000Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>bitcask数据文件 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="bitcask数据文件"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-01-13 10:32" pubdate>
+          2026年1月13日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          12k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          97 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">bitcask数据文件</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>之前已经定义好了IOManager的接口，封装这一层主要是为了屏蔽上层调用者，并且可以后续接入不同IO类型比如MMap<br>接下来实现如何打开数据文件，根据文件id和offset就可以读取写入</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">const</span> (<br>	DataFileNameSuffix    = <span class="hljs-string">&quot;.data&quot;</span><br>	HintFileName          = <span class="hljs-string">&quot;hint-index&quot;</span><br>	MergeFinishedFileName = <span class="hljs-string">&quot;merge-finished&quot;</span><br>	SeqNoFileName         = <span class="hljs-string">&quot;seq-no&quot;</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">GetDataFileName</span><span class="hljs-params">(dirPath <span class="hljs-type">string</span>, fileId <span class="hljs-type">uint32</span>)</span></span> <span class="hljs-type">string</span> &#123;<br>	<span class="hljs-keyword">return</span> filepath.Join(dirPath, fmt.Sprintf(<span class="hljs-string">&quot;%09d&quot;</span>, fileId)+DataFileNameSuffix)<br>&#125;<br><br><span class="hljs-keyword">type</span> DataFile <span class="hljs-keyword">struct</span> &#123;<br>	FileId    <span class="hljs-type">uint32</span>        <span class="hljs-comment">// 文件id</span><br>	WriteOff  <span class="hljs-type">int64</span>         <span class="hljs-comment">// 文件写到了哪个位置</span><br>	IoManager fio.IOManager <span class="hljs-comment">// io 读写管理</span><br>&#125;<br><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">OpenDataFile</span><span class="hljs-params">(dirPath <span class="hljs-type">string</span>, fileId <span class="hljs-type">uint32</span>, ioType fio.FileIOType)</span></span> (*DataFile, <span class="hljs-type">error</span>) &#123;<br>	fileName := GetDataFileName(dirPath, fileId)<br>	<span class="hljs-keyword">return</span> newDataFile(fileName, fileId, ioType)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>接下来需要实现读取LogRecord的方法，这个方法比较重要因为打开bitcask实例和读取数据的过程都会用到。<br>一条LogRecord包括两部分：</p>
+<pre><code class="hljs">1.头部信息，包括元数据（CRC，Type,Key Size,Value Size）
+2.用户实际存储的Key，Value
+</code></pre>
+<p>存储keysize和valuesize是因为用户存储的数据大小是不确定的，在读取数据的时候读到keysize，valuesize就可以知道读取多少字节。<br>读取数据时先读取定长的header就可以知道key和value的大小了。</p>
+<p>在header中，crc占4字节，type占1字节，keysize和valuesize是变长的，如果不设置成变长会占据更多空间。从数据文件中读取的时候，<br>我们会选取最大的字节header数，反序列化时如果keysize和valuesize解码之后还有多余的字节会自动忽略。读的时候需要判断offset加headersize<br>是否超过文件的大小。拿到header之后如果keysize和valuesize都是0，说明读到了文件的末尾。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(df *DataFile)</span></span> ReadLogRecord(offset <span class="hljs-type">int64</span>) (*LogRecord, <span class="hljs-type">int64</span>, <span class="hljs-type">error</span>) &#123;<br>	fileSize, err := df.IoManager.Size()<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-number">0</span>, err<br>	&#125;<br><br>	<span class="hljs-comment">// 读取的最大 header 长度已经超过了文件的长度，则只需要读取到文件的末尾即可</span><br>	<span class="hljs-keyword">var</span> headerBytes <span class="hljs-type">int64</span> = maxLogRecordHeaderSize<br>	<span class="hljs-keyword">if</span> offset+maxLogRecordHeaderSize &gt; fileSize &#123;<br>		headerBytes = fileSize - offset<br>	&#125;<br><br>	<span class="hljs-comment">// Header</span><br>	headerBuf, err := df.readNBytes(headerBytes, offset)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-number">0</span>, err<br>	&#125;<br><br>	header, headerSize := decodeLogRecordHeader(headerBuf)<br>	<span class="hljs-comment">// 文件末尾，返回EOF</span><br>	<span class="hljs-keyword">if</span> header == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-number">0</span>, io.EOF<br>	&#125;<br>	<span class="hljs-keyword">if</span> header.crc == <span class="hljs-number">0</span> &amp;&amp; header.keySize == <span class="hljs-number">0</span> &amp;&amp; header.valueSize == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-number">0</span>, io.EOF<br>	&#125;<br><br>	keySize, valueSize := <span class="hljs-type">int64</span>(header.keySize), <span class="hljs-type">int64</span>(header.valueSize)<br>	<span class="hljs-keyword">var</span> recordSize = headerSize + keySize + valueSize<br><br>	logRecord := &amp;LogRecord&#123;Type: header.recordType&#125;<br>	<span class="hljs-comment">//  key value 数据</span><br>	<span class="hljs-keyword">if</span> keySize &gt; <span class="hljs-number">0</span> || valueSize &gt; <span class="hljs-number">0</span> &#123;<br>		kvBuf, err := df.readNBytes(keySize+valueSize, offset+headerSize)<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-number">0</span>, err<br>		&#125;<br>		<span class="hljs-comment">//	解出 key 和 value</span><br>		logRecord.Key = kvBuf[:keySize]<br>		logRecord.Value = kvBuf[keySize:]<br>	&#125;<br><br>	<span class="hljs-comment">// 校验数据</span><br>	crc := getLogRecordCRC(logRecord, headerBuf[crc32.Size:headerSize])<br>	<span class="hljs-keyword">if</span> crc != header.crc &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-number">0</span>, ErrInvalidCRC<br>	&#125;<br>	<span class="hljs-keyword">return</span> logRecord, recordSize, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(df *DataFile)</span></span> Write(buf []<span class="hljs-type">byte</span>) <span class="hljs-type">error</span> &#123;<br>	n, err := df.IoManager.Write(buf)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	df.WriteOff += <span class="hljs-type">int64</span>(n)<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>对于LogRecord的编码，可以使用go的binary包。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs go"><br><span class="hljs-comment">// crc type keySize valueSize</span><br><span class="hljs-comment">// 4 +  1  +  5   +   5 = 15</span><br><span class="hljs-keyword">const</span> maxLogRecordHeaderSize = binary.MaxVarintLen32*<span class="hljs-number">2</span> + <span class="hljs-number">5</span><br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">EncodeLogRecord</span><span class="hljs-params">(logRecord *LogRecord)</span></span> ([]<span class="hljs-type">byte</span>, <span class="hljs-type">int64</span>) &#123;<br>	<span class="hljs-comment">// 初始化一个 header 部分的字节数组</span><br>	header := <span class="hljs-built_in">make</span>([]<span class="hljs-type">byte</span>, maxLogRecordHeaderSize)<br><br>	<span class="hljs-comment">// 第五个字节存储 Type</span><br>	header[<span class="hljs-number">4</span>] = logRecord.Type<br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">5</span><br>	<span class="hljs-comment">// 5 字节之后，存储的是 key 和 value 的长度信息</span><br>	<span class="hljs-comment">// 使用变长类型，节省空间</span><br>	index += binary.PutVarint(header[index:], <span class="hljs-type">int64</span>(<span class="hljs-built_in">len</span>(logRecord.Key)))<br>	index += binary.PutVarint(header[index:], <span class="hljs-type">int64</span>(<span class="hljs-built_in">len</span>(logRecord.Value)))<br><br>	<span class="hljs-keyword">var</span> size = index + <span class="hljs-built_in">len</span>(logRecord.Key) + <span class="hljs-built_in">len</span>(logRecord.Value)<br>	encBytes := <span class="hljs-built_in">make</span>([]<span class="hljs-type">byte</span>, size)<br><br>	<span class="hljs-comment">// header 内容拷贝</span><br>	<span class="hljs-built_in">copy</span>(encBytes[:index], header[:index])<br>	<span class="hljs-comment">// key value 数据拷贝</span><br>	<span class="hljs-built_in">copy</span>(encBytes[index:], logRecord.Key)<br>	<span class="hljs-built_in">copy</span>(encBytes[index+<span class="hljs-built_in">len</span>(logRecord.Key):], logRecord.Value)<br><br>	<span class="hljs-comment">// 对整个 LogRecord 的数据进行 crc 校验</span><br>	crc := crc32.ChecksumIEEE(encBytes[<span class="hljs-number">4</span>:])<br>	binary.LittleEndian.PutUint32(encBytes[:<span class="hljs-number">4</span>], crc)<br><br>	<span class="hljs-keyword">return</span> encBytes, <span class="hljs-type">int64</span>(size)<br>&#125;<br><br><br><span class="hljs-comment">// EncodeLogRecordPos 对位置信息进行编码</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">EncodeLogRecordPos</span><span class="hljs-params">(pos *LogRecordPos)</span></span> []<span class="hljs-type">byte</span> &#123;<br>	buf := <span class="hljs-built_in">make</span>([]<span class="hljs-type">byte</span>, binary.MaxVarintLen32*<span class="hljs-number">2</span>+binary.MaxVarintLen64)<br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">0</span><br>	index += binary.PutVarint(buf[index:], <span class="hljs-type">int64</span>(pos.Fid))<br>	index += binary.PutVarint(buf[index:], pos.Offset)<br>	index += binary.PutVarint(buf[index:], <span class="hljs-type">int64</span>(pos.Size))<br>	<span class="hljs-keyword">return</span> buf[:index]<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>LogRecord的解码首先按照固定长度读取header部分的字节数，然后对其解码，主要是根据编码时的对应长度<br>获取CRC，Type，keysize和valuesize，根据keysize和valuesize读取key和value。读取完需要进行CRC校验<br>，判断所取出的数据CRC和LogRecord对应的CRC是否相等。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// 解码 LogRecordPos</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">DecodeLogRecordPos</span><span class="hljs-params">(buf []<span class="hljs-type">byte</span>)</span></span> *LogRecordPos &#123;<br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">0</span><br>	fileId, n := binary.Varint(buf[index:])<br>	index += n<br>	offset, n := binary.Varint(buf[index:])<br>	index += n<br>	size, _ := binary.Varint(buf[index:])<br>	<span class="hljs-keyword">return</span> &amp;LogRecordPos&#123;Fid: <span class="hljs-type">uint32</span>(fileId), Offset: offset, Size: <span class="hljs-type">uint32</span>(size)&#125;<br>&#125;<br><br><span class="hljs-comment">// 对字节数组中的 Header 信息进行解码</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">decodeLogRecordHeader</span><span class="hljs-params">(buf []<span class="hljs-type">byte</span>)</span></span> (*logRecordHeader, <span class="hljs-type">int64</span>) &#123;<br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(buf) &lt;= <span class="hljs-number">4</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-number">0</span><br>	&#125;<br><br>	header := &amp;logRecordHeader&#123;<br>		crc:        binary.LittleEndian.Uint32(buf[:<span class="hljs-number">4</span>]),<br>		recordType: buf[<span class="hljs-number">4</span>],<br>	&#125;<br><br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">5</span><br>	<span class="hljs-comment">// 取出key size</span><br>	keySize, n := binary.Varint(buf[index:])<br>	header.keySize = <span class="hljs-type">uint32</span>(keySize)<br>	index += n<br><br>	<span class="hljs-comment">// 取出value size</span><br>	valueSize, n := binary.Varint(buf[index:])<br>	header.valueSize = <span class="hljs-type">uint32</span>(valueSize)<br>	index += n<br><br>	<span class="hljs-keyword">return</span> header, <span class="hljs-type">int64</span>(index)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">getLogRecordCRC</span><span class="hljs-params">(lr *LogRecord, header []<span class="hljs-type">byte</span>)</span></span> <span class="hljs-type">uint32</span> &#123;<br>	<span class="hljs-keyword">if</span> lr == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-number">0</span><br>	&#125;<br><br>	crc := crc32.ChecksumIEEE(header[:])<br>	crc = crc32.Update(crc, crc32.IEEETable, lr.Key)<br>	crc = crc32.Update(crc, crc32.IEEETable, lr.Value)<br><br>	<span class="hljs-keyword">return</span> crc<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>顺便学习一下Varint。</p>
+<pre><code class="hljs">Varint 是一种 “变长整数编码方式”，它的核心设计目标是用最少的字节存储整数（小整数用 1 字节，大整数用多字节），且具备「自定界」特性 ——从二进制流中解析时，能自己判断一个整数的字节边界（不用提前知道总长度）。而 binary.Varint 函数会返回 “解析出的整数值” 和 “解析该值消耗的字节数”，这就让代码能通过累加 “消耗字节数” 动态定位下一个值的起始位置，完全不需要知道 buf 的总长度。
+</code></pre>
+<p>Varint 对整数的编码遵循两个核心规则，这是 “自定界” 的基础：</p>
+<pre><code class="hljs">字节的最高位（MSB，Most Significant Bit）是「结束标记」：如果某字节的最高位是 1 → 表示 “这个整数还没结束，下一个字节也是该整数的一部分”；果最高位是 0 → 表示 “这是该整数的最后一个字节”。
+每个字节的低 7 位是「数据位」：整数的实际数值，是把所有字节的低 7 位按顺序拼接后得到的结果。
+</code></pre>
+<p>对于数据库其他的接口，比如list_keys,fold,sync,close也需要实现。</p>
+<p>close用来关闭数据库，首先需要关闭当前活跃文件，接着要关闭旧的数据文件，包括其他清理和释放的文件。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(db *DB)</span></span> Close() <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		<span class="hljs-comment">// 释放文件锁</span><br>		<span class="hljs-keyword">if</span> err := db.fileLock.Unlock(); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-built_in">panic</span>(fmt.Sprintf(<span class="hljs-string">&quot;failed to unlock the directory, %v&quot;</span>, err))<br>		&#125;<br>		<span class="hljs-comment">// 关闭索引</span><br>		<span class="hljs-keyword">if</span> err := db.index.Close(); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-built_in">panic</span>(fmt.Sprintf(<span class="hljs-string">&quot;failed to close index&quot;</span>))<br>		&#125;<br>	&#125;()<br>	<span class="hljs-keyword">if</span> db.activeFile == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	db.mu.Lock()<br>	<span class="hljs-keyword">defer</span> db.mu.Unlock()<br><br>	<span class="hljs-comment">// 保存当前事务序列号</span><br>	seqNoFile, err := data.OpenSeqNoFile(db.options.DirPath)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	record := &amp;data.LogRecord&#123;<br>		Key:   []<span class="hljs-type">byte</span>(seqNoKey),<br>		Value: []<span class="hljs-type">byte</span>(strconv.FormatUint(db.seqNo, <span class="hljs-number">10</span>)),<br>	&#125;<br>	encRecord, _ := data.EncodeLogRecord(record)<br>	<span class="hljs-keyword">if</span> err := seqNoFile.Write(encRecord); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-keyword">if</span> err := seqNoFile.Sync(); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br><br>	<span class="hljs-comment">//	关闭当前活跃文件</span><br>	<span class="hljs-keyword">if</span> err := db.activeFile.Close(); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-comment">// 关闭旧的数据文件</span><br>	<span class="hljs-keyword">for</span> _, file := <span class="hljs-keyword">range</span> db.olderFiles &#123;<br>		<span class="hljs-keyword">if</span> err := file.Close(); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> err<br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>sync刷盘只需要针对活跃文件操作就行，直接调用IOManager的接口就可以。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(db *DB)</span></span> Sync() <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-keyword">if</span> db.activeFile == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	db.mu.Lock()<br>	<span class="hljs-keyword">defer</span> db.mu.Unlock()<br>	<span class="hljs-keyword">return</span> db.activeFile.Sync()<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>list_keys和fold都需要遍历数据。由于key信息全部保存在内存中，直接从内存中取出全部数据即可。<br>同时由于索引类型可能会有很多种，可以实现一个索引迭代器接口，后面只需要调用迭代器获取索引中的数据。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> Iterator <span class="hljs-keyword">interface</span> &#123;<br>	<span class="hljs-comment">// Rewind 重新回到迭代器的起点，即第一个数据</span><br>	Rewind()<br><br>	<span class="hljs-comment">// Seek 根据传入的 key 查找到第一个大于（或小于）等于的目标 key，根据从这个 key 开始遍历</span><br>	Seek(key []<span class="hljs-type">byte</span>)<br><br>	<span class="hljs-comment">// Next 跳转到下一个 key</span><br>	Next()<br><br>	<span class="hljs-comment">// Valid 是否有效，即是否已经遍历完了所有的 key，用于退出遍历</span><br>	Valid() <span class="hljs-type">bool</span><br><br>	<span class="hljs-comment">// Key 当前遍历位置的 Key 数据</span><br>	Key() []<span class="hljs-type">byte</span><br><br>	<span class="hljs-comment">// Value 当前遍历位置的 Value 数据</span><br>	Value() *data.LogRecordPos<br><br>	<span class="hljs-comment">// Close 关闭迭代器，释放相应资源</span><br>	Close()<br>&#125;<br><br><br></code></pre></td></tr></table></figure>
+
+<p>接口的方法：</p>
+<pre><code class="hljs">Rewind:重新回到迭代器的起点，即第一个数据
+Seek:根据传入的key查找到第一个大于(或小于)等于的目标key，根据从这个key开始遍历
+Next:跳转到下一个key
+Valid:是否有效，即是否已经遍历完了所有的key，用于退出遍历
+Key:当前遍历位置的Key数据
+Value:当前遍历位置的Value数据
+Close:关闭迭代器，释放相应资源
+</code></pre>
+<p>可以在数据库的配置项中加入一个选项来指定遍历的时候是正向还是反向。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> IteratorOptions <span class="hljs-keyword">struct</span> &#123;<br>	<span class="hljs-comment">// 遍历前缀为指定值的 Key，默认为空</span><br>	Prefix []<span class="hljs-type">byte</span><br>	<span class="hljs-comment">// 是否反向遍历，默认 false 是正向</span><br>	Reverse <span class="hljs-type">bool</span><br>&#125;<br><br><span class="hljs-comment">// Iterator 迭代器</span><br><span class="hljs-keyword">type</span> Iterator <span class="hljs-keyword">struct</span> &#123;<br>	indexIter index.Iterator <span class="hljs-comment">// 索引迭代器</span><br>	db        *DB<br>	options   IteratorOptions<br>&#125;<br><br><span class="hljs-comment">// NewIterator 初始化迭代器</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(db *DB)</span></span> NewIterator(opts IteratorOptions) *Iterator &#123;<br>	indexIter := db.index.Iterator(opts.Reverse)<br>	<span class="hljs-keyword">return</span> &amp;Iterator&#123;<br>		db:        db,<br>		indexIter: indexIter,<br>		options:   opts,<br>	&#125;<br>&#125;<br><br><span class="hljs-comment">// Rewind 重新回到迭代器的起点，即第一个数据</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(it *Iterator)</span></span> Rewind() &#123;<br>	it.indexIter.Rewind()<br>	it.skipToNext()<br>&#125;<br><br><span class="hljs-comment">// Seek 根据传入的 key 查找到第一个大于（或小于）等于的目标 key，根据从这个 key 开始遍历</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(it *Iterator)</span></span> Seek(key []<span class="hljs-type">byte</span>) &#123;<br>	it.indexIter.Seek(key)<br>	it.skipToNext()<br>&#125;<br><br><span class="hljs-comment">// Next 跳转到下一个 key</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(it *Iterator)</span></span> Next() &#123;<br>	it.indexIter.Next()<br>	it.skipToNext()<br>&#125;<br><br><span class="hljs-comment">// Valid 是否有效，即是否已经遍历完了所有的 key，用于退出遍历</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(it *Iterator)</span></span> Valid() <span class="hljs-type">bool</span> &#123;<br>	<span class="hljs-keyword">return</span> it.indexIter.Valid()<br>&#125;<br><br><span class="hljs-comment">// Key 当前遍历位置的 Key 数据</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(it *Iterator)</span></span> Key() []<span class="hljs-type">byte</span> &#123;<br>	<span class="hljs-keyword">return</span> it.indexIter.Key()<br>&#125;<br><br><span class="hljs-comment">// Value 当前遍历位置的 Value 数据</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(it *Iterator)</span></span> Value() ([]<span class="hljs-type">byte</span>, <span class="hljs-type">error</span>) &#123;<br>	logRecordPos := it.indexIter.Value()<br>	it.db.mu.RLock()<br>	<span class="hljs-keyword">defer</span> it.db.mu.RUnlock()<br>	<span class="hljs-keyword">return</span> it.db.getValueByPosition(logRecordPos)<br>&#125;<br><br><span class="hljs-comment">// Close 关闭迭代器，释放相应资源</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(it *Iterator)</span></span> Close() &#123;<br>	it.indexIter.Close()<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(it *Iterator)</span></span> skipToNext() &#123;<br>	prefixLen := <span class="hljs-built_in">len</span>(it.options.Prefix)<br>	<span class="hljs-keyword">if</span> prefixLen == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span><br>	&#125;<br><br>	<span class="hljs-keyword">for</span> ; it.indexIter.Valid(); it.indexIter.Next() &#123;<br>		key := it.indexIter.Key()<br>		<span class="hljs-keyword">if</span> prefixLen &lt;= <span class="hljs-built_in">len</span>(key) &amp;&amp; bytes.Compare(it.options.Prefix, key[:prefixLen]) == <span class="hljs-number">0</span> &#123;<br>			<span class="hljs-keyword">break</span><br>		&#125;<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>B树索引实现：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// BTree google 的 btree ku</span><br><span class="hljs-comment">// https://github.com/google/btree</span><br><span class="hljs-keyword">type</span> BTree <span class="hljs-keyword">struct</span> &#123;<br>	tree *btree.BTree<br>	lock *sync.RWMutex<br>&#125;<br><br><span class="hljs-comment">// NewBTree 新建 BTree 索引结构</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewBTree</span><span class="hljs-params">()</span></span> *BTree &#123;<br>	<span class="hljs-keyword">return</span> &amp;BTree&#123;<br>		tree: btree.New(<span class="hljs-number">32</span>),<br>		lock: <span class="hljs-built_in">new</span>(sync.RWMutex),<br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bt *BTree)</span></span> Put(key []<span class="hljs-type">byte</span>, pos *data.LogRecordPos) *data.LogRecordPos &#123;<br>	it := &amp;Item&#123;key: key, pos: pos&#125;<br>	bt.lock.Lock()<br>	oldItem := bt.tree.ReplaceOrInsert(it)<br>	bt.lock.Unlock()<br>	<span class="hljs-keyword">if</span> oldItem == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> oldItem.(*Item).pos<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bt *BTree)</span></span> Get(key []<span class="hljs-type">byte</span>) *data.LogRecordPos &#123;<br>	it := &amp;Item&#123;key: key&#125;<br>	btreeItem := bt.tree.Get(it)<br>	<span class="hljs-keyword">if</span> btreeItem == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> btreeItem.(*Item).pos<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bt *BTree)</span></span> Delete(key []<span class="hljs-type">byte</span>) (*data.LogRecordPos, <span class="hljs-type">bool</span>) &#123;<br>	it := &amp;Item&#123;key: key&#125;<br>	bt.lock.Lock()<br>	oldItem := bt.tree.Delete(it)<br>	bt.lock.Unlock()<br>	<span class="hljs-keyword">if</span> oldItem == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">false</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> oldItem.(*Item).pos, <span class="hljs-literal">true</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bt *BTree)</span></span> Size() <span class="hljs-type">int</span> &#123;<br>	<span class="hljs-keyword">return</span> bt.tree.Len()<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bt *BTree)</span></span> Iterator(reverse <span class="hljs-type">bool</span>) Iterator &#123;<br>	<span class="hljs-keyword">if</span> bt.tree == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	bt.lock.RLock()<br>	<span class="hljs-keyword">defer</span> bt.lock.RUnlock()<br>	<span class="hljs-keyword">return</span> newBTreeIterator(bt.tree, reverse)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bt *BTree)</span></span> Close() <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">// BTree 索引迭代器</span><br><span class="hljs-keyword">type</span> btreeIterator <span class="hljs-keyword">struct</span> &#123;<br>	currIndex <span class="hljs-type">int</span>     <span class="hljs-comment">// 当前遍历的下标位置</span><br>	reverse   <span class="hljs-type">bool</span>    <span class="hljs-comment">// 是否是反向遍历</span><br>	values    []*Item <span class="hljs-comment">// key+位置索引信息</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">newBTreeIterator</span><span class="hljs-params">(tree *btree.BTree, reverse <span class="hljs-type">bool</span>)</span></span> *btreeIterator &#123;<br>	<span class="hljs-keyword">var</span> idx <span class="hljs-type">int</span><br>	values := <span class="hljs-built_in">make</span>([]*Item, tree.Len())<br><br>	<span class="hljs-comment">// 将所有的数据存放到数组中</span><br>	saveValues := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(it btree.Item)</span></span> <span class="hljs-type">bool</span> &#123;<br>		values[idx] = it.(*Item)<br>		idx++<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>	&#125;<br>	<span class="hljs-keyword">if</span> reverse &#123;<br>		tree.Descend(saveValues)<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		tree.Ascend(saveValues)<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> &amp;btreeIterator&#123;<br>		currIndex: <span class="hljs-number">0</span>,<br>		reverse:   reverse,<br>		values:    values,<br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bti *btreeIterator)</span></span> Rewind() &#123;<br>	bti.currIndex = <span class="hljs-number">0</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bti *btreeIterator)</span></span> Seek(key []<span class="hljs-type">byte</span>) &#123;<br>	<span class="hljs-keyword">if</span> bti.reverse &#123;<br>		bti.currIndex = sort.Search(<span class="hljs-built_in">len</span>(bti.values), <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(i <span class="hljs-type">int</span>)</span></span> <span class="hljs-type">bool</span> &#123;<br>			<span class="hljs-keyword">return</span> bytes.Compare(bti.values[i].key, key) &lt;= <span class="hljs-number">0</span><br>		&#125;)<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		bti.currIndex = sort.Search(<span class="hljs-built_in">len</span>(bti.values), <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(i <span class="hljs-type">int</span>)</span></span> <span class="hljs-type">bool</span> &#123;<br>			<span class="hljs-keyword">return</span> bytes.Compare(bti.values[i].key, key) &gt;= <span class="hljs-number">0</span><br>		&#125;)<br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bti *btreeIterator)</span></span> Next() &#123;<br>	bti.currIndex += <span class="hljs-number">1</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bti *btreeIterator)</span></span> Valid() <span class="hljs-type">bool</span> &#123;<br>	<span class="hljs-keyword">return</span> bti.currIndex &lt; <span class="hljs-built_in">len</span>(bti.values)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bti *btreeIterator)</span></span> Key() []<span class="hljs-type">byte</span> &#123;<br>	<span class="hljs-keyword">return</span> bti.values[bti.currIndex].key<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bti *btreeIterator)</span></span> Value() *data.LogRecordPos &#123;<br>	<span class="hljs-keyword">return</span> bti.values[bti.currIndex].pos<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(bti *btreeIterator)</span></span> Close() &#123;<br>	bti.values = <span class="hljs-literal">nil</span><br>&#125;<br><br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>bitcask数据文件</div>
+      <div>http://example.com/2026/01/13/bitcask数据文件/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年1月13日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/01/13/bitcask%E5%86%99%E6%95%B0%E6%8D%AE/" title="bitcask写数据">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">bitcask写数据</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/01/13/3453-%E5%88%86%E5%89%B2%E6%AD%A3%E6%96%B9%E5%BD%A2-I/" title="3453. 分割正方形 I">
+                        <span class="hidden-mobile">3453. 分割正方形 I</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

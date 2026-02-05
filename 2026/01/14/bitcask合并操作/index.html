@@ -1,0 +1,646 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="merge操作主要是清理磁盘上的无用数据，避免由于数据增加无用数据一直占据数据目录的空间。 merge主要包括两个操作，一个是清理旧的数据文件，重写有效的数据。另一个是生成包含索引的hint文件。在执行merge操作的时候，我们要尽量保证不对前台的正常读写造成很大影响。 为避免清理无效数据时与主实例竞争资源，可采用隔离重写策略，在独立目录中启动临时数据库实例，逐一读取原数据文件，仅将内存索引验证有">
+<meta property="og:type" content="article">
+<meta property="og:title" content="bitcask合并操作">
+<meta property="og:url" content="http://example.com/2026/01/14/bitcask%E5%90%88%E5%B9%B6%E6%93%8D%E4%BD%9C/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="merge操作主要是清理磁盘上的无用数据，避免由于数据增加无用数据一直占据数据目录的空间。 merge主要包括两个操作，一个是清理旧的数据文件，重写有效的数据。另一个是生成包含索引的hint文件。在执行merge操作的时候，我们要尽量保证不对前台的正常读写造成很大影响。 为避免清理无效数据时与主实例竞争资源，可采用隔离重写策略，在独立目录中启动临时数据库实例，逐一读取原数据文件，仅将内存索引验证有">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-01-14T07:37:07.000Z">
+<meta property="article:modified_time" content="2026-01-16T07:38:29.000Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>bitcask合并操作 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="bitcask合并操作"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-01-14 15:37" pubdate>
+          2026年1月14日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          62 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">bitcask合并操作</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>merge操作主要是清理磁盘上的无用数据，避免由于数据增加无用数据一直占据数据目录的空间。</p>
+<p>merge主要包括两个操作，一个是清理旧的数据文件，重写有效的数据。另一个是生成包含索引的hint文件。在执行merge操作的时候，我们要尽量保证不对前台的正常读写造成很大影响。</p>
+<p>为避免清理无效数据时与主实例竞争资源，可采用隔离重写策略，在独立目录中启动临时数据库实例，逐一读取原数据文件，仅将内存索引验证有效的日志记录重写入新实例，不调用外层Put接口，从而规避锁冲突与内存膨胀风险。待所有文件处理完毕，原实例只需切换至新数据目录即可，正常写入不受影响。</p>
+<p>在生成hint索引文件时，重写数据到merge目录的过程中会得到位置索引信息，可以与原始key一并存储到新的hint文件中，该文件沿用数据文件的结构并采用日志追加方式。为应对merge过程中因异常导致的未完成情况，可在数据全部重写完成后在磁盘上创建标识merge完成的文件，重启数据库时若发现merge目录存在但无完成标识文件则判定为无效merge并删除该目录，若是有效merge则需将merge目录中的数据文件及对应的hint索引文件拷贝至原始数据目录。</p>
+<p>merge完成的标识文件需记录merge过程中新生成的数据文件中最近一个未参与merge的文件id，以确保在加载索引时，合并后新写入的、未参与merge的数据能正确处理，因其需与原加载方式一致，不从hint文件加载，同时避免删除这些新数据。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">const</span> (<br>	mergeDirName     = <span class="hljs-string">&quot;-merge&quot;</span><br>	mergeFinishedKey = <span class="hljs-string">&quot;merge.finished&quot;</span><br>)<br><br><span class="hljs-comment">// Merge 清理无效数据，生成 Hint 文件</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(db *DB)</span></span> Merge() <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-comment">// 数据库为空</span><br>	<span class="hljs-keyword">if</span> db.activeFile == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	db.mu.Lock()<br>	<span class="hljs-comment">// merge 正在进行</span><br>	<span class="hljs-keyword">if</span> db.isMerging &#123;<br>		db.mu.Unlock()<br>		<span class="hljs-keyword">return</span> ErrMergeIsProgress<br>	&#125;<br><br>	<span class="hljs-comment">// 是否达到了阈值</span><br>	totalSize, err := utils.DirSize(db.options.DirPath)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		db.mu.Unlock()<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-keyword">if</span> <span class="hljs-type">float32</span>(db.reclaimSize)/<span class="hljs-type">float32</span>(totalSize) &lt; db.options.DataFileMergeRatio &#123;<br>		db.mu.Unlock()<br>		<span class="hljs-keyword">return</span> ErrMergeRatioUnreached<br>	&#125;<br><br>	<span class="hljs-comment">// 剩余的空间容量是否足够支撑merge</span><br>	availableDiskSize, err := utils.AvailableDiskSize()<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		db.mu.Unlock()<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-keyword">if</span> <span class="hljs-type">uint64</span>(totalSize-db.reclaimSize) &gt;= availableDiskSize &#123;<br>		db.mu.Unlock()<br>		<span class="hljs-keyword">return</span> ErrNoEnoughSpaceForMerge<br>	&#125;<br><br>	db.isMerging = <span class="hljs-literal">true</span><br>	<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		db.isMerging = <span class="hljs-literal">false</span><br>	&#125;()<br><br>	<span class="hljs-comment">// 持久化当前活跃文件</span><br>	<span class="hljs-keyword">if</span> err := db.activeFile.Sync(); err != <span class="hljs-literal">nil</span> &#123;<br>		db.mu.Unlock()<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-comment">// 将当前活跃文件转换为旧的数据文件</span><br>	db.olderFiles[db.activeFile.FileId] = db.activeFile<br>	<span class="hljs-comment">// 打开新的活跃文件</span><br>	<span class="hljs-keyword">if</span> err := db.setActiveDataFile(); err != <span class="hljs-literal">nil</span> &#123;<br>		db.mu.Unlock()<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-comment">// 记录最近没有参与 merge 的文件 id</span><br>	nonMergeFileId := db.activeFile.FileId<br><br>	<span class="hljs-comment">// 取出所有需要 merge 的文件</span><br>	<span class="hljs-keyword">var</span> mergeFiles []*data.DataFile<br>	<span class="hljs-keyword">for</span> _, file := <span class="hljs-keyword">range</span> db.olderFiles &#123;<br>		mergeFiles = <span class="hljs-built_in">append</span>(mergeFiles, file)<br>	&#125;<br>	db.mu.Unlock()<br><br>	<span class="hljs-comment">//	从小到大进行排序</span><br>	sort.Slice(mergeFiles, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(i, j <span class="hljs-type">int</span>)</span></span> <span class="hljs-type">bool</span> &#123;<br>		<span class="hljs-keyword">return</span> mergeFiles[i].FileId &lt; mergeFiles[j].FileId<br>	&#125;)<br><br>	mergePath := db.getMergePath()<br>	<span class="hljs-comment">// 发生过 merge</span><br>	<span class="hljs-keyword">if</span> _, err := os.Stat(mergePath); err == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">if</span> err := os.RemoveAll(mergePath); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> err<br>		&#125;<br>	&#125;<br>	<span class="hljs-comment">// 新建目录</span><br>	<span class="hljs-keyword">if</span> err := os.MkdirAll(mergePath, os.ModePerm); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-comment">// 临时 bitcask 实例</span><br>	mergeOptions := db.options<br>	mergeOptions.DirPath = mergePath<br>	mergeOptions.SyncWrites = <span class="hljs-literal">false</span><br>	mergeDB, err := Open(mergeOptions)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br><br>	<span class="hljs-comment">// hint文件</span><br>	hintFile, err := data.OpenHintFile(mergePath)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-comment">// 遍历处理</span><br>	<span class="hljs-keyword">for</span> _, dataFile := <span class="hljs-keyword">range</span> mergeFiles &#123;<br>		<span class="hljs-keyword">var</span> offset <span class="hljs-type">int64</span> = <span class="hljs-number">0</span><br>		<span class="hljs-keyword">for</span> &#123;<br>			logRecord, size, err := dataFile.ReadLogRecord(offset)<br>			<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>				<span class="hljs-keyword">if</span> err == io.EOF &#123;<br>					<span class="hljs-keyword">break</span><br>				&#125;<br>				<span class="hljs-keyword">return</span> err<br>			&#125;<br><br>			realKey, _ := parseLogRecordKey(logRecord.Key)<br>			logRecordPos := db.index.Get(realKey)<br>			<span class="hljs-comment">// 和内存中的索引位置进行比较</span><br>			<span class="hljs-keyword">if</span> logRecordPos != <span class="hljs-literal">nil</span> &amp;&amp;<br>				logRecordPos.Fid == dataFile.FileId &amp;&amp;<br>				logRecordPos.Offset == offset &#123;<br>				<span class="hljs-comment">// 清除事务标记</span><br>				logRecord.Key = logRecordKeyWithSeq(realKey, nonTransactionSeqNo)<br>				pos, err := mergeDB.appendLogRecord(logRecord)<br>				<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>					<span class="hljs-keyword">return</span> err<br>				&#125;<br>				<span class="hljs-comment">// 将当前位置索引写到 Hint 文件当中</span><br>				<span class="hljs-keyword">if</span> err := hintFile.WriteHintRecord(realKey, pos); err != <span class="hljs-literal">nil</span> &#123;<br>					<span class="hljs-keyword">return</span> err<br>				&#125;<br>			&#125;<br>			<span class="hljs-comment">// 增加 offset</span><br>			offset += size<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// sync</span><br>	<span class="hljs-keyword">if</span> err := hintFile.Sync(); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-keyword">if</span> err := mergeDB.Sync(); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br><br>	<span class="hljs-comment">// 写标识 merge 完成文件</span><br>	mergeFinishedFile, err := data.OpenMergeFinishedFile(mergePath)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	mergeFinRecord := &amp;data.LogRecord&#123;<br>		Key:   []<span class="hljs-type">byte</span>(mergeFinishedKey),<br>		Value: []<span class="hljs-type">byte</span>(strconv.Itoa(<span class="hljs-type">int</span>(nonMergeFileId))),<br>	&#125;<br>	encRecord, _ := data.EncodeLogRecord(mergeFinRecord)<br>	<span class="hljs-keyword">if</span> err := mergeFinishedFile.Write(encRecord); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-keyword">if</span> err := mergeFinishedFile.Sync(); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(db *DB)</span></span> getMergePath() <span class="hljs-type">string</span> &#123;<br>	dir := path.Dir(path.Clean(db.options.DirPath))<br>	base := path.Base(db.options.DirPath)<br>	<span class="hljs-keyword">return</span> filepath.Join(dir, base+mergeDirName)<br>&#125;<br><br><span class="hljs-comment">// 加载 merge 数据目录</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(db *DB)</span></span> loadMergeFiles() <span class="hljs-type">error</span> &#123;<br>	mergePath := db.getMergePath()<br><br>	<span class="hljs-keyword">if</span> _, err := os.Stat(mergePath); os.IsNotExist(err) &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		_ = os.RemoveAll(mergePath)<br>	&#125;()<br><br>	dirEntries, err := os.ReadDir(mergePath)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br><br>	<span class="hljs-comment">// 查找标识 merge 完成</span><br>	<span class="hljs-keyword">var</span> mergeFinished <span class="hljs-type">bool</span><br>	<span class="hljs-keyword">var</span> mergeFileNames []<span class="hljs-type">string</span><br>	<span class="hljs-keyword">for</span> _, entry := <span class="hljs-keyword">range</span> dirEntries &#123;<br>		<span class="hljs-keyword">if</span> entry.Name() == data.MergeFinishedFileName &#123;<br>			mergeFinished = <span class="hljs-literal">true</span><br>		&#125;<br>		<span class="hljs-keyword">if</span> entry.Name() == data.SeqNoFileName &#123;<br>			<span class="hljs-keyword">continue</span><br>		&#125;<br>		<span class="hljs-keyword">if</span> entry.Name() == fileLockName &#123;<br>			<span class="hljs-keyword">continue</span><br>		&#125;<br>		mergeFileNames = <span class="hljs-built_in">append</span>(mergeFileNames, entry.Name())<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> !mergeFinished &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br><br>	nonMergeFileId, err := db.getNonMergeFileId(mergePath)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-comment">// 删除旧数据</span><br>	<span class="hljs-keyword">var</span> fileId <span class="hljs-type">uint32</span> = <span class="hljs-number">0</span><br>	<span class="hljs-keyword">for</span> ; fileId &lt; nonMergeFileId; fileId++ &#123;<br>		fileName := data.GetDataFileName(db.options.DirPath, fileId)<br>		<span class="hljs-keyword">if</span> _, err := os.Stat(fileName); err == <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">if</span> err := os.Remove(fileName); err != <span class="hljs-literal">nil</span> &#123;<br>				<span class="hljs-keyword">return</span> err<br>			&#125;<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// 将新的数据文件移动到数据目录中</span><br>	<span class="hljs-keyword">for</span> _, fileName := <span class="hljs-keyword">range</span> mergeFileNames &#123;<br>		srcPath := filepath.Join(mergePath, fileName)<br>		destPath := filepath.Join(db.options.DirPath, fileName)<br>		<span class="hljs-keyword">if</span> err := os.Rename(srcPath, destPath); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> err<br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(db *DB)</span></span> getNonMergeFileId(dirPath <span class="hljs-type">string</span>) (<span class="hljs-type">uint32</span>, <span class="hljs-type">error</span>) &#123;<br>	mergeFinishedFile, err := data.OpenMergeFinishedFile(dirPath)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>, err<br>	&#125;<br>	record, _, err := mergeFinishedFile.ReadLogRecord(<span class="hljs-number">0</span>)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>, err<br>	&#125;<br>	nonMergeFileId, err := strconv.Atoi(<span class="hljs-type">string</span>(record.Value))<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>, err<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-type">uint32</span>(nonMergeFileId), <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">// hint 文件加载索引</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(db *DB)</span></span> loadIndexFromHintFile() <span class="hljs-type">error</span> &#123;<br>	hintFileName := filepath.Join(db.options.DirPath, data.HintFileName)<br>	<span class="hljs-keyword">if</span> _, err := os.Stat(hintFileName); os.IsNotExist(err) &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-comment">//	打开索引文件</span><br>	hintFile, err := data.OpenHintFile(db.options.DirPath)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br><br>	<span class="hljs-comment">// 读取索引</span><br>	<span class="hljs-keyword">var</span> offset <span class="hljs-type">int64</span> = <span class="hljs-number">0</span><br>	<span class="hljs-keyword">for</span> &#123;<br>		logRecord, size, err := hintFile.ReadLogRecord(offset)<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">if</span> err == io.EOF &#123;<br>				<span class="hljs-keyword">break</span><br>			&#125;<br>			<span class="hljs-keyword">return</span> err<br>		&#125;<br><br>		<span class="hljs-comment">// 解码</span><br>		pos := data.DecodeLogRecordPos(logRecord.Value)<br>		db.index.Put(logRecord.Key, pos)<br>		offset += size<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>根据论文，对bitcask进行备份也很方便，因为所有数据文件都放进了同一个目录，只需要将数据目录拷贝到另一个位置就可以了。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">CopyDir</span><span class="hljs-params">(src, dest <span class="hljs-type">string</span>, exclude []<span class="hljs-type">string</span>)</span></span> <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-comment">// 目标目标不存在则创建</span><br>	<span class="hljs-keyword">if</span> _, err := os.Stat(dest); os.IsNotExist(err) &#123;<br>		<span class="hljs-keyword">if</span> err := os.MkdirAll(dest, os.ModePerm); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> err<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> filepath.Walk(src, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(path <span class="hljs-type">string</span>, info fs.FileInfo, err <span class="hljs-type">error</span>)</span></span> <span class="hljs-type">error</span> &#123;<br>		fileName := strings.Replace(path, src, <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-number">1</span>)<br>		<span class="hljs-keyword">if</span> fileName == <span class="hljs-string">&quot;&quot;</span> &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>		&#125;<br><br>		<span class="hljs-keyword">for</span> _, e := <span class="hljs-keyword">range</span> exclude &#123;<br>			matched, err := filepath.Match(e, info.Name())<br>			<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>				<span class="hljs-keyword">return</span> err<br>			&#125;<br>			<span class="hljs-keyword">if</span> matched &#123;<br>				<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>			&#125;<br>		&#125;<br><br>		<span class="hljs-keyword">if</span> info.IsDir() &#123;<br>			<span class="hljs-keyword">return</span> os.MkdirAll(filepath.Join(dest, fileName), info.Mode())<br>		&#125;<br><br>		data, err := os.ReadFile(filepath.Join(src, fileName))<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> err<br>		&#125;<br>		<span class="hljs-keyword">return</span> os.WriteFile(filepath.Join(dest, fileName), data, info.Mode())<br>	&#125;)<br>&#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>bitcask合并操作</div>
+      <div>http://example.com/2026/01/14/bitcask合并操作/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年1月14日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/01/15/2943-%E6%9C%80%E5%A4%A7%E5%8C%96%E7%BD%91%E6%A0%BC%E5%9B%BE%E4%B8%AD%E6%AD%A3%E6%96%B9%E5%BD%A2%E7%A9%BA%E6%B4%9E%E7%9A%84%E9%9D%A2%E7%A7%AF/" title="2943. 最大化网格图中正方形空洞的面积">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">2943. 最大化网格图中正方形空洞的面积</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/01/13/bitcask%E5%86%99%E6%95%B0%E6%8D%AE/" title="bitcask写数据">
+                        <span class="hidden-mobile">bitcask写数据</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

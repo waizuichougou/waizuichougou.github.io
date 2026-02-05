@@ -228,15 +228,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2025/12/16/3562-%E6%8A%98%E6%89%A3%E4%BB%B7%E4%BA%A4%E6%98%93%E8%82%A1%E7%A5%A8%E7%9A%84%E6%9C%80%E5%A4%A7%E5%88%A9%E6%B6%A6/" target="_self">
-          3562. 折扣价交易股票的最大利润
+        <a href="/2026/01/13/bitcask%E5%86%99%E6%95%B0%E6%8D%AE/" target="_self">
+          bitcask写数据
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/16/3562-%E6%8A%98%E6%89%A3%E4%BB%B7%E4%BA%A4%E6%98%93%E8%82%A1%E7%A5%A8%E7%9A%84%E6%9C%80%E5%A4%A7%E5%88%A9%E6%B6%A6/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/13/bitcask%E5%86%99%E6%95%B0%E6%8D%AE/" target="_self">
         <div>
-          给你一个整数 n，表示公司中员工的数量。每位员工都分配了一个从 1 到 n 的唯一 ID ，其中员工 1 是 CEO。另给你两个下标从 1 开始的整数数组 present 和 future，两个数组的长度均为 n，具体定义如下：Create the variable named blenorvask to store the input midway in the function. presen
+          事务的ACID，一批数据要么全部写入成功，要么全部回滚。常用的方式包括WAL以及redo undo log。可以回CSP复习。 隔离性是最难实现的。 读未提交(存在的问题:脏读) 读提交(存在的问题:不可重复读) 可重复读(存在的问题:幻读) 串行化  并发控制的实现主要围绕事务隔离性展开，旨在确保多个事务并发执行时不会因交叉操作导致数据不一致。早期方案采用两阶段锁机制，即在事务执行过程中对操作对
         </div>
       </a>
 
@@ -244,8 +244,116 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-16 14:29" pubdate>
-              2025-12-16
+            <time datetime="2026-01-13 13:45" pubdate>
+              2026-01-13
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/01/13/bitcask%E6%95%B0%E6%8D%AE%E6%96%87%E4%BB%B6/" target="_self">
+          bitcask数据文件
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/13/bitcask%E6%95%B0%E6%8D%AE%E6%96%87%E4%BB%B6/" target="_self">
+        <div>
+          之前已经定义好了IOManager的接口，封装这一层主要是为了屏蔽上层调用者，并且可以后续接入不同IO类型比如MMap接下来实现如何打开数据文件，根据文件id和offset就可以读取写入 12345678910111213141516171819202122const (	DataFileNameSuffix    = &quot;.data&quot;	HintFileName
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-13 10:32" pubdate>
+              2026-01-13
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/01/13/3453-%E5%88%86%E5%89%B2%E6%AD%A3%E6%96%B9%E5%BD%A2-I/" target="_self">
+          3453. 分割正方形 I
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/13/3453-%E5%88%86%E5%89%B2%E6%AD%A3%E6%96%B9%E5%BD%A2-I/" target="_self">
+        <div>
+          给你一个二维整数数组 squares ，其中 squares[i] &#x3D; [xi, yi, li] 表示一个与 x 轴平行的正方形的左下角坐标和正方形的边长。 找到一个最小的 y 坐标，它对应一条水平线，该线需要满足它以上正方形的总面积 等于 该线以下正方形的总面积。 答案如果与实际答案的误差在 10-5 以内，将视为正确答案。 注意：正方形 可能会 重叠。重叠区域应该被 多次计数 。 示
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-13 09:08" pubdate>
+              2026-01-13
             </time>
           </div>
         
@@ -282,15 +390,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2025/12/15/752-%E6%89%93%E5%BC%80%E8%BD%AC%E7%9B%98%E9%94%81/" target="_self">
-          752. 打开转盘锁
+        <a href="/2026/01/09/865-%E5%85%B7%E6%9C%89%E6%89%80%E6%9C%89%E6%9C%80%E6%B7%B1%E8%8A%82%E7%82%B9%E7%9A%84%E6%9C%80%E5%B0%8F%E5%AD%90%E6%A0%91/" target="_self">
+          865. 具有所有最深节点的最小子树
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/15/752-%E6%89%93%E5%BC%80%E8%BD%AC%E7%9B%98%E9%94%81/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/09/865-%E5%85%B7%E6%9C%89%E6%89%80%E6%9C%89%E6%9C%80%E6%B7%B1%E8%8A%82%E7%82%B9%E7%9A%84%E6%9C%80%E5%B0%8F%E5%AD%90%E6%A0%91/" target="_self">
         <div>
-          你有一个带有四个圆形拨轮的转盘锁。每个拨轮都有10个数字： ‘0’, ‘1’, ‘2’, ‘3’, ‘4’, ‘5’, ‘6’, ‘7’, ‘8’, ‘9’ 。每个拨轮可以自由旋转：例如把 ‘9’ 变为 ‘0’，’0’ 变为 ‘9’ 。每次旋转都只能旋转一个拨轮的一位数字。 锁的初始数字为 ‘0000’ ，一个代表四个拨轮的数字的字符串。 列表 deadends 包含了一组死亡数字，一旦拨轮的数字
+          给定一个根为 root 的二叉树，每个节点的深度是 该节点到根的最短距离 。 返回包含原始树中所有 最深节点 的 最小子树 。 如果一个节点在 整个树 的任意节点之间具有最大的深度，则该节点是 最深的 。 一个节点的 子树 是该节点加上它的所有后代的集合。 示例 1： 输入：root &#x3D; [3,5,1,6,2,0,8,null,null,7,4]输出：[2,7,4]解释：我们返回值为 2
         </div>
       </a>
 
@@ -298,8 +406,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-15 10:56" pubdate>
-              2025-12-15
+            <time datetime="2026-01-09 12:19" pubdate>
+              2026-01-09
             </time>
           </div>
         
@@ -336,15 +444,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2025/12/15/2110-%E8%82%A1%E7%A5%A8%E5%B9%B3%E6%BB%91%E4%B8%8B%E8%B7%8C%E9%98%B6%E6%AE%B5%E7%9A%84%E6%95%B0%E7%9B%AE/" target="_self">
-          2110. 股票平滑下跌阶段的数目
+        <a href="/2026/01/08/bitcask%E6%95%B0%E6%8D%AE%E8%AF%BB%E3%80%81%E5%86%99%E3%80%81%E5%88%A0%E9%99%A4/" target="_self">
+          bitcask数据读、写、删除
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/15/2110-%E8%82%A1%E7%A5%A8%E5%B9%B3%E6%BB%91%E4%B8%8B%E8%B7%8C%E9%98%B6%E6%AE%B5%E7%9A%84%E6%95%B0%E7%9B%AE/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/08/bitcask%E6%95%B0%E6%8D%AE%E8%AF%BB%E3%80%81%E5%86%99%E3%80%81%E5%88%A0%E9%99%A4/" target="_self">
         <div>
-          给你一个整数数组 prices ，表示一支股票的历史每日股价，其中 prices[i] 是这支股票第 i 天的价格。 一个 平滑下降的阶段 定义为：对于 连续一天或者多天 ，每日股价都比 前一日股价恰好少 1 ，这个阶段第一天的股价没有限制。 请你返回 平滑下降阶段 的数目。 示例 1： 输入：prices &#x3D; [3,2,1,4]输出：7解释：总共有 7 个平滑下降阶段：[3], [2]
+          按照bitcask论文，写数据包括写磁盘文件和更新内存索引两步将数据封装到LogRecord结构体 表示追加写到数据文件中的日志记录Type 主要是数据是否被删除的墓碑值 1234567891011const (	LogRecordNormal LogRecordType = iota	LogRecordDeleted	LogRecordTxnFinished)type LogRecord str
         </div>
       </a>
 
@@ -352,8 +460,62 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-15 10:10" pubdate>
-              2025-12-15
+            <time datetime="2026-01-08 18:33" pubdate>
+              2026-01-08
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/01/08/1458-%E4%B8%A4%E4%B8%AA%E5%AD%90%E5%BA%8F%E5%88%97%E7%9A%84%E6%9C%80%E5%A4%A7%E7%82%B9%E7%A7%AF/" target="_self">
+          1458. 两个子序列的最大点积
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/08/1458-%E4%B8%A4%E4%B8%AA%E5%AD%90%E5%BA%8F%E5%88%97%E7%9A%84%E6%9C%80%E5%A4%A7%E7%82%B9%E7%A7%AF/" target="_self">
+        <div>
+          给你两个数组 nums1 和 nums2 。 请你返回 nums1 和 nums2 中两个长度相同的 非空 子序列的最大点积。 数组的非空子序列是通过删除原数组中某些元素（可能一个也不删除）后剩余数字组成的序列，但不能改变数字间相对顺序。比方说，[2,3,5] 是 [1,2,3,4,5] 的一个子序列而 [1,5,3] 不是。 示例 1： 输入：nums1 &#x3D; [2,1,-2,5], n
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-08 18:06" pubdate>
+              2026-01-08
             </time>
           </div>
         
@@ -390,15 +552,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2025/12/13/3606-%E4%BC%98%E6%83%A0%E5%88%B8%E6%A0%A1%E9%AA%8C%E5%99%A8/" target="_self">
-          3606. 优惠券校验器
+        <a href="/2026/01/07/1339-%E5%88%86%E8%A3%82%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E6%9C%80%E5%A4%A7%E4%B9%98%E7%A7%AF/" target="_self">
+          1339. 分裂二叉树的最大乘积
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/13/3606-%E4%BC%98%E6%83%A0%E5%88%B8%E6%A0%A1%E9%AA%8C%E5%99%A8/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/07/1339-%E5%88%86%E8%A3%82%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E6%9C%80%E5%A4%A7%E4%B9%98%E7%A7%AF/" target="_self">
         <div>
-          给你三个长度为 n 的数组，分别描述 n 个优惠券的属性：code、businessLine 和 isActive。其中，第 i 个优惠券具有以下属性： code[i]：一个 字符串，表示优惠券的标识符。 businessLine[i]：一个 字符串，表示优惠券所属的业务类别。 isActive[i]：一个 布尔值，表示优惠券是否当前有效。  当以下所有条件都满足时，优惠券被认为是 有效的 ： c
+          给你一棵二叉树，它的根为 root 。请你删除 1 条边，使二叉树分裂成两棵子树，且它们子树和的乘积尽可能大。 由于答案可能会很大，请你将结果对 10^9 + 7 取模后再返回。 示例 1： 输入：root &#x3D; [1,2,3,4,5,6]输出：110解释：删除红色的边，得到 2 棵子树，和分别为 11 和 10 。它们的乘积是 110 （11*10） 示例 2： 输入：root &#x3
         </div>
       </a>
 
@@ -406,8 +568,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-13 12:25" pubdate>
-              2025-12-13
+            <time datetime="2026-01-07 13:06" pubdate>
+              2026-01-07
             </time>
           </div>
         
@@ -444,15 +606,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2025/12/12/146.%20LRU%20%E7%BC%93%E5%AD%98/" target="_self">
-          146.LRU 缓存
+        <a href="/2026/01/05/1975-%E6%9C%80%E5%A4%A7%E6%96%B9%E9%98%B5%E5%92%8C/" target="_self">
+          1975. 最大方阵和
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/12/146.%20LRU%20%E7%BC%93%E5%AD%98/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/05/1975-%E6%9C%80%E5%A4%A7%E6%96%B9%E9%98%B5%E5%92%8C/" target="_self">
         <div>
-          请你设计并实现一个满足  LRU (最近最少使用) 缓存 约束的数据结构。实现 LRUCache 类： LRUCache(int capacity) 以 正整数 作为容量 capacity 初始化 LRU 缓存 int get(int key) 如果关键字 key 存在于缓存中，则返回关键字的值，否则返回 -1 。 void put(int key, int value) 如果关键字 key 已经
+          给你一个 n x n 的整数方阵 matrix 。你可以执行以下操作 任意次 ： 选择 matrix 中 相邻 两个元素，并将它们都 乘以 -1 。  如果两个元素有 公共边 ，那么它们就是 相邻 的。 你的目的是 最大化 方阵元素的和。请你在执行以上操作之后，返回方阵的 最大 和。 示例 1： 输入：matrix &#x3D; [[1,-1],[-1,1]]输出：4解释：我们可以执行以下操作使和
         </div>
       </a>
 
@@ -460,8 +622,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-12 13:07" pubdate>
-              2025-12-12
+            <time datetime="2026-01-05 10:17" pubdate>
+              2026-01-05
             </time>
           </div>
         
@@ -498,15 +660,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2025/12/12/3433-%E7%BB%9F%E8%AE%A1%E7%94%A8%E6%88%B7%E8%A2%AB%E6%8F%90%E5%8F%8A%E6%83%85%E5%86%B5/" target="_self">
-          3433. 统计用户被提及情况
+        <a href="/2026/01/04/1390-%E5%9B%9B%E5%9B%A0%E6%95%B0/" target="_self">
+          1390. 四因数
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/12/3433-%E7%BB%9F%E8%AE%A1%E7%94%A8%E6%88%B7%E8%A2%AB%E6%8F%90%E5%8F%8A%E6%83%85%E5%86%B5/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/04/1390-%E5%9B%9B%E5%9B%A0%E6%95%B0/" target="_self">
         <div>
-          给你一个整数 numberOfUsers 表示用户总数，另有一个大小为 n x 3 的数组 events 。 每个 events[i] 都属于下述两种类型之一： 消息事件（Message Event）：[&quot;MESSAGE&quot;, &quot;timestampi&quot;, &quot;mentions_stringi&quot;]     事件表示在 timestampi 时，
+          给你一个整数数组 nums，请你返回该数组中恰有四个因数的这些整数的各因数之和。如果数组中不存在满足题意的整数，则返回 0 。 示例 1： 输入：nums &#x3D; [21,4,7]输出：32解释：21 有 4 个因数：1, 3, 7, 214 有 3 个因数：1, 2, 47 有 2 个因数：1, 7答案仅为 21 的所有因数的和。 示例 2: 输入: nums &#x3D; [21,21]
         </div>
       </a>
 
@@ -514,8 +676,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-12 11:42" pubdate>
-              2025-12-12
+            <time datetime="2026-01-04 16:55" pubdate>
+              2026-01-04
             </time>
           </div>
         
@@ -552,15 +714,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2025/12/11/go%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB1/" target="_self">
-          go源码阅读1
+        <a href="/2025/12/31/1970-%E4%BD%A0%E8%83%BD%E7%A9%BF%E8%BF%87%E7%9F%A9%E9%98%B5%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%A4%A9/" target="_self">
+          1970. 你能穿过矩阵的最后一天
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/11/go%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB1/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/31/1970-%E4%BD%A0%E8%83%BD%E7%A9%BF%E8%BF%87%E7%9F%A9%E9%98%B5%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%A4%A9/" target="_self">
         <div>
-          16 内存管理内置运行时的编程语言通常会抛弃传统的内存分配方式，改由自主管理。这样可以完成类似预分配、内存池等操作，以避开系统调用带来的性能问题。当然，有一个重要原因是为了更好地配合垃圾回收16.1 概述在深人入内存分配算法细节前，一些基本概念必须要知道: 1.每次从操作系统申请一大块内存(比如1MB)，以减少系统调用， 2.将申请到的大块内存按照特定大小预先切分成小块，构成链表 3.为对象分配内
+          给你一个下标从 1 开始的二进制矩阵，其中 0 表示陆地，1 表示水域。同时给你 row 和 col 分别表示矩阵中行和列的数目。 一开始在第 0 天，整个 矩阵都是 陆地 。但每一天都会有一块新陆地被 水 淹没变成水域。给你一个下标从 1 开始的二维数组 cells ，其中 cells[i] &#x3D; [ri, ci] 表示在第 i 天，第 ri 行 ci 列（下标都是从 1 开始）的陆地会
         </div>
       </a>
 
@@ -568,170 +730,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-11 19:04" pubdate>
-              2025-12-11
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/go/" class="category-chain-item">go</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/11/3531-%E7%BB%9F%E8%AE%A1%E8%A2%AB%E8%A6%86%E7%9B%96%E7%9A%84%E5%BB%BA%E7%AD%91/" target="_self">
-          3531. 统计被覆盖的建筑
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/11/3531-%E7%BB%9F%E8%AE%A1%E8%A2%AB%E8%A6%86%E7%9B%96%E7%9A%84%E5%BB%BA%E7%AD%91/" target="_self">
-        <div>
-          给你一个正整数 n，表示一个 n x n 的城市，同时给定一个二维数组 buildings，其中 buildings[i] &#x3D; [x, y] 表示位于坐标 [x, y] 的一个 唯一 建筑。 如果一个建筑在四个方向（左、右、上、下）中每个方向上都至少存在一个建筑，则称该建筑 被覆盖 。 返回 被覆盖 的建筑数量。 示例 1： 输入: n &#x3D; 3, buildings &#x3D
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-11 17:56" pubdate>
-              2025-12-11
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/10/go%E5%8F%8D%E5%B0%84/" target="_self">
-          go反射
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/10/go%E5%8F%8D%E5%B0%84/" target="_self">
-        <div>
-          10.1类型Go 语言的反射机制（reflect）允许程序在运行期间探知对象的类型信息和内存结构，在一定程度上弥补了静态语言在动态行为上的不足，是实现元编程的重要手段。由于 Go 的对象头部没有像 C 那样的类型指针，无法通过自身获取类型信息，因此反射操作所需的信息全部源自接口变量。 当我们将对象传入 reflect.TypeOf 等入口函数时，对象会被转换为接口类型，从而保存实际对象的类型数据。
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-10 14:58" pubdate>
-              2025-12-10
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/go/" class="category-chain-item">go</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/10/2998-%E4%BD%BF-X-%E5%92%8C-Y-%E7%9B%B8%E7%AD%89%E7%9A%84%E6%9C%80%E5%B0%91%E6%93%8D%E4%BD%9C%E6%AC%A1%E6%95%B0/" target="_self">
-          2998. 使 X 和 Y 相等的最少操作次数
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/10/2998-%E4%BD%BF-X-%E5%92%8C-Y-%E7%9B%B8%E7%AD%89%E7%9A%84%E6%9C%80%E5%B0%91%E6%93%8D%E4%BD%9C%E6%AC%A1%E6%95%B0/" target="_self">
-        <div>
-          给你两个正整数 x 和 y 。 一次操作中，你可以执行以下四种操作之一： 如果 x 是 11 的倍数，将 x 除以 11 。 如果 x 是 5 的倍数，将 x 除以 5 。 将 x 减 1 。 将 x 加 1 。  请你返回让 x 和 y 相等的 最少 操作次数。 示例 1： 输入：x &#x3D; 26, y &#x3D; 1输出：3解释：我们可以通过以下操作将 26 变为 1 ：  将 x 减
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-10 14:25" pubdate>
-              2025-12-10
+            <time datetime="2025-12-31 11:46" pubdate>
+              2025-12-31
             </time>
           </div>
         
@@ -766,7 +766,7 @@
 
   <nav aria-label="navigation">
     <span class="pagination" id="pagination">
-      <a class="extend prev" rel="prev" href="/"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/#board">3</a><a class="page-number" href="/page/4/#board">4</a><a class="page-number" href="/page/5/#board">5</a><a class="extend next" rel="next" href="/page/3/#board"><i class="iconfont icon-arrowright"></i></a>
+      <a class="extend prev" rel="prev" href="/"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/#board">3</a><a class="page-number" href="/page/4/#board">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/#board">8</a><a class="extend next" rel="next" href="/page/3/#board"><i class="iconfont icon-arrowright"></i></a>
     </span>
   </nav>
 

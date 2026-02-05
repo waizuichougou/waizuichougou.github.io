@@ -1,0 +1,679 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="前面实现的存储引擎只实现了几个简单的KV接口且只支持 Key&#x2F;Value的数据格式，在更加多样化的实际使用需求中，纯粹的 KV接口 能够满足的需求比较有限。参考NoSQL数据库的行业标准 Redis，Redis是一个成熟强大的 KV数据库，它支持的数据类型非常的多样化，例如字符串(String)、哈希表(Hash)、列表(List)、集合(Set)、有序集合(sorted set)、位图">
+<meta property="og:type" content="article">
+<meta property="og:title" content="bitcask 支持redis数据结构">
+<meta property="og:url" content="http://example.com/2026/01/19/bitcask-%E6%94%AF%E6%8C%81redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="前面实现的存储引擎只实现了几个简单的KV接口且只支持 Key&#x2F;Value的数据格式，在更加多样化的实际使用需求中，纯粹的 KV接口 能够满足的需求比较有限。参考NoSQL数据库的行业标准 Redis，Redis是一个成熟强大的 KV数据库，它支持的数据类型非常的多样化，例如字符串(String)、哈希表(Hash)、列表(List)、集合(Set)、有序集合(sorted set)、位图">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-01-19T05:40:45.000Z">
+<meta property="article:modified_time" content="2026-01-19T06:12:14.000Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>bitcask 支持redis数据结构 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="bitcask 支持redis数据结构"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-01-19 13:40" pubdate>
+          2026年1月19日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          22k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          185 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">bitcask 支持redis数据结构</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>前面实现的存储引擎只实现了几个简单的KV接口且只支持 Key&#x2F;Value的数据格式，在更加多样化的实际使用需求中，纯粹的 KV接口 能够满足的需求比较有限。<br>参考NoSQL数据库的行业标准 Redis，Redis是一个成熟强大的 KV数据库，它支持的数据类型非常的多样化，例如字符串(String)、哈希表(Hash)、列表(List)、集合(Set)、有序集合(sorted set)、位图(bitmap)等等<br>在这基础之上将我们实现的bitcask加上更加多样的数据类型，包含Redis最常用的五种数据结构，String、Hash、Set、List、ZSet(Sorted Set)。<br>在设计上遵循的一个总体理念就是在 KV的接口之上，去实现Redis 的这几种数据结构，主要是将这几种结构进行转化和编码，然后使用bitcask存储引擎的KV接口来进行存储。</p>
+<p>声明了一个全局错误变量 ErrWrongTypeOperation，用于在用户对某个 key 执行不匹配其实际数据类型的命令时返回标准 Redis 错误信息，对一个 Hash 类型的 key 调用 Get 命令时会触发该错误。通过 type redisDataType &#x3D; byte 定义了一个别名类型 redisDataType，表示 Redis 支持的数据类型，使用 iota 依次定义了五种核心数据类。RedisDataStructure 结构体作为整个 Redis 数据结构服务的主载体，包含一个指向底层 Bitcask 实例字段 db。NewRedisDataStructure 函数用于根据传入的 Bitcask 配置选项打开或创建数据库，并返回封装好的 RedisDataStructure 实例。Close 方法则用于关闭底层数据库连接，释放相关资源。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">var</span> (<br>	ErrWrongTypeOperation = errors.New(<span class="hljs-string">&quot;WRONGTYPE Operation against a key holding the wrong kind of value&quot;</span>)<br>)<br><br><span class="hljs-keyword">type</span> redisDataType = <span class="hljs-type">byte</span><br><br><span class="hljs-keyword">const</span> (<br>	String redisDataType = <span class="hljs-literal">iota</span><br>	Hash<br>	Set<br>	List<br>	ZSet<br>)<br><br><span class="hljs-comment">// RedisDataStructure Redis 数据结构服务</span><br><span class="hljs-keyword">type</span> RedisDataStructure <span class="hljs-keyword">struct</span> &#123;<br>	db *bitcask.DB<br>&#125;<br><br><span class="hljs-comment">// NewRedisDataStructure 初始化 Redis 数据结构服务</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewRedisDataStructure</span><span class="hljs-params">(options bitcask.Options)</span></span> (*RedisDataStructure, <span class="hljs-type">error</span>) &#123;<br>	db, err := bitcask.Open(options)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">return</span> &amp;RedisDataStructure&#123;db: db&#125;, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> Close() <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-keyword">return</span> rds.db.Close()<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>metadata 结构体用于描述每个 Redis key 的元信息。它包含 dataType、expire、version、size，以及仅 List 类型使用的 head 和 tail 字段。为了高效持久化，metadata 的 encode 方法使用 binary.PutVarint 对整数字段进行变长编码以节省空间，并根据是否为 List 类型动态调整缓冲区大小。 decodeMetadata 函数从字节数组中反序列化出完整的元数据对象。maxMetadataSize 是非 List 类型元数据的最大长度，extraListMetaSize 补充 List 特有字段所需的空间， initialListMark 被设为 uint64 最大值的一半，作为 List 初始 head&#x2F;tail 的中间锚点，便于向两端扩展。<br>针对 Hash、Set、List 和 ZSet 四种复合类型，分别定义了各自的 internalKey 结构体，用于构造存储引擎中实际使用的底层键。这些内部键均由用户提供的原始 key、元数据中的 version 以及字段&#x2F;成员&#x2F;索引等组成，确保即使同一 key 被反复修改或删除重建，旧版本的数据也不会被误读，通过 version 隔离。各 encode 方法将这些组成部分拼接成唯一字节数组：Hash 和 List 直接拼接 key + version（8 字节小端）+ field&#x2F;index；Set 在拼接 key + version + member 后，额外追加 member 的长度（4 字节小端），以便后续能从键中准确还原 member 内容；ZSet 两种编码方式，encodeWithMember 用于建立 member 到 score 的映射， encodeWithScore 则将 score 放在 member 前，附加 member 长度，使得bitcask可按 score 排序后高效遍历成员。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">const</span> (<br>	maxMetadataSize   = <span class="hljs-number">1</span> + binary.MaxVarintLen64*<span class="hljs-number">2</span> + binary.MaxVarintLen32<br>	extraListMetaSize = binary.MaxVarintLen64 * <span class="hljs-number">2</span><br><br>	initialListMark = math.MaxUint64 / <span class="hljs-number">2</span><br>)<br><br><span class="hljs-comment">// 元数据</span><br><span class="hljs-keyword">type</span> metadata <span class="hljs-keyword">struct</span> &#123;<br>	dataType <span class="hljs-type">byte</span>   <span class="hljs-comment">// 数据类型</span><br>	expire   <span class="hljs-type">int64</span>  <span class="hljs-comment">// 过期时间</span><br>	version  <span class="hljs-type">int64</span>  <span class="hljs-comment">// 版本号</span><br>	size     <span class="hljs-type">uint32</span> <span class="hljs-comment">// 数据量</span><br>	head     <span class="hljs-type">uint64</span> <span class="hljs-comment">// List 数据结构专用</span><br>	tail     <span class="hljs-type">uint64</span> <span class="hljs-comment">// List 数据结构专用</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(md *metadata)</span></span> encode() []<span class="hljs-type">byte</span> &#123;<br>	<span class="hljs-keyword">var</span> size = maxMetadataSize<br>	<span class="hljs-keyword">if</span> md.dataType == List &#123;<br>		size += extraListMetaSize<br>	&#125;<br>	buf := <span class="hljs-built_in">make</span>([]<span class="hljs-type">byte</span>, size)<br><br>	buf[<span class="hljs-number">0</span>] = md.dataType<br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">1</span><br>	index += binary.PutVarint(buf[index:], md.expire)<br>	index += binary.PutVarint(buf[index:], md.version)<br>	index += binary.PutVarint(buf[index:], <span class="hljs-type">int64</span>(md.size))<br><br>	<span class="hljs-keyword">if</span> md.dataType == List &#123;<br>		index += binary.PutUvarint(buf[index:], md.head)<br>		index += binary.PutUvarint(buf[index:], md.tail)<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> buf[:index]<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">decodeMetadata</span><span class="hljs-params">(buf []<span class="hljs-type">byte</span>)</span></span> *metadata &#123;<br>	dataType := buf[<span class="hljs-number">0</span>]<br><br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">1</span><br>	expire, n := binary.Varint(buf[index:])<br>	index += n<br>	version, n := binary.Varint(buf[index:])<br>	index += n<br>	size, n := binary.Varint(buf[index:])<br>	index += n<br><br>	<span class="hljs-keyword">var</span> head <span class="hljs-type">uint64</span> = <span class="hljs-number">0</span><br>	<span class="hljs-keyword">var</span> tail <span class="hljs-type">uint64</span> = <span class="hljs-number">0</span><br>	<span class="hljs-keyword">if</span> dataType == List &#123;<br>		head, n = binary.Uvarint(buf[index:])<br>		index += n<br>		tail, _ = binary.Uvarint(buf[index:])<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> &amp;metadata&#123;<br>		dataType: dataType,<br>		expire:   expire,<br>		version:  version,<br>		size:     <span class="hljs-type">uint32</span>(size),<br>		head:     head,<br>		tail:     tail,<br>	&#125;<br>&#125;<br><br><span class="hljs-keyword">type</span> hashInternalKey <span class="hljs-keyword">struct</span> &#123;<br>	key     []<span class="hljs-type">byte</span><br>	version <span class="hljs-type">int64</span><br>	field   []<span class="hljs-type">byte</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(hk *hashInternalKey)</span></span> encode() []<span class="hljs-type">byte</span> &#123;<br>	buf := <span class="hljs-built_in">make</span>([]<span class="hljs-type">byte</span>, <span class="hljs-built_in">len</span>(hk.key)+<span class="hljs-built_in">len</span>(hk.field)+<span class="hljs-number">8</span>)<br>	<span class="hljs-comment">// key</span><br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">0</span><br>	<span class="hljs-built_in">copy</span>(buf[index:index+<span class="hljs-built_in">len</span>(hk.key)], hk.key)<br>	index += <span class="hljs-built_in">len</span>(hk.key)<br><br>	<span class="hljs-comment">// version</span><br>	binary.LittleEndian.PutUint64(buf[index:index+<span class="hljs-number">8</span>], <span class="hljs-type">uint64</span>(hk.version))<br>	index += <span class="hljs-number">8</span><br><br>	<span class="hljs-comment">// field</span><br>	<span class="hljs-built_in">copy</span>(buf[index:], hk.field)<br><br>	<span class="hljs-keyword">return</span> buf<br>&#125;<br><br><span class="hljs-keyword">type</span> setInternalKey <span class="hljs-keyword">struct</span> &#123;<br>	key     []<span class="hljs-type">byte</span><br>	version <span class="hljs-type">int64</span><br>	member  []<span class="hljs-type">byte</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(sk *setInternalKey)</span></span> encode() []<span class="hljs-type">byte</span> &#123;<br>	buf := <span class="hljs-built_in">make</span>([]<span class="hljs-type">byte</span>, <span class="hljs-built_in">len</span>(sk.key)+<span class="hljs-built_in">len</span>(sk.member)+<span class="hljs-number">8</span>+<span class="hljs-number">4</span>)<br>	<span class="hljs-comment">// key</span><br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">0</span><br>	<span class="hljs-built_in">copy</span>(buf[index:index+<span class="hljs-built_in">len</span>(sk.key)], sk.key)<br>	index += <span class="hljs-built_in">len</span>(sk.key)<br><br>	<span class="hljs-comment">// version</span><br>	binary.LittleEndian.PutUint64(buf[index:index+<span class="hljs-number">8</span>], <span class="hljs-type">uint64</span>(sk.version))<br>	index += <span class="hljs-number">8</span><br><br>	<span class="hljs-comment">// member</span><br>	<span class="hljs-built_in">copy</span>(buf[index:index+<span class="hljs-built_in">len</span>(sk.member)], sk.member)<br>	index += <span class="hljs-built_in">len</span>(sk.member)<br><br>	<span class="hljs-comment">// member size</span><br>	binary.LittleEndian.PutUint32(buf[index:], <span class="hljs-type">uint32</span>(<span class="hljs-built_in">len</span>(sk.member)))<br><br>	<span class="hljs-keyword">return</span> buf<br>&#125;<br><br><span class="hljs-keyword">type</span> listInternalKey <span class="hljs-keyword">struct</span> &#123;<br>	key     []<span class="hljs-type">byte</span><br>	version <span class="hljs-type">int64</span><br>	index   <span class="hljs-type">uint64</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(lk *listInternalKey)</span></span> encode() []<span class="hljs-type">byte</span> &#123;<br>	buf := <span class="hljs-built_in">make</span>([]<span class="hljs-type">byte</span>, <span class="hljs-built_in">len</span>(lk.key)+<span class="hljs-number">8</span>+<span class="hljs-number">8</span>)<br><br>	<span class="hljs-comment">// key</span><br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">0</span><br>	<span class="hljs-built_in">copy</span>(buf[index:index+<span class="hljs-built_in">len</span>(lk.key)], lk.key)<br>	index += <span class="hljs-built_in">len</span>(lk.key)<br><br>	<span class="hljs-comment">// version</span><br>	binary.LittleEndian.PutUint64(buf[index:index+<span class="hljs-number">8</span>], <span class="hljs-type">uint64</span>(lk.version))<br>	index += <span class="hljs-number">8</span><br><br>	<span class="hljs-comment">// index</span><br>	binary.LittleEndian.PutUint64(buf[index:], lk.index)<br><br>	<span class="hljs-keyword">return</span> buf<br>&#125;<br><br><span class="hljs-keyword">type</span> zsetInternalKey <span class="hljs-keyword">struct</span> &#123;<br>	key     []<span class="hljs-type">byte</span><br>	version <span class="hljs-type">int64</span><br>	member  []<span class="hljs-type">byte</span><br>	score   <span class="hljs-type">float64</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(zk *zsetInternalKey)</span></span> encodeWithMember() []<span class="hljs-type">byte</span> &#123;<br>	buf := <span class="hljs-built_in">make</span>([]<span class="hljs-type">byte</span>, <span class="hljs-built_in">len</span>(zk.key)+<span class="hljs-built_in">len</span>(zk.member)+<span class="hljs-number">8</span>)<br><br>	<span class="hljs-comment">// key</span><br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">0</span><br>	<span class="hljs-built_in">copy</span>(buf[index:index+<span class="hljs-built_in">len</span>(zk.key)], zk.key)<br>	index += <span class="hljs-built_in">len</span>(zk.key)<br><br>	<span class="hljs-comment">// version</span><br>	binary.LittleEndian.PutUint64(buf[index:index+<span class="hljs-number">8</span>], <span class="hljs-type">uint64</span>(zk.version))<br>	index += <span class="hljs-number">8</span><br><br>	<span class="hljs-comment">// member</span><br>	<span class="hljs-built_in">copy</span>(buf[index:], zk.member)<br><br>	<span class="hljs-keyword">return</span> buf<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(zk *zsetInternalKey)</span></span> encodeWithScore() []<span class="hljs-type">byte</span> &#123;<br>	scoreBuf := utils.Float64ToBytes(zk.score)<br>	buf := <span class="hljs-built_in">make</span>([]<span class="hljs-type">byte</span>, <span class="hljs-built_in">len</span>(zk.key)+<span class="hljs-built_in">len</span>(zk.member)+<span class="hljs-built_in">len</span>(scoreBuf)+<span class="hljs-number">8</span>+<span class="hljs-number">4</span>)<br><br>	<span class="hljs-comment">// key</span><br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">0</span><br>	<span class="hljs-built_in">copy</span>(buf[index:index+<span class="hljs-built_in">len</span>(zk.key)], zk.key)<br>	index += <span class="hljs-built_in">len</span>(zk.key)<br><br>	<span class="hljs-comment">// version</span><br>	binary.LittleEndian.PutUint64(buf[index:index+<span class="hljs-number">8</span>], <span class="hljs-type">uint64</span>(zk.version))<br>	index += <span class="hljs-number">8</span><br><br>	<span class="hljs-comment">// score</span><br>	<span class="hljs-built_in">copy</span>(buf[index:index+<span class="hljs-built_in">len</span>(scoreBuf)], scoreBuf)<br>	index += <span class="hljs-built_in">len</span>(scoreBuf)<br><br>	<span class="hljs-comment">// member</span><br>	<span class="hljs-built_in">copy</span>(buf[index:index+<span class="hljs-built_in">len</span>(zk.member)], zk.member)<br>	index += <span class="hljs-built_in">len</span>(zk.member)<br><br>	<span class="hljs-comment">// member size</span><br>	binary.LittleEndian.PutUint32(buf[index:], <span class="hljs-type">uint32</span>(<span class="hljs-built_in">len</span>(zk.member)))<br><br>	<span class="hljs-keyword">return</span> buf<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>1.String：</p>
+<p>对于 Redis 的 String 类型，我们设计了其编码结构，包含 key、type、expire 和 payload 四个部分。其中 type 字段用于标识数据类型，如 0 表示 String，1 表示 Hash，2 表示 Set，3 表示 List，4 表示 ZSet；expire 存储过期时间，采用 Unix 时间戳形式；payload 则是原始 value 的内容。对于 Set 类型的操作，Put 一个 key&#x2F;value 键值对时，只需将 value 加上对应的编码结构后调用存储引擎接口即可，编码逻辑与之前学习的 LogRecord 类似，使用的库和编码方法也一致。Get 操作首先根据用户传入的 key 查找对应的 value，如果 value 不存在，则说明该 key 不存在，直接返回错误；否则需判断类型，若不是 String 类型，则说明类型不匹配，直接返回错误，Redis 中此类错误提示为 “WRONGTYPE Operation against a key holding the wrong kind of value”。如果是正确的类型，则需要解码获取实际的 value，并检查是否已过期，若已过期则直接返回。<br>Del 命令是一个通用命令，可以删除任意类型的 key 数据，通过调用存储引擎接口实现删除操作。对于非 String 类型的数据结构，实际删除的是其元数据，因为这类数据首先会查询元数据，若元数据不存在，则该 key 所属的所有数据均无效。Type 命令用于获取 key 的类型，在 String 类型中，value 内维护了类型信息；而对于其他四种数据结构，元数据中也存储了对应类型，因此可通过 Get 获取数据并解码来获取类型。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> Set(key []<span class="hljs-type">byte</span>, ttl time.Duration, value []<span class="hljs-type">byte</span>) <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-keyword">if</span> value == <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-comment">// 编码 value : type + expire + payload</span><br>	buf := <span class="hljs-built_in">make</span>([]<span class="hljs-type">byte</span>, binary.MaxVarintLen64+<span class="hljs-number">1</span>)<br>	buf[<span class="hljs-number">0</span>] = String<br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">1</span><br>	<span class="hljs-keyword">var</span> expire <span class="hljs-type">int64</span> = <span class="hljs-number">0</span><br>	<span class="hljs-keyword">if</span> ttl != <span class="hljs-number">0</span> &#123;<br>		expire = time.Now().Add(ttl).UnixNano()<br>	&#125;<br>	index += binary.PutVarint(buf[index:], expire)<br><br>	encValue := <span class="hljs-built_in">make</span>([]<span class="hljs-type">byte</span>, index+<span class="hljs-built_in">len</span>(value))<br>	<span class="hljs-built_in">copy</span>(encValue[:index], buf[:index])<br>	<span class="hljs-built_in">copy</span>(encValue[index:], value)<br><br>	<span class="hljs-comment">// 调用存储接口写入数据</span><br>	<span class="hljs-keyword">return</span> rds.db.Put(key, encValue)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> Get(key []<span class="hljs-type">byte</span>) ([]<span class="hljs-type">byte</span>, <span class="hljs-type">error</span>) &#123;<br>	encValue, err := rds.db.Get(key)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br><br>	<span class="hljs-comment">// 解码</span><br>	dataType := encValue[<span class="hljs-number">0</span>]<br>	<span class="hljs-keyword">if</span> dataType != String &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, ErrWrongTypeOperation<br>	&#125;<br><br>	<span class="hljs-keyword">var</span> index = <span class="hljs-number">1</span><br>	expire, n := binary.Varint(encValue[index:])<br>	index += n<br>	<span class="hljs-comment">// 判断是否过期</span><br>	<span class="hljs-keyword">if</span> expire &gt; <span class="hljs-number">0</span> &amp;&amp; expire &lt;= time.Now().UnixNano() &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-keyword">return</span> encValue[index:], <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>2.Hash：</p>
+<p>Hash 数据结构的设计中，元数据包括 type、expire、version、size 等字段，其中 version 主要用于快速删除 key。数据部分由 key|version|field 映射到 value 构成。HSet 命令首先获取元数据，若不存在则初始化新的元数据结构体，元数据定义包含 data_type、expire、version、size、head 和 tail 字段，其中 head 和 tail 专用于 List 类型。数据部分编码后的 key 为 key+version+field，若该 key 不存在，则表示新增 field，元数据 size 需加 1 并更新元数据；若存在，则说明 field 对应的 value 已存在，无需更新元数据。更新元数据和数据部分时使用 WriteBatch 保证原子性。HGet 命令先查询元数据，若不存在则说明 key 不存在，否则判断 value 类型，若类型不符则返回相应错误。接着根据 key 和 version 字段以及 field 编码出 key，再获取实际 value。HDel 命令用于删除指定 field，同样先查询元数据并判断类型，然后更新元数据，主要将 size 递减，并删除实际数据部分。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> HSet(key, field, value []<span class="hljs-type">byte</span>) (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-comment">// 先查找元数据</span><br>	meta, err := rds.findMetadata(key, Hash)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br><br>	<span class="hljs-comment">// 构造 Hash 数据部分的 key</span><br>	hk := &amp;hashInternalKey&#123;<br>		key:     key,<br>		version: meta.version,<br>		field:   field,<br>	&#125;<br>	encKey := hk.encode()<br><br>	<span class="hljs-comment">// 先查找是否存在</span><br>	<span class="hljs-keyword">var</span> exist = <span class="hljs-literal">true</span><br>	<span class="hljs-keyword">if</span> _, err = rds.db.Get(encKey); err == bitcask.ErrKeyNotFound &#123;<br>		exist = <span class="hljs-literal">false</span><br>	&#125;<br><br>	wb := rds.db.NewWriteBatch(bitcask.DefaultWriteBatchOptions)<br>	<span class="hljs-comment">// 不存在则更新元数据</span><br>	<span class="hljs-keyword">if</span> !exist &#123;<br>		meta.size++<br>		_ = wb.Put(key, meta.encode())<br>	&#125;<br>	_ = wb.Put(encKey, value)<br>	<span class="hljs-keyword">if</span> err = wb.Commit(); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br>	<span class="hljs-keyword">return</span> !exist, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> HGet(key, field []<span class="hljs-type">byte</span>) ([]<span class="hljs-type">byte</span>, <span class="hljs-type">error</span>) &#123;<br>	meta, err := rds.findMetadata(key, Hash)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> meta.size == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	hk := &amp;hashInternalKey&#123;<br>		key:     key,<br>		version: meta.version,<br>		field:   field,<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> rds.db.Get(hk.encode())<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> HDel(key, field []<span class="hljs-type">byte</span>) (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) &#123;<br>	meta, err := rds.findMetadata(key, Hash)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> meta.size == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	hk := &amp;hashInternalKey&#123;<br>		key:     key,<br>		version: meta.version,<br>		field:   field,<br>	&#125;<br>	encKey := hk.encode()<br><br>	<span class="hljs-comment">// 先查看是否存在</span><br>	<span class="hljs-keyword">var</span> exist = <span class="hljs-literal">true</span><br>	<span class="hljs-keyword">if</span> _, err = rds.db.Get(encKey); err == bitcask.ErrKeyNotFound &#123;<br>		exist = <span class="hljs-literal">false</span><br>	&#125;<br><br>	<span class="hljs-keyword">if</span> exist &#123;<br>		wb := rds.db.NewWriteBatch(bitcask.DefaultWriteBatchOptions)<br>		meta.size--<br>		_ = wb.Put(key, meta.encode())<br>		_ = wb.Delete(encKey)<br>		<span class="hljs-keyword">if</span> err = wb.Commit(); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> exist, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<p>3.Set</p>
+<p>Set 数据结构的元数据与 Hash 完全一致，包含 type、expire、version 和 size 字段。数据部分由 key|version|member|member size 映射到 NULL。由于存储的 value 是空的，member 可从 key 中提取，因此编码时可将 member 的长度编码进 key，获取 key 后从末尾截取 member size 即可得到 member 值。SAdd 命令首先获取元数据，若不存在则初始化新元数据结构体，构造数据部分的 key 并更新元数据和数据。SisMember 和 SAdd 类似，先获取元数据，构造数据部分的 key，调用存储引擎接口查看是否存在。Srem 命令先获取元数据，若不存在则直接返回，否则构造数据部分的 key，调用存储引擎接口，若存在则更新元数据并删除该 key。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> SAdd(key, member []<span class="hljs-type">byte</span>) (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-comment">// 查找元数据</span><br>	meta, err := rds.findMetadata(key, Set)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br><br>	<span class="hljs-comment">// 构造一个数据部分的 key</span><br>	sk := &amp;setInternalKey&#123;<br>		key:     key,<br>		version: meta.version,<br>		member:  member,<br>	&#125;<br><br>	<span class="hljs-keyword">var</span> ok <span class="hljs-type">bool</span><br>	<span class="hljs-keyword">if</span> _, err = rds.db.Get(sk.encode()); err == bitcask.ErrKeyNotFound &#123;<br>		<span class="hljs-comment">// 不存在的话则更新</span><br>		wb := rds.db.NewWriteBatch(bitcask.DefaultWriteBatchOptions)<br>		meta.size++<br>		_ = wb.Put(key, meta.encode())<br>		_ = wb.Put(sk.encode(), <span class="hljs-literal">nil</span>)<br>		<span class="hljs-keyword">if</span> err = wb.Commit(); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>		&#125;<br>		ok = <span class="hljs-literal">true</span><br>	&#125;<br><br>	<span class="hljs-keyword">return</span> ok, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> SIsMember(key, member []<span class="hljs-type">byte</span>) (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) &#123;<br>	meta, err := rds.findMetadata(key, Set)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> meta.size == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-comment">// 构造一个数据部分的 key</span><br>	sk := &amp;setInternalKey&#123;<br>		key:     key,<br>		version: meta.version,<br>		member:  member,<br>	&#125;<br><br>	_, err = rds.db.Get(sk.encode())<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &amp;&amp; err != bitcask.ErrKeyNotFound &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> err == bitcask.ErrKeyNotFound &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> SRem(key, member []<span class="hljs-type">byte</span>) (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) &#123;<br>	meta, err := rds.findMetadata(key, Set)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> meta.size == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-comment">// 构造一个数据部分的 key</span><br>	sk := &amp;setInternalKey&#123;<br>		key:     key,<br>		version: meta.version,<br>		member:  member,<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> _, err = rds.db.Get(sk.encode()); err == bitcask.ErrKeyNotFound &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-comment">// 更新</span><br>	wb := rds.db.NewWriteBatch(bitcask.DefaultWriteBatchOptions)<br>	meta.size--<br>	_ = wb.Put(key, meta.encode())<br>	_ = wb.Delete(sk.encode())<br>	<span class="hljs-keyword">if</span> err = wb.Commit(); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>4.List<br>List 数据结构的元数据与 Hash 和 Set 类似，但多了 head 和 tail 字段。List 可视为队列，支持头尾 Push 和 Pop 操作，可用标识表示头尾，初始情况下 head &#x3D; tail &#x3D; U64_MAX &#x2F; 2。数据部分由 key|version|index 映射到 value，index 根据 head 或 tail 值确定，左端 Push 时 index 为 head - 1，右端 Push 时 index 为 tail。Lpush 命令先查找元数据，若不存在则初始化，构造数据部分的 key，其中 index 为 meta.head - 1，调用存储引擎接口写入数据并更新元数据。Rpush 与 Lpush 类似，但 index 为 meta.tail。Lpop 命令先查找元数据，若不存在或 key 下无数据则直接返回，否则构造数据部分的 key，获取值后更新元数据，size 递减，meta.head + 1。Rpop 与 Lpop 类似，只是更新元数据时 meta.tail 递减。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> LPush(key, element []<span class="hljs-type">byte</span>) (<span class="hljs-type">uint32</span>, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">return</span> rds.pushInner(key, element, <span class="hljs-literal">true</span>)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> RPush(key, element []<span class="hljs-type">byte</span>) (<span class="hljs-type">uint32</span>, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">return</span> rds.pushInner(key, element, <span class="hljs-literal">false</span>)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> LPop(key []<span class="hljs-type">byte</span>) ([]<span class="hljs-type">byte</span>, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">return</span> rds.popInner(key, <span class="hljs-literal">true</span>)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> RPop(key []<span class="hljs-type">byte</span>) ([]<span class="hljs-type">byte</span>, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">return</span> rds.popInner(key, <span class="hljs-literal">false</span>)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> pushInner(key, element []<span class="hljs-type">byte</span>, isLeft <span class="hljs-type">bool</span>) (<span class="hljs-type">uint32</span>, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-comment">// 查找元数据</span><br>	meta, err := rds.findMetadata(key, List)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>, err<br>	&#125;<br><br>	<span class="hljs-comment">// 构造数据部分的 key</span><br>	lk := &amp;listInternalKey&#123;<br>		key:     key,<br>		version: meta.version,<br>	&#125;<br>	<span class="hljs-keyword">if</span> isLeft &#123;<br>		lk.index = meta.head - <span class="hljs-number">1</span><br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		lk.index = meta.tail<br>	&#125;<br><br>	<span class="hljs-comment">// 更新元数据和数据部分</span><br>	wb := rds.db.NewWriteBatch(bitcask.DefaultWriteBatchOptions)<br>	meta.size++<br>	<span class="hljs-keyword">if</span> isLeft &#123;<br>		meta.head--<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		meta.tail++<br>	&#125;<br>	_ = wb.Put(key, meta.encode())<br>	_ = wb.Put(lk.encode(), element)<br>	<span class="hljs-keyword">if</span> err = wb.Commit(); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>, err<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> meta.size, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> popInner(key []<span class="hljs-type">byte</span>, isLeft <span class="hljs-type">bool</span>) ([]<span class="hljs-type">byte</span>, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-comment">// 查找元数据</span><br>	meta, err := rds.findMetadata(key, List)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> meta.size == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-comment">// 构造数据部分的 key</span><br>	lk := &amp;listInternalKey&#123;<br>		key:     key,<br>		version: meta.version,<br>	&#125;<br>	<span class="hljs-keyword">if</span> isLeft &#123;<br>		lk.index = meta.head<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		lk.index = meta.tail - <span class="hljs-number">1</span><br>	&#125;<br><br>	element, err := rds.db.Get(lk.encode())<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br><br>	<span class="hljs-comment">// 更新元数据</span><br>	meta.size--<br>	<span class="hljs-keyword">if</span> isLeft &#123;<br>		meta.head++<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		meta.tail--<br>	&#125;<br>	<span class="hljs-keyword">if</span> err = rds.db.Put(key, meta.encode()); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> element, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>5.Zset<br>ZSet 数据结构的元数据与 Hash 和 Set 一致，包含 type、expire、version 和 size 字段。数据部分分为两部分：第一部分通过 key + member 获取 score，第二部分将 member 按 score 排序，便于按 score 顺序获取 member。ZAdd 命令首先根据 key 获取元数据，若未获取则初始化新元数据结构体，再判断 member 是否已存在且 score 相同，若相同则无需操作，否则构造两个 key，调用存储引擎接口写入数据并更新元数据。ZScore 命令首先根据 key 获取元数据，若未获取则说明 key 不存在，直接返回；否则根据元数据构造 key: key|version|member，调用存储引擎接口获取 score 值。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> ZAdd(key []<span class="hljs-type">byte</span>, score <span class="hljs-type">float64</span>, member []<span class="hljs-type">byte</span>) (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) &#123;<br>	meta, err := rds.findMetadata(key, ZSet)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br><br>	<span class="hljs-comment">// 构造数据部分的key</span><br>	zk := &amp;zsetInternalKey&#123;<br>		key:     key,<br>		version: meta.version,<br>		score:   score,<br>		member:  member,<br>	&#125;<br><br>	<span class="hljs-keyword">var</span> exist = <span class="hljs-literal">true</span><br>	<span class="hljs-comment">// 查看是否已经存在</span><br>	value, err := rds.db.Get(zk.encodeWithMember())<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &amp;&amp; err != bitcask.ErrKeyNotFound &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> err == bitcask.ErrKeyNotFound &#123;<br>		exist = <span class="hljs-literal">false</span><br>	&#125;<br>	<span class="hljs-keyword">if</span> exist &#123;<br>		<span class="hljs-keyword">if</span> score == utils.FloatFromBytes(value) &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// 更新元数据和数据</span><br>	wb := rds.db.NewWriteBatch(bitcask.DefaultWriteBatchOptions)<br>	<span class="hljs-keyword">if</span> !exist &#123;<br>		meta.size++<br>		_ = wb.Put(key, meta.encode())<br>	&#125;<br>	<span class="hljs-keyword">if</span> exist &#123;<br>		oldKey := &amp;zsetInternalKey&#123;<br>			key:     key,<br>			version: meta.version,<br>			member:  member,<br>			score:   utils.FloatFromBytes(value),<br>		&#125;<br>		_ = wb.Delete(oldKey.encodeWithScore())<br>	&#125;<br>	_ = wb.Put(zk.encodeWithMember(), utils.Float64ToBytes(score))<br>	_ = wb.Put(zk.encodeWithScore(), <span class="hljs-literal">nil</span>)<br>	<span class="hljs-keyword">if</span> err = wb.Commit(); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> !exist, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> ZScore(key []<span class="hljs-type">byte</span>, member []<span class="hljs-type">byte</span>) (<span class="hljs-type">float64</span>, <span class="hljs-type">error</span>) &#123;<br>	meta, err := rds.findMetadata(key, ZSet)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> meta.size == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	<span class="hljs-comment">// 构造数据部分的key</span><br>	zk := &amp;zsetInternalKey&#123;<br>		key:     key,<br>		version: meta.version,<br>		member:  member,<br>	&#125;<br><br>	value, err := rds.db.Get(zk.encodeWithMember())<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>, err<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> utils.FloatFromBytes(value), <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rds *RedisDataStructure)</span></span> findMetadata(key []<span class="hljs-type">byte</span>, dataType redisDataType) (*metadata, <span class="hljs-type">error</span>) &#123;<br>	metaBuf, err := rds.db.Get(key)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &amp;&amp; err != bitcask.ErrKeyNotFound &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br><br>	<span class="hljs-keyword">var</span> meta *metadata<br>	<span class="hljs-keyword">var</span> exist = <span class="hljs-literal">true</span><br>	<span class="hljs-keyword">if</span> err == bitcask.ErrKeyNotFound &#123;<br>		exist = <span class="hljs-literal">false</span><br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		meta = decodeMetadata(metaBuf)<br>		<span class="hljs-comment">// 判断数据类型</span><br>		<span class="hljs-keyword">if</span> meta.dataType != dataType &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, ErrWrongTypeOperation<br>		&#125;<br>		<span class="hljs-comment">// 判断过期时间</span><br>		<span class="hljs-keyword">if</span> meta.expire != <span class="hljs-number">0</span> &amp;&amp; meta.expire &lt;= time.Now().UnixNano() &#123;<br>			exist = <span class="hljs-literal">false</span><br>		&#125;<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> !exist &#123;<br>		meta = &amp;metadata&#123;<br>			dataType: dataType,<br>			expire:   <span class="hljs-number">0</span>,<br>			version:  time.Now().UnixNano(),<br>			size:     <span class="hljs-number">0</span>,<br>		&#125;<br>		<span class="hljs-keyword">if</span> dataType == List &#123;<br>			meta.head = initialListMark<br>			meta.tail = initialListMark<br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">return</span> meta, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>Redis的通信协议RESP是一种简单、高效的二进制协议，用于在客户端和Redis服务器之间进行通信。<br>RESP使用文本的格式并支持多种数据类型，常见的有以下几种:</p>
+<pre><code class="hljs">1.简单字符串(Simple Strings):以&quot;+&quot;符号开头，后跟字符串内容。例如,&quot;+OK\r\n&quot;表示一个简单字符串回复，内容为&quot;OK&quot;。
+2.错误消息(Errors):以&quot;-&quot;符号开头，后跟错误信息。例如，&quot;-Error occurred\r\n&quot;表示一个错误消息回复，内容为&quot;Error occurred&quot;。
+3.整数(Integers):以&quot;:&quot;符号开头，后跟一个整数。例如，&quot;:100\r、n&quot;表示一个整数回复，值为100。
+4.多行字符串(Bulk Strings):以&quot;$&quot;符号开头，后跟一个字符串长度(字节数),然后是字符串内容。例如，&quot;$5\r\nHello\r\n&quot;表示一个长度为5的多行字符串，内容为&quot;Hello&quot;。
+5.数组(Arrays):以&quot;*&quot;符号开头，后跟一个整数表示数组中元素的个数，然后是数组的元素。数组可以包含任意RESP数据类型，包括简单字符串、错误消息、整数、多行字符串和嵌套数组。
+</code></pre>
+<p>Redis Server：<br>首先 bitcask_redis.NewRedisDataStructure 初始化底层存储引擎，并将其存入 BitcaskServer 的 dbs 字典中。使用 redcon 库创建一个 TCP 服务器实例监听端口。redcon 是一个轻量级的 Redis 协议解析库，会自动处理客户端连接、命令解析和响应发送。BitcaskServer 实现了 redcon.Server 所需的 accept 和 close 回调函数，accept 在新连接建立时创建一个 BitcaskClient 对象，并将其关联到当前连接的上下文中，close 则在连接关闭或服务器停止时，负责清理所有数据库实例并关闭服务器本身。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">const</span> addr = <span class="hljs-string">&quot;127.0.0.1:6380&quot;</span><br><br><span class="hljs-keyword">type</span> BitcaskServer <span class="hljs-keyword">struct</span> &#123;<br>	dbs    <span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]*bitcask_redis.RedisDataStructure<br>	server *redcon.Server<br>	mu     sync.RWMutex<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	<span class="hljs-comment">// 打开 Redis 数据结构服务</span><br>	redisDataStructure, err := bitcask_redis.NewRedisDataStructure(bitcask.DefaultOptions)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-built_in">panic</span>(err)<br>	&#125;<br><br>	<span class="hljs-comment">// 初始化 BitcaskServer</span><br>	bitcaskServer := &amp;BitcaskServer&#123;<br>		dbs: <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">int</span>]*bitcask_redis.RedisDataStructure),<br>	&#125;<br>	bitcaskServer.dbs[<span class="hljs-number">0</span>] = redisDataStructure<br><br>	<span class="hljs-comment">// 初始化一个 Redis 服务端</span><br>	bitcaskServer.server = redcon.NewServer(addr, execClientCommand, bitcaskServer.accept, bitcaskServer.<span class="hljs-built_in">close</span>)<br>	bitcaskServer.listen()<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(svr *BitcaskServer)</span></span> listen() &#123;<br>	log.Println(<span class="hljs-string">&quot;bitcask server running, ready to accept connections.&quot;</span>)<br>	_ = svr.server.ListenAndServe()<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(svr *BitcaskServer)</span></span> accept(conn redcon.Conn) <span class="hljs-type">bool</span> &#123;<br>	cli := <span class="hljs-built_in">new</span>(BitcaskClient)<br>	svr.mu.Lock()<br>	<span class="hljs-keyword">defer</span> svr.mu.Unlock()<br>	cli.server = svr<br>	cli.db = svr.dbs[<span class="hljs-number">0</span>]<br>	conn.SetContext(cli)<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(svr *BitcaskServer)</span></span> <span class="hljs-built_in">close</span>(conn redcon.Conn, err <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">for</span> _, db := <span class="hljs-keyword">range</span> svr.dbs &#123;<br>		_ = db.Close()<br>	&#125;<br>	_ = svr.server.Close()<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<p>Redis Client：<br>当 redcon 解析出一个完整的客户端命令后，会调用 execClientCommand，将命令名转换为小写，并在 supportedCommands 映射表中查找对应的处理器函数。如果命令不被支持，则返回错误。对于 quit 命令，直接关闭连接；对于 ping 命令，返回 “PONG” 字符串。对于其他命令，它会从连接的 context 中获取 BitcaskClient 实例，然后调用对应的处理器函数。首先检查参数数量是否正确，然后调用 BitcaskClient.db 中的相应方法执行操作；最后根据操作结果，通过 redcon 提供的 WriteAny 等方法将结果编码为符合 RESP 协议格式的数据并返回给客户端。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">newWrongNumberOfArgsError</span><span class="hljs-params">(cmd <span class="hljs-type">string</span>)</span></span> <span class="hljs-type">error</span> &#123;<br>	<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;ERR wrong number of arguments for &#x27;%s&#x27; command&quot;</span>, cmd)<br>&#125;<br><br><span class="hljs-keyword">type</span> cmdHandler <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(cli *BitcaskClient, args [][]<span class="hljs-type">byte</span>)</span></span> (<span class="hljs-keyword">interface</span>&#123;&#125;, <span class="hljs-type">error</span>)<br><br><span class="hljs-keyword">var</span> supportedCommands = <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]cmdHandler&#123;<br>	<span class="hljs-string">&quot;set&quot;</span>:   set,<br>	<span class="hljs-string">&quot;get&quot;</span>:   get,<br>	<span class="hljs-string">&quot;hset&quot;</span>:  hset,<br>	<span class="hljs-string">&quot;sadd&quot;</span>:  sadd,<br>	<span class="hljs-string">&quot;lpush&quot;</span>: lpush,<br>	<span class="hljs-string">&quot;zadd&quot;</span>:  zadd,<br>&#125;<br><br><span class="hljs-keyword">type</span> BitcaskClient <span class="hljs-keyword">struct</span> &#123;<br>	server *BitcaskServer<br>	db     *bitcask_redis.RedisDataStructure<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">execClientCommand</span><span class="hljs-params">(conn redcon.Conn, cmd redcon.Command)</span></span> &#123;<br>	command := strings.ToLower(<span class="hljs-type">string</span>(cmd.Args[<span class="hljs-number">0</span>]))<br>	cmdFunc, ok := supportedCommands[command]<br>	<span class="hljs-keyword">if</span> !ok &#123;<br>		conn.WriteError(<span class="hljs-string">&quot;Err unsupported command: &#x27;&quot;</span> + command + <span class="hljs-string">&quot;&#x27;&quot;</span>)<br>		<span class="hljs-keyword">return</span><br>	&#125;<br><br>	client, _ := conn.Context().(*BitcaskClient)<br>	<span class="hljs-keyword">switch</span> command &#123;<br>	<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;quit&quot;</span>:<br>		_ = conn.Close()<br>	<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;ping&quot;</span>:<br>		conn.WriteString(<span class="hljs-string">&quot;PONG&quot;</span>)<br>	<span class="hljs-keyword">default</span>:<br>		res, err := cmdFunc(client, cmd.Args[<span class="hljs-number">1</span>:])<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">if</span> err == bitcask.ErrKeyNotFound &#123;<br>				conn.WriteNull()<br>			&#125; <span class="hljs-keyword">else</span> &#123;<br>				conn.WriteError(err.Error())<br>			&#125;<br>			<span class="hljs-keyword">return</span><br>		&#125;<br>		conn.WriteAny(res)<br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">set</span><span class="hljs-params">(cli *BitcaskClient, args [][]<span class="hljs-type">byte</span>)</span></span> (<span class="hljs-keyword">interface</span>&#123;&#125;, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(args) != <span class="hljs-number">2</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, newWrongNumberOfArgsError(<span class="hljs-string">&quot;set&quot;</span>)<br>	&#125;<br><br>	key, value := args[<span class="hljs-number">0</span>], args[<span class="hljs-number">1</span>]<br>	<span class="hljs-keyword">if</span> err := cli.db.Set(key, <span class="hljs-number">0</span>, value); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">return</span> redcon.SimpleString(<span class="hljs-string">&quot;OK&quot;</span>), <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">get</span><span class="hljs-params">(cli *BitcaskClient, args [][]<span class="hljs-type">byte</span>)</span></span> (<span class="hljs-keyword">interface</span>&#123;&#125;, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(args) != <span class="hljs-number">1</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, newWrongNumberOfArgsError(<span class="hljs-string">&quot;get&quot;</span>)<br>	&#125;<br><br>	value, err := cli.db.Get(args[<span class="hljs-number">0</span>])<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">return</span> value, <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">hset</span><span class="hljs-params">(cli *BitcaskClient, args [][]<span class="hljs-type">byte</span>)</span></span> (<span class="hljs-keyword">interface</span>&#123;&#125;, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(args) != <span class="hljs-number">3</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, newWrongNumberOfArgsError(<span class="hljs-string">&quot;hset&quot;</span>)<br>	&#125;<br><br>	<span class="hljs-keyword">var</span> ok = <span class="hljs-number">0</span><br>	key, field, value := args[<span class="hljs-number">0</span>], args[<span class="hljs-number">1</span>], args[<span class="hljs-number">2</span>]<br>	res, err := cli.db.HSet(key, field, value)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> res &#123;<br>		ok = <span class="hljs-number">1</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> redcon.SimpleInt(ok), <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">sadd</span><span class="hljs-params">(cli *BitcaskClient, args [][]<span class="hljs-type">byte</span>)</span></span> (<span class="hljs-keyword">interface</span>&#123;&#125;, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(args) != <span class="hljs-number">2</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, newWrongNumberOfArgsError(<span class="hljs-string">&quot;sadd&quot;</span>)<br>	&#125;<br><br>	<span class="hljs-keyword">var</span> ok = <span class="hljs-number">0</span><br>	key, member := args[<span class="hljs-number">0</span>], args[<span class="hljs-number">1</span>]<br>	res, err := cli.db.SAdd(key, member)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> res &#123;<br>		ok = <span class="hljs-number">1</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> redcon.SimpleInt(ok), <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">lpush</span><span class="hljs-params">(cli *BitcaskClient, args [][]<span class="hljs-type">byte</span>)</span></span> (<span class="hljs-keyword">interface</span>&#123;&#125;, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(args) != <span class="hljs-number">2</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, newWrongNumberOfArgsError(<span class="hljs-string">&quot;lpush&quot;</span>)<br>	&#125;<br><br>	key, value := args[<span class="hljs-number">0</span>], args[<span class="hljs-number">1</span>]<br>	res, err := cli.db.LPush(key, value)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">return</span> redcon.SimpleInt(res), <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">zadd</span><span class="hljs-params">(cli *BitcaskClient, args [][]<span class="hljs-type">byte</span>)</span></span> (<span class="hljs-keyword">interface</span>&#123;&#125;, <span class="hljs-type">error</span>) &#123;<br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(args) != <span class="hljs-number">3</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, newWrongNumberOfArgsError(<span class="hljs-string">&quot;zadd&quot;</span>)<br>	&#125;<br><br>	<span class="hljs-keyword">var</span> ok = <span class="hljs-number">0</span><br>	key, score, member := args[<span class="hljs-number">0</span>], args[<span class="hljs-number">1</span>], args[<span class="hljs-number">2</span>]<br>	res, err := cli.db.ZAdd(key, utils.FloatFromBytes(score), member)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	<span class="hljs-keyword">if</span> res &#123;<br>		ok = <span class="hljs-number">1</span><br>	&#125;<br>	<span class="hljs-keyword">return</span> redcon.SimpleInt(ok), <span class="hljs-literal">nil</span><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>bitcask 支持redis数据结构</div>
+      <div>http://example.com/2026/01/19/bitcask-支持redis数据结构/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年1月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/01/21/3315-%E6%9E%84%E9%80%A0%E6%9C%80%E5%B0%8F%E4%BD%8D%E8%BF%90%E7%AE%97%E6%95%B0%E7%BB%84-II/" title="3315. 构造最小位运算数组 II">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">3315. 构造最小位运算数组 II</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/01/19/1292-%E5%85%83%E7%B4%A0%E5%92%8C%E5%B0%8F%E4%BA%8E%E7%AD%89%E4%BA%8E%E9%98%88%E5%80%BC%E7%9A%84%E6%AD%A3%E6%96%B9%E5%BD%A2%E7%9A%84%E6%9C%80%E5%A4%A7%E8%BE%B9%E9%95%BF/" title="1292. 元素和小于等于阈值的正方形的最大边长">
+                        <span class="hidden-mobile">1292. 元素和小于等于阈值的正方形的最大边长</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
