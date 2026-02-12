@@ -1,0 +1,799 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="为贴近真实用户访问，将请求到达过程建模为泊松过程。设单位时间内到达率为λ，则时间窗口 T 内到达请求数 K 满足： • chatbot：短输入短输出、请求频率高。设置arrival_rate&#x3D;60, avg_prompt_len&#x3D;50,avg_output_len&#x3D;50。• analysis：长输入长输出、单请求计算更重。设置arrival_rate&#x3D;15,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="为vLLM增加调度策略">
+<meta property="og:url" content="http://example.com/2026/02/12/%E4%B8%BAvLLM%E5%A2%9E%E5%8A%A0%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="为贴近真实用户访问，将请求到达过程建模为泊松过程。设单位时间内到达率为λ，则时间窗口 T 内到达请求数 K 满足： • chatbot：短输入短输出、请求频率高。设置arrival_rate&#x3D;60, avg_prompt_len&#x3D;50,avg_output_len&#x3D;50。• analysis：长输入长输出、单请求计算更重。设置arrival_rate&#x3D;15,">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/pic/vllm10.png">
+<meta property="og:image" content="http://example.com/pic/vllm11.png">
+<meta property="og:image" content="http://example.com/pic/vllm12.png">
+<meta property="og:image" content="http://example.com/pic/vllm13.png">
+<meta property="og:image" content="http://example.com/pic/vllm14.png">
+<meta property="og:image" content="http://example.com/pic/vllm15.png">
+<meta property="og:image" content="http://example.com/pic/vllm16.png">
+<meta property="og:image" content="http://example.com/pic/vllm17.png">
+<meta property="og:image" content="http://example.com/pic/vllm18.png">
+<meta property="article:published_time" content="2026-02-12T10:30:22.000Z">
+<meta property="article:modified_time" content="2026-02-12T12:57:16.875Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/pic/vllm10.png">
+  
+  
+  
+  <title>为vLLM增加调度策略 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="为vLLM增加调度策略"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-02-12 18:30" pubdate>
+          2026年2月12日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          19k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          162 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">为vLLM增加调度策略</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>为贴近真实用户访问，将请求到达过程建模为泊松过程。设单位时间内到达率为λ，则时间窗口 T 内到达请求数 K 满足：</p>
+<p>• chatbot：短输入短输出、请求频率高。设置arrival_rate&#x3D;60, avg_prompt_len&#x3D;50,<br>avg_output_len&#x3D;50。<br>• analysis：长输入长输出、单请求计算更重。设置arrival_rate&#x3D;15, avg_prompt_len&#x3D;800,<br>avg_output_len&#x3D;200。<br>• mixed：上述两类请求按一定比例混合，产生显著异质性。设置arrival_rate&#x3D;30,<br>avg_prompt_len&#x3D;200, avg_output_len&#x3D;100。</p>
+<p>VLLM 的调度逻辑封装在 Scheduler 类中，核心维护 3 个队列：<br>• waiting: 等待队列，存放新的 prefill 请求或被抢占后需重计算的请求；<br>• running: 运行队列，存放 decode 请求或分块 prefill（chunked prefill）请求；<br>• swapped: 交换队列，存放被换出到 CPU 的 decode 请求。<br>本作业比较的策略如下，并给出其核心思想和对应代码：</p>
+<ol>
+<li>FCFS<br>FIFO 是 VLLM 的默认调度策略，请求按进入 running 队列的顺序调度，无额外重排，队首请求优先获取资源。</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_reorder_running_queue_for_policy</span>(<span class="hljs-params">self, *, enable_chunking: <span class="hljs-built_in">bool</span></span>) -&gt; <span class="hljs-literal">None</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;根据调度策略重排 self.running。&quot;&quot;&quot;</span><br>    <span class="hljs-comment"># ... </span><br>    <span class="hljs-keyword">if</span> policy == <span class="hljs-string">&quot;fcfs&quot;</span>:<br>        <span class="hljs-comment"># 不进行重排</span><br>        <span class="hljs-keyword">return</span><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">_reorder_waiting_queue_for_policy</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-literal">None</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;Reorder `self.waiting` according to WRR / RR / EDF / FCFS.&quot;&quot;&quot;</span><br>    <span class="hljs-comment"># ...</span><br>    <span class="hljs-keyword">if</span> policy <span class="hljs-keyword">in</span> (<span class="hljs-string">&quot;fcfs&quot;</span>, <span class="hljs-string">&quot;priority&quot;</span>):<br>        <span class="hljs-keyword">return</span>  <span class="hljs-comment"># 不进行重排</span><br></code></pre></td></tr></table></figure>
+<p>调度流程如下：</p>
+<pre><code class="hljs">新请求完成 prefill 后进入 running 队列，按入队顺序排列；
+
+调度器调用 _reorder_running_queue_for_policy，因策略为 FCFS，不修改队列顺序；
+
+进入 _schedule_running 方法，遍历 running 队列的原始顺序，依次检查每个请求的资源需求：
+    若满足 can_schedule，token 预算、最大序列数充足，则调度该请求；
+    若资源不足，抢占 running 队列队尾的请求，释放资源，再调度当前请求；
+
+调度完成后，该请求继续留在 running 队列，直到 decode 完成，后续调度仍按队列顺序执行。
+</code></pre>
+<ol start="2">
+<li>Priority Scheduling</li>
+</ol>
+<p>Priority 优先级调度在 FCFS 基础上，根据 SequenceGroup 的优先级属性调整调度顺序：高优先级请求优先入队到 running 队列前端，资源不足时优先抢占低优先级请求。Priority 策略的核心体现在抢占阶段的低优先级受害者选择和队列隐式排序，核心代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_reorder_running_queue_for_policy</span>(<span class="hljs-params">self, *, enable_chunking: <span class="hljs-built_in">bool</span></span>) -&gt; <span class="hljs-literal">None</span>:<br>    <span class="hljs-keyword">if</span> enable_chunking <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> <span class="hljs-variable language_">self</span>.running:<br>        <span class="hljs-keyword">return</span><br><br>    policy = <span class="hljs-variable language_">self</span>.scheduler_config.policy<br>    running_queue: Deque[SequenceGroup] = <span class="hljs-variable language_">self</span>.running<br><br>    <span class="hljs-comment"># Priority 策略：无额外重排，保持队列中高优先级请求在前端</span><br>    <span class="hljs-keyword">if</span> policy <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> [<span class="hljs-string">&quot;rr&quot;</span>, <span class="hljs-string">&quot;wrr&quot;</span>, <span class="hljs-string">&quot;edf&quot;</span>]:<br>        <span class="hljs-keyword">return</span><br></code></pre></td></tr></table></figure>
+<p>资源不足时，调度器优先抢占 running 队列队尾的低优先级请求（队尾为低优先级），核心代码在 _schedule_running 方法中：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">while</span> <span class="hljs-keyword">not</span> <span class="hljs-variable language_">self</span>._can_append_slots(seq_group, enable_chunking):<br>    budget.subtract_num_batched_tokens(seq_group.request_id, num_running_tokens)<br>    num_running_seqs = seq_group.get_max_num_running_seqs()<br>    budget.subtract_num_seqs(seq_group.request_id, num_running_seqs)<br><br>    <span class="hljs-keyword">if</span> (curr_loras <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> seq_group.lora_int_id &gt; <span class="hljs-number">0</span><br>            <span class="hljs-keyword">and</span> seq_group.lora_int_id <span class="hljs-keyword">in</span> curr_loras):<br>        curr_loras.remove(seq_group.lora_int_id)<br><br>    <span class="hljs-comment"># 选择低优先级受害者：优先弹出队尾的低优先级请求</span><br>    cont_loop = <span class="hljs-literal">True</span><br>    <span class="hljs-keyword">if</span> running_queue:<br>        <span class="hljs-comment"># Preempt the lowest-priority sequence group.</span><br>        victim_seq_group = running_queue.pop()  <span class="hljs-comment"># 队尾=低优先级</span><br>    <span class="hljs-keyword">else</span>:<br>        <span class="hljs-comment"># 无其他请求可抢占时，抢占当前请求</span><br>        victim_seq_group = seq_group<br>        cont_loop = <span class="hljs-literal">False</span><br><br>    <span class="hljs-comment"># 执行抢占逻辑</span><br>    ...<br></code></pre></td></tr></table></figure>
+<p>调度流程如下：</p>
+<pre><code class="hljs">新请求进入 waiting 队列时，高优先级请求被优先处理, 完成 prefill 后进入 running 队列前端；
+
+调度器调用 _reorder_running_queue_for_policy，Priority 策略不修改队列顺序，保持高优先级请求在队首；
+
+遍历 running 队列时，队首的高优先级请求优先检查资源：
+    资源充足则直接调度；
+    资源不足则抢占队尾的低优先级请求（running_queue.pop()），释放资源后调度高优先级请求；
+
+被抢占的低优先级请求根据抢占模式（PreemptionMode）进入 waiting（重计算）或 swapped（换出到 CPU）队列，等待后续调度。
+</code></pre>
+<ol start="3">
+<li>EDF<br>Earliest Deadline First（EDF 最早截止时间优先）是一种动态优先级调度算法，核心原则为截止时间Deadline越早的任务，调度优先级越高。与FIFO、RR轮询等静态调度策略不同，EDF的优先级随任务截止时间动态调整——新任务加入或现有任务截止时间更新时调度队列会重新排序，确保截止时间最早的任务始终优先获取算力资源。在实时系统中，EDF是最优调度算法，只要任务集的CPU利用率不超过100%就能满足所有任务的截止时间要求。vLLM的上下文中，我们将这一思想应用于LLM推理请求调度，通过为每个请求计算截止时间，实现对请求优先级的动态调整。相比静态优先级策略，EDF能够更好地平衡请求的等待时间、剩余工作量和系统整体公平性。</li>
+</ol>
+<p>EDF的截止时间通过函数_get_edf_key计算。该函数的设计体现了EDF算法的两个关键维度，请求的时间和剩余工作量。arrival_time记录了请求到达调度器的时间戳，越早到达的请求拥有更小的基准时间值，反映了其在系统中等待的时长，remaining_uncomputed_tokens则量化了请求尚未完成的token数量，包括初始prompt的长度和已生成但尚未被计算的输出token。将这两个维度相加，得到的截止时间越小，意味着该请求既等待时间较长，又相对较短小，获得更高的调度优先级。这种设计平衡了公平性和系统效率，避免了长请求对短请求的饥饿问题。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_get_edf_key</span>(<span class="hljs-params">self, seq_group: SequenceGroup</span>) -&gt; <span class="hljs-built_in">float</span>:<br><br>    This <span class="hljs-keyword">is</span> a simple approximation: shorter <span class="hljs-keyword">and</span> older requests<br>    tend to have smaller deadline <span class="hljs-keyword">and</span> thus higher priority.<br><br>    <span class="hljs-comment"># arrival_time 在 RequestMetrics 中</span><br>    arrival_time = <span class="hljs-built_in">getattr</span>(seq_group.metrics, <span class="hljs-string">&quot;arrival_time&quot;</span>, <span class="hljs-number">0.0</span>)<br>    <span class="hljs-comment"># 剩余未计算 token 数：包括 prompt + 已生成的 output</span><br>    remaining_tokens = seq_group.get_num_uncomputed_tokens()<br>    <span class="hljs-keyword">return</span> arrival_time + <span class="hljs-built_in">float</span>(remaining_tokens)<br></code></pre></td></tr></table></figure>
+<p>为了实现EDF调度，每次调度循环开始时调度器根据最新的截止时间信息重新组织等待队列，由_reorder_waiting_queue_for_policy函数完成：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_reorder_waiting_queue_for_policy</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-literal">None</span>:<br><br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-variable language_">self</span>.waiting:<br>        <span class="hljs-keyword">return</span><br><br>    policy = <span class="hljs-variable language_">self</span>.scheduler_config.policy<br>    waiting_queue: Deque[SequenceGroup] = <span class="hljs-variable language_">self</span>.waiting<br><br>    ...<br>    <br>    <span class="hljs-comment"># -------------------------</span><br>    <span class="hljs-comment"># EDF：按deadline 排序</span><br>    <span class="hljs-comment"># -------------------------</span><br>    <span class="hljs-keyword">if</span> policy == <span class="hljs-string">&quot;edf&quot;</span>:<br>        sorted_queue = <span class="hljs-built_in">sorted</span>(waiting_queue, key=<span class="hljs-variable language_">self</span>._get_edf_key)<br>        <span class="hljs-variable language_">self</span>.waiting = deque(sorted_queue)<br>        <span class="hljs-keyword">return</span><br></code></pre></td></tr></table></figure>
+<p>当策略设置为EDF时，使用内置的sorted方法以_get_edf_key作为排序键对等待队列进行升序排列。排序完成后，队列的队首元素即为具有最小截止时间的请求也就是当前最紧急的请求。这一过程的时间复杂度为O(nlogn) ，其中n 是等待队列的长度，对于LLM推理场景而言，这一开销完全可以接受。每次调度都重新排序确保了优先级的动态性，使得新到达的短请求能够及时获得调度机会而不会被积压的长请求长期阻塞。</p>
+<p>EDF抢占算法的核心代码位于_schedule_edf_preemption函数，其实现如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_schedule_edf_preemption</span>(<span class="hljs-params"></span><br><span class="hljs-params">    self,</span><br><span class="hljs-params">    budget: SchedulingBudget,</span><br><span class="hljs-params"></span>) -&gt; <span class="hljs-built_in">int</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;EDF 抢占版本：比较waiting中最紧急的deadline和running中最松的deadline，必要时把后者抢占下来。返回强制 EDF 抢占的次数。</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br><br>    waiting_queue = <span class="hljs-variable language_">self</span>.waiting<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> waiting_queue:<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span><br><br>    <span class="hljs-comment"># 复制一份 running，并按 EDF 从小到大排（最紧急在左，最不紧急在右）</span><br>    running_queue = deque(<span class="hljs-built_in">sorted</span>(<span class="hljs-variable language_">self</span>.running, key=<span class="hljs-variable language_">self</span>._get_edf_key))<br><br>    blocks_to_swap_out: <span class="hljs-type">List</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">int</span>]] = []<br>    force_preemption_count = <span class="hljs-number">0</span><br><br>    <span class="hljs-comment"># 找到 waiting 里 deadline 最小的那个候选</span><br>    seq_group = <span class="hljs-built_in">min</span>(waiting_queue, key=<span class="hljs-variable language_">self</span>._get_edf_key)<br><br>    num_new_seqs = seq_group.get_max_num_running_seqs()<br>    num_new_tokens_uncached, _ = <span class="hljs-variable language_">self</span>._get_num_new_uncached_and_cached_tokens(<br>        seq_group,<br>        SequenceStatus.WAITING,<br>        <span class="hljs-literal">False</span>,<br>        budget,<br>    )<br><br>    <span class="hljs-comment"># 只有在候选的 deadline 比 running 里最晚更紧急时才考虑抢占</span><br>    <span class="hljs-keyword">while</span> running_queue <span class="hljs-keyword">and</span> <span class="hljs-variable language_">self</span>._get_edf_key(running_queue[-<span class="hljs-number">1</span>]) &gt; <span class="hljs-variable language_">self</span>._get_edf_key(seq_group):<br>        <span class="hljs-comment"># 和 priority 版本一样：抢占前先判断。如果空间够没必要抢</span><br>        can_allocate = <span class="hljs-variable language_">self</span>.block_manager.can_allocate(seq_group)<br>        <span class="hljs-keyword">if</span> (<br>            num_new_tokens_uncached &gt; <span class="hljs-number">0</span><br>            <span class="hljs-keyword">and</span> can_allocate == AllocStatus.OK<br>            <span class="hljs-keyword">and</span> budget.can_schedule(<br>                num_new_tokens=num_new_tokens_uncached,<br>                num_new_seqs=num_new_seqs,<br>            )<br>        ):<br>            <span class="hljs-keyword">break</span><br><br>        <span class="hljs-comment"># 抢占当前 EDF 最差（deadline 最大）的 running 请求</span><br>        vseq_group = running_queue.pop()<br><br>        num_running_tokens_uncached, _ = <span class="hljs-variable language_">self</span>._get_num_new_uncached_and_cached_tokens(<br>            vseq_group,<br>            SequenceStatus.RUNNING,<br>            <span class="hljs-literal">False</span>,<br>            budget,<br>        )<br>        budget.subtract_num_batched_tokens(<br>            vseq_group.request_id,<br>            num_running_tokens_uncached,<br>        )<br>        num_running_seqs = vseq_group.get_max_num_running_seqs()<br>        budget.subtract_num_seqs(vseq_group.request_id, num_running_seqs)<br><br>        <span class="hljs-comment"># 真正做 preempt：可能是 recompute 也可能是 swap</span><br>        <span class="hljs-variable language_">self</span>._preempt(vseq_group, blocks_to_swap_out)<br>        <span class="hljs-comment"># 这里和 priority 版本保持一致：被抢占的先塞回 waiting</span><br>        waiting_queue.appendleft(vseq_group)<br>        force_preemption_count += <span class="hljs-number">1</span><br><br>    <span class="hljs-comment"># 把排序和抢占后的 running / waiting 写回</span><br>    <span class="hljs-variable language_">self</span>.waiting = waiting_queue<br>    <span class="hljs-variable language_">self</span>.running = running_queue<br>    <span class="hljs-keyword">return</span> force_preemption_count<br></code></pre></td></tr></table></figure>
+
+<p>EDF抢占的决策过程遵循严格的优先级反转检测机制。算法首先获取等待队列中截止时间最小的请求作为候选，同时复制运行队列并按截止时间从大到小排序。</p>
+<p>进入while循环后，条件判断确保只有当运行队列中最不紧张即队尾元素的截止时间仍大于等待队列中最紧急即队首元素的截止时间时，抢占才会发生。</p>
+<p>在每次抢占迭代中，算法会先执行二次验证，检查候选请求是否可以被直接调度，即GPU有可用空间且预算充足。如果验证通过，则立即跳出抢占循环，避免不必要的上下文切换。若验证失败，则从运行队列尾部弹出截止时间最大的请求作为牺牲者，从调度预算中扣除其占用的token和序列配额，随后调用_preempt方法执行实际的抢占操作。被抢占的请求将被放回等待队列头部并在下一轮调度中重新参与EDF排序。该算法返回force_preemption_count，记录本次调度循环中执行的抢占次数，为系统监控和性能调优提供指标。</p>
+<p>EDF抢占仅在prefill调度完成后调用，确保decode阶段的请求优先级得到动态调整。这种设计避免了在高负载场景下长请求对短请求的阻塞。</p>
+<ol>
+<li>RR与 WRR<br>RR（轮询调度）是我们在vLLM调度器中最简单且公平的调度策略，通过循环轮转机制确保每个请求获得均等的调度机会。该算法实现极为轻量，核心逻辑仅通过Python双端队列的旋转操作完成，时间复杂度为常数级。</li>
+</ol>
+<p>RR 策略的核心是为每个解码序列组分配均等的 “时间片”（单次调度可处理的 token 数），代码中通过num_decoding_tokens_per_seq属性实现这一基础规则：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">@property</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">num_decoding_tokens_per_seq</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">int</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;The number of new tokens for each decode step.&quot;&quot;&quot;</span><br>    <span class="hljs-comment"># RR 策略：decode 的时间片 = rr_time_slice_tokens</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-variable language_">self</span>.scheduler_config.policy == <span class="hljs-string">&quot;rr&quot;</span>:<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">max</span>(<br>            <span class="hljs-number">1</span>,<br>            <span class="hljs-built_in">getattr</span>(<span class="hljs-variable language_">self</span>.scheduler_config, <span class="hljs-string">&quot;rr_time_slice_tokens&quot;</span>, <span class="hljs-number">1</span>),<br>        )<br>    <span class="hljs-comment"># 其它策略保持原行为：每步 decode 1 个 token</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+<p>该代码段明确区分了 RR 策略与其他策略的解码 token 数,非 RR 策略仍保持原生的每次解码 1 个 token，而 RR 策略则使用配置的rr_time_slice_tokens（最小为 1）作为时间片，确保每个序列组在单次调度中只能处理固定数量的 token，避免单个序列长期占用计算资源。</p>
+<p>RR算法的实现分布在两个关键函数中，分别处理等待队列和运行队列的轮转：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_reorder_waiting_queue_for_policy</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-literal">None</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;Reorder `self.waiting` according to WRR / RR / EDF / FCFS.&quot;&quot;&quot;</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-variable language_">self</span>.waiting:<br>        <span class="hljs-keyword">return</span><br><br>    policy = <span class="hljs-variable language_">self</span>.scheduler_config.policy<br>    waiting_queue: Deque[SequenceGroup] = <span class="hljs-variable language_">self</span>.waiting<br><br>    <span class="hljs-comment"># FCFS / PRIORITY策略保持原顺序</span><br>    <span class="hljs-keyword">if</span> policy <span class="hljs-keyword">in</span> (<span class="hljs-string">&quot;fcfs&quot;</span>, <span class="hljs-string">&quot;priority&quot;</span>):<br>        <span class="hljs-keyword">return</span><br><br>    <span class="hljs-comment"># -------------------------</span><br>    <span class="hljs-comment"># RR：简单 rotate</span><br>    <span class="hljs-comment"># -------------------------</span><br>    <span class="hljs-keyword">if</span> policy == <span class="hljs-string">&quot;rr&quot;</span>:<br>        waiting_queue.rotate(-<span class="hljs-number">1</span>)<br>        <span class="hljs-keyword">return</span><br><br>    <span class="hljs-comment"># WRR和EDF处理逻辑...</span><br></code></pre></td></tr></table></figure>
+<p>对于等待队列，RR策略直接调用deque.rotate(-1)方法，将队首元素移至队尾，实现每轮调度的轮换。该操作的时间复杂度为O(1) ，对系统性能影响微乎其微。<br>运行队列的轮转逻辑同样简洁：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_reorder_running_queue_for_policy</span>(<span class="hljs-params">self, *, enable_chunking: <span class="hljs-built_in">bool</span></span>) -&gt; <span class="hljs-literal">None</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;根据调度策略重排 self.running。&quot;&quot;&quot;</span><br>    <span class="hljs-keyword">if</span> enable_chunking <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> <span class="hljs-variable language_">self</span>.running:<br>        <span class="hljs-keyword">return</span><br><br>    policy = <span class="hljs-variable language_">self</span>.scheduler_config.policy<br>    running_queue: Deque[SequenceGroup] = <span class="hljs-variable language_">self</span>.running<br><br>    <span class="hljs-keyword">if</span> policy == <span class="hljs-string">&quot;rr&quot;</span>:<br>        <span class="hljs-comment"># 标准 RR：每次 schedule 调用前 rotate 一步。</span><br>        running_queue.rotate(-<span class="hljs-number">1</span>)<br></code></pre></td></tr></table></figure>
+<p>RR在运行队列的处理与等待队列完全一致，每次调度前将队列向前旋转一位。这种设计确保了在decode阶段，各请求能够依次获得token生成机会，实现严格的公平性。整体执行流程为每次调度 running 队列前，若策略为 RR 且未启用分块预填充<br>（enable_chunking&#x3D;False），则将 running 队列循环右移一位,队首元素移至队尾；随后遍历轮转后的队列，为每个序列组分配rr_time_slice_tokens数量的 token 进行解码，完成一次调度后，下一次调度会重复队列轮转→分配时间片的逻辑，最终实现所有解码序列组按顺序均等占用计算资源的轮询效果。</p>
+<p>RR算法的核心优势在于其简洁性和公平性。每个请求无论长度、优先级或到达时间如何，都获得完全相等的调度机会。这种特性使得RR适用于以下场景：</p>
+<pre><code class="hljs">请求长度高度均匀的批处理任务
+
+对公平性要求高于响应时间优化的场景
+
+系统负载较低，无需复杂调度策略的环境
+</code></pre>
+<p>然而RR的缺点同样明显，完全忽视请求的紧急程度和资源需求差异。在长请求与短请求混合的场景下，短请求的响应时间会被严重拖累，无法保证服务质量。</p>
+<p>WRR（加权轮询）是RR的扩展版本，通过为不同请求分配差异化权重，实现加权公平的资源分配。该算法特别适用于多租户场景或需要区分服务质量的业务需求，能够在保证公平性的同时支持资源倾斜。</p>
+<p>WRR的权重计算逻辑在_get_wrr_weight函数中实现，支持多层次的权重获取策略：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_get_wrr_weight</span>(<span class="hljs-params">self, seq_group: SequenceGroup</span>) -&gt; <span class="hljs-built_in">int</span>:<br>    <span class="hljs-comment"># 1) 显式权重字段</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">hasattr</span>(seq_group, <span class="hljs-string">&quot;scheduling_weight&quot;</span>):<br>        <span class="hljs-keyword">try</span>:<br>            w = <span class="hljs-built_in">int</span>(<span class="hljs-built_in">getattr</span>(seq_group, <span class="hljs-string">&quot;scheduling_weight&quot;</span>))<br>            <span class="hljs-keyword">if</span> w &gt; <span class="hljs-number">0</span>:<br>                <span class="hljs-keyword">return</span> w<br>        <span class="hljs-keyword">except</span> Exception:<br>            <span class="hljs-keyword">pass</span><br><br>    <span class="hljs-comment"># 2) 用 priority fallback（如果有 priority，且越小越重要）</span><br>    prio, _ = <span class="hljs-variable language_">self</span>._get_priority(seq_group)<br>    <span class="hljs-keyword">if</span> prio <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        <span class="hljs-comment"># 越小权重越大</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">max</span>(<span class="hljs-number">1</span>, <span class="hljs-number">1</span> - <span class="hljs-built_in">int</span>(prio))<br><br>    <span class="hljs-comment"># 3) 默认</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+<p>该函数采用三级回退策略，首先检查请求是否包含显式的scheduling_weight属性；若无则尝试从优先级字段推导权重，优先级数值越小权重越大。最终回退到默认值1。这种设计确保了WRR在各种配置下的鲁棒性。</p>
+<p>WRR的核心在于等待队列的重排序，采用了权重展开weight spreading技术：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_reorder_waiting_queue_for_policy</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-literal">None</span>:<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-variable language_">self</span>.waiting:<br>        <span class="hljs-keyword">return</span><br><br>    policy = <span class="hljs-variable language_">self</span>.scheduler_config.policy<br>    waiting_queue: Deque[SequenceGroup] = <span class="hljs-variable language_">self</span>.waiting<br><br>    <span class="hljs-comment"># FCFS/RR策略处理...</span><br><br>    <span class="hljs-comment"># WRR（加权轮询 Weighted Round Robin）</span><br>    <span class="hljs-keyword">if</span> policy == <span class="hljs-string">&quot;wrr&quot;</span>:<br>        <span class="hljs-comment"># 按 request_id 组织 group</span><br>        orig_list = <span class="hljs-built_in">list</span>(waiting_queue)<br>        rid_to_group: <span class="hljs-type">Dict</span>[<span class="hljs-built_in">str</span>, SequenceGroup] = &#123;&#125;<br><br>        <span class="hljs-comment"># 每个 request 建立整数权重</span><br>        <span class="hljs-keyword">for</span> g <span class="hljs-keyword">in</span> orig_list:<br>            rid = g.request_id<br>            rid_to_group[rid] = g<br>            <span class="hljs-keyword">if</span> rid <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>._wrr_weight:<br>                <span class="hljs-variable language_">self</span>._wrr_weight[rid] = <span class="hljs-built_in">max</span>(<span class="hljs-number">1</span>, <span class="hljs-built_in">int</span>(<span class="hljs-variable language_">self</span>._get_wrr_weight(g)))<br><br>        <span class="hljs-comment"># 构建 WRR ring</span><br>        ring_ids: <span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>] = []<br>        <span class="hljs-keyword">for</span> rid, w <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>._wrr_weight.items():<br>            <span class="hljs-keyword">if</span> rid <span class="hljs-keyword">in</span> rid_to_group:  <span class="hljs-comment"># 仅对 active waiting 的 id 扩展</span><br>                ring_ids.extend([rid] * w)<br><br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> ring_ids:<br>            <span class="hljs-keyword">return</span><br><br>        ring_len = <span class="hljs-built_in">len</span>(ring_ids)<br><br>        <span class="hljs-comment"># pointer 用独立变量（与 running WRR 分离）</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">hasattr</span>(<span class="hljs-variable language_">self</span>, <span class="hljs-string">&quot;_wrr_waiting_ring_pos&quot;</span>):<br>            <span class="hljs-variable language_">self</span>._wrr_waiting_ring_pos = -<span class="hljs-number">1</span><br><br>        <span class="hljs-comment"># 每次 schedule 时 pointer 前进一步</span><br>        <span class="hljs-variable language_">self</span>._wrr_waiting_ring_pos = (<span class="hljs-variable language_">self</span>._wrr_waiting_ring_pos + <span class="hljs-number">1</span>) % ring_len<br><br>        <span class="hljs-comment"># 扫描 ring，收集 unique rid（维持 WRR 公平）</span><br>        seen: <span class="hljs-type">Set</span>[<span class="hljs-built_in">str</span>] = <span class="hljs-built_in">set</span>()<br>        ordered_rids: <span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>] = []<br>        idx = <span class="hljs-variable language_">self</span>._wrr_waiting_ring_pos<br><br>        <span class="hljs-keyword">while</span> <span class="hljs-built_in">len</span>(ordered_rids) &lt; <span class="hljs-built_in">len</span>(orig_list):<br>            rid = ring_ids[idx]<br>            <span class="hljs-keyword">if</span> rid <span class="hljs-keyword">in</span> rid_to_group <span class="hljs-keyword">and</span> rid <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> seen:<br>                seen.add(rid)<br>                ordered_rids.append(rid)<br>            idx = (idx + <span class="hljs-number">1</span>) % ring_len<br><br>        <span class="hljs-comment"># 重新组装 waiting queue</span><br>        <span class="hljs-variable language_">self</span>.waiting = deque(rid_to_group[rid] <span class="hljs-keyword">for</span> rid <span class="hljs-keyword">in</span> ordered_rids)<br>        <span class="hljs-keyword">return</span><br></code></pre></td></tr></table></figure>
+<p>WRR等待队列的重排序包含四个关键步骤：</p>
+<pre><code class="hljs">权重计算与缓存：遍历当前等待队列，为每个请求计算并缓存整数权重。使用self._wrr_weight字典存储，避免重复计算。
+
+权重展开环构建：将每个请求ID按其权重值重复添加到ring_ids列表中。例如，权重为3的请求会在环形结构中出现3次，形成物理上的权重展开。
+
+指针推进：使用独立的_wrr_waiting_ring_pos指针记录当前在环中的位置，每次调度时向前移动一位，实现轮转效果。
+
+去重收集：从指针位置开始扫描环形结构，按首次遇到的顺序收集请求ID，确保每个请求只出现一次。通过seen集合去重，生成新的队列顺序。
+</code></pre>
+<p>该算法的时间复杂度为O(n⋅wmax​) ，其中wmax​ 为最大权重值。权重展开技术保证了高权重请求在统计上获得更多的调度机会，同时避免了连续调度同一请求导致的饥饿问题。<br>运行队列的WRR排序逻辑与等待队列类似，但使用独立的指针_wrr_ring_pos：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_reorder_running_queue_for_policy</span>(<span class="hljs-params">self, *, enable_chunking: <span class="hljs-built_in">bool</span></span>) -&gt; <span class="hljs-literal">None</span>:<br>    <span class="hljs-keyword">if</span> enable_chunking <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> <span class="hljs-variable language_">self</span>.running:<br>        <span class="hljs-keyword">return</span><br><br>    policy = <span class="hljs-variable language_">self</span>.scheduler_config.policy<br>    running_queue: Deque[SequenceGroup] = <span class="hljs-variable language_">self</span>.running<br><br>    <span class="hljs-keyword">elif</span> policy == <span class="hljs-string">&quot;wrr&quot;</span>:<br>        <span class="hljs-comment"># 经典 Weighted Round Robin：</span><br>        <span class="hljs-comment">#   1. 把当前 running 里的 request_id 按权重展开成一个环；</span><br>        <span class="hljs-comment">#   2. _wrr_ring_pos 是这个环上的当前位置，每次调用向前走一步；</span><br>        <span class="hljs-comment">#   3. 从当前指针开始，沿环走一圈，按&quot;第一次遇到&quot;的顺序</span><br>        <span class="hljs-comment">#      生成一个不含重复 request 的列表，作为本轮的 running 顺序。</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> running_queue:<br>            <span class="hljs-keyword">return</span><br><br>        orig_list = <span class="hljs-built_in">list</span>(running_queue)<br><br>        <span class="hljs-comment"># 1) 更新每个 request 的整数权重，并构建权重展开的环</span><br>        ring_ids: <span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>] = []<br>        rid_to_group: <span class="hljs-type">Dict</span>[<span class="hljs-built_in">str</span>, SequenceGroup] = &#123;&#125;<br>        <span class="hljs-keyword">for</span> g <span class="hljs-keyword">in</span> orig_list:<br>            rid = g.request_id<br>            rid_to_group[rid] = g<br>            w = <span class="hljs-variable language_">self</span>._get_wrr_weight(g)<br>            <span class="hljs-variable language_">self</span>._wrr_weight[rid] = <span class="hljs-built_in">max</span>(<span class="hljs-number">1</span>, <span class="hljs-built_in">int</span>(w))<br>            ring_ids.extend([rid] * <span class="hljs-variable language_">self</span>._wrr_weight[rid])<br><br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> ring_ids:<br>            <span class="hljs-keyword">return</span><br><br>        ring_len = <span class="hljs-built_in">len</span>(ring_ids)<br><br>        <span class="hljs-comment"># 2) 环上指针往前挪一格</span><br>        <span class="hljs-variable language_">self</span>._wrr_ring_pos = (<span class="hljs-variable language_">self</span>._wrr_ring_pos + <span class="hljs-number">1</span>) % ring_len<br><br>        <span class="hljs-comment"># 3) 沿环扫描，生成无重复 request_id 的顺序</span><br>        seen: <span class="hljs-type">Set</span>[<span class="hljs-built_in">str</span>] = <span class="hljs-built_in">set</span>()<br>        ordered_rids: <span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>] = []<br>        idx = <span class="hljs-variable language_">self</span>._wrr_ring_pos<br>        <span class="hljs-keyword">while</span> <span class="hljs-built_in">len</span>(ordered_rids) &lt; <span class="hljs-built_in">len</span>(orig_list):<br>            rid = ring_ids[idx]<br>            <span class="hljs-keyword">if</span> rid <span class="hljs-keyword">in</span> rid_to_group <span class="hljs-keyword">and</span> rid <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> seen:<br>                seen.add(rid)<br>                ordered_rids.append(rid)<br>            idx = (idx + <span class="hljs-number">1</span>) % ring_len<br><br>        <span class="hljs-comment"># 4) 根据 ordered_rids 重新组装 running 队列</span><br>        <span class="hljs-variable language_">self</span>.running = deque(rid_to_group[rid] <span class="hljs-keyword">for</span> rid <span class="hljs-keyword">in</span> ordered_rids)<br></code></pre></td></tr></table></figure>
+
+<p>运行队列的WRR排序同样遵循权重展开原则，但使用独立的指针变量确保等待队列和运行队列的轮转状态互不干扰。这种分离设计使得WRR能够在不同阶段独立调整调度权重，实现更精细的资源分配控制。<br>WRR算法通过权重机制实现了服务质量的可控倾斜，其核心优势在于：</p>
+<pre><code class="hljs">加权公平性: 高权重请求获得更多调度机会，但不会完全垄断资源
+
+配置灵活性: 支持显式权重、优先级回退和默认权重三种配置方式
+
+多租户隔离: 适用于多租户场景，为不同租户分配差异化的资源配额
+
+平滑性: 权重展开技术避免了突发调度，保证请求调制的平滑性
+</code></pre>
+<p>然而WRR的权重展开过程在大规模权重值下可能带来一定的计算开销，且权重配置需要业务方精确设计，否则可能导致资源分配失衡。</p>
+<h3 id="实验变量与对照"><a href="#实验变量与对照" class="headerlink" title="实验变量与对照"></a>实验变量与对照</h3><p>我们在不同总请求量 $N$ 下，对比不同调度策略的性能表现。每个 $N$ 下记录：</p>
+<ul>
+<li>Overall Throughput（tokens&#x2F;s）</li>
+<li>Latency mean &#x2F; p95</li>
+<li>TTFT mean &#x2F; p95</li>
+</ul>
+<h3 id="实验流程"><a href="#实验流程" class="headerlink" title="实验流程"></a>实验流程</h3><p>我们使用的是Qwen3-1.7B的模型。<br>本作业所有实验均由自定义基准测试脚本完成，核心实验驱动脚本为<br><code>verify_scheduler_1.py</code>，<br>用于在不同调度策略与负载场景下对 vLLM 推理服务进行请求注入与性能测量。<br>批量实验由辅助脚本 <code>verify_scheduler.sh</code> 负责调度执行。</p>
+<p>整体实验流程如下：</p>
+<ol>
+<li>启动 vLLM 推理服务时通过环境变量或启动参数选择调度策略<br>  （FCFS &#x2F; Priority &#x2F; EDF &#x2F; RR &#x2F; WRR）。</li>
+<li>运行脚本 <code>verify_scheduler_1.py</code>，按泊松过程生成请求到达时间，<br>  并根据场景类型（chatbot &#x2F; analysis &#x2F; mixed）控制请求长度分布。</li>
+<li>在请求执行过程中，记录每个请求的首 token 返回时间（TTFT）、<br>  端到端延迟（Latency）、生成 token 数及完成时间。</li>
+<li>脚本在实验结束后输出 mean 与 p95 等统计指标，<br>  并由后处理程序绘制吞吐量与延迟随请求规模变化的对比图。</li>
+</ol>
+<h3 id="基准测试脚本"><a href="#基准测试脚本" class="headerlink" title="基准测试脚本"></a>基准测试脚本</h3><p>为在不同调度策略下进行可复现、可对比的性能评估，我们实现了统一的基准测试驱动脚本 <code>verify_scheduler_1.py</code>。该脚本使用 vLLM 的 <code>AsyncLLMEngine</code> 直接在进程内注入并发请求，避免额外的网络开销对 TTFT&#x2F;Latency 的扰动；同时通过泊松到达过程生成真实的请求排队压力，并对每个请求记录 TTFT、端到端延迟以及吞吐量等指标。</p>
+<p>作业要求使用 legacy engine 而非 V1 engine，因此脚本在启动前设置环境变量<br><code>VLLM_USE_V1=0</code>，确保调度逻辑走 legacy 路径。调度策略选择通过环境变量<br><code>VLLM_SCHED_POLICY</code> 传入（例如 <code>fcfs</code>&#x2F;<code>edf</code>&#x2F;<code>wrr</code>&#x2F;<code>rr</code>&#x2F;<code>priority</code>），从而在不修改 benchmark 逻辑的前提下切换调度器进行对照实验。</p>
+<p>为了使测试场景稳定且易于扩展，脚本通过 <code>ScenarioConfig</code> 数据类定义<br><code>arrival_rate</code>（到达率 $\lambda$）、<code>avg_prompt_len</code>（平均输入长度）、<br><code>avg_output_len</code>（平均输出长度）与描述字段，并统一存放在 <code>SCENARIOS</code> 字典中。<br>三类负载场景分别为：<code>chatbot</code>（高并发短请求）、<code>analysis</code>（低并发长输入&#x2F;输出）与<br><code>mixed</code>（混合负载）。在实验中，<code>scenario</code> 作为命令行参数传入，使同一套脚本可复用到不同负载设置。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python">SCENARIOS = &#123;<br>   <span class="hljs-string">&quot;chatbot&quot;</span>: ScenarioConfig(<br>       name=<span class="hljs-string">&quot;Chatbot (High Concurrency, Short)&quot;</span>,<br>       arrival_rate=<span class="hljs-number">60.0</span>,<br>       avg_prompt_len=<span class="hljs-number">50</span>,<br>       avg_output_len=<span class="hljs-number">50</span>,<br>       description=<span class="hljs-string">&quot;模拟高并发客服对话，短输入短输出&quot;</span><br>   ),<br>   <span class="hljs-string">&quot;analysis&quot;</span>: ScenarioConfig(<br>       name=<span class="hljs-string">&quot;Doc Analysis (Low Concurrency, Long)&quot;</span>,<br>       arrival_rate=<span class="hljs-number">15.0</span>,<br>       avg_prompt_len=<span class="hljs-number">800</span>,<br>       avg_output_len=<span class="hljs-number">200</span>,<br>       description=<span class="hljs-string">&quot;模拟长文档摘要，低频长输入&quot;</span><br>   ),<br>   <span class="hljs-string">&quot;mixed&quot;</span>: ScenarioConfig(<br>       name=<span class="hljs-string">&quot;Mixed Workload (Real World)&quot;</span>,<br>       arrival_rate=<span class="hljs-number">30.0</span>,<br>       avg_prompt_len=<span class="hljs-number">200</span>,<br>       avg_output_len=<span class="hljs-number">100</span>,<br>       description=<span class="hljs-string">&quot;混合负载，测试调度公平性&quot;</span><br>   )<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在异步并发环境中，如果直接使用全局 random.seed()，不同调度策略会改变请求执行与协程调度顺序，从而间接影响随机数消耗顺序，导致不同策略下生成的请求集合并不完全一致，使对比不公平。</p>
+<p>为解决该问题，我们引入 SEED 并实现 _make_per_request_rng(scenario, i)：<br>对每个请求 i  基于场景名与索引构造独立的 random.Random 与 numpy 生成器，<br>使请求的到达时间序列之外的随机性（prompt 长度、output 长度、请求类型）与调度策略解耦。</p>
+<p>因此，在相同 (N,λ)  与相同场景下，切换调度策略不会改变请求集合分布，保证了实验可比性。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">async</span> <span class="hljs-keyword">def</span> <span class="hljs-title function_">one_request</span>(<span class="hljs-params">i: <span class="hljs-built_in">int</span>, arrival_time: <span class="hljs-built_in">float</span></span>):<br>    py_rng, np_rng = _make_per_request_rng(scenario_name, i)<br>    <span class="hljs-comment"># 后续所有随机操作都使用这两个生成器</span><br>    req_class = _pick_request_class(py_rng, req_classes)<br>    prompt, prompt_len = get_random_prompt(..., np_rng=np_rng)<br>    output_len = <span class="hljs-built_in">max</span>(<span class="hljs-number">1</span>, <span class="hljs-built_in">int</span>(np_rng.poisson(...)))<br></code></pre></td></tr></table></figure>
+<p>仅用随机长度难以体现 Priority&#x2F;EDF&#x2F;WRR 的策略差异。为让调度器有可利用的业务信号，<br>我们新增 RequestClass 结构，定义类别占比 frac、输入&#x2F;输出长度缩放<br>(prompt_scale, output_scale) 与优先级 priority（数值越小优先级越高）。</p>
+<p>脚本支持两种 profile：</p>
+<p>（1）default：交互类（interactive）与批处理类（batch）；</p>
+<p>（2）diverse：将交互类进一步分成多档优先级，对应不同权重层级，用于更清晰地拉开 WRR 与 Priority 的差异。</p>
+<p>在请求执行时，脚本通过 _pick_request_class() 按比例选择类别，并将类别优先级<br>直接传入 engine.generate(…, priority&#x3D;priority)，从而在 priority policy 下验证高优先级请求更快响应的效果，同时也为 EDF&#x2F;WRR 提供更有结构的输入分布。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">@dataclass(<span class="hljs-params">frozen=<span class="hljs-literal">True</span></span>)</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">RequestClass</span>:<br>    name: <span class="hljs-built_in">str</span><br>    frac: <span class="hljs-built_in">float</span><br>    prompt_scale: <span class="hljs-built_in">float</span><br>    output_scale: <span class="hljs-built_in">float</span><br>    priority: <span class="hljs-built_in">int</span>  <span class="hljs-comment"># 越小越高</span><br><br>REQUEST_CLASSES_DEFAULT = [<br>    RequestClass(name=<span class="hljs-string">&quot;interactive&quot;</span>, frac=<span class="hljs-number">0.7</span>, prompt_scale=<span class="hljs-number">0.5</span>, output_scale=<span class="hljs-number">0.5</span>, priority=-<span class="hljs-number">10</span>),<br>    RequestClass(name=<span class="hljs-string">&quot;batch&quot;</span>,       frac=<span class="hljs-number">0.3</span>, prompt_scale=<span class="hljs-number">5.0</span>, output_scale=<span class="hljs-number">3.0</span>, priority=<span class="hljs-number">0</span>),<br>]<br><br><span class="hljs-comment"># 更丰富的 WRR 目标权重 通过 priority 档位实现</span><br><span class="hljs-comment"># priority -&gt; weight: 0-&gt;1, -1-&gt;2, -3-&gt;4, -7-&gt;8, -15-&gt;16 ...</span><br>REQUEST_CLASSES_DIVERSE = [<br>    <span class="hljs-comment"># interactive 总占比仍为 0.7，但分成多档权重：2/4/8/16</span><br>    RequestClass(name=<span class="hljs-string">&quot;interactive_w2&quot;</span>,  frac=<span class="hljs-number">0.20</span>, prompt_scale=<span class="hljs-number">0.55</span>, output_scale=<span class="hljs-number">0.55</span>, priority=-<span class="hljs-number">1</span>),   <span class="hljs-comment"># w=2</span><br>    RequestClass(name=<span class="hljs-string">&quot;interactive_w4&quot;</span>,  frac=<span class="hljs-number">0.25</span>, prompt_scale=<span class="hljs-number">0.50</span>, output_scale=<span class="hljs-number">0.50</span>, priority=-<span class="hljs-number">3</span>),   <span class="hljs-comment"># w=4</span><br>    RequestClass(name=<span class="hljs-string">&quot;interactive_w8&quot;</span>,  frac=<span class="hljs-number">0.20</span>, prompt_scale=<span class="hljs-number">0.45</span>, output_scale=<span class="hljs-number">0.45</span>, priority=-<span class="hljs-number">7</span>),   <span class="hljs-comment"># w=8</span><br>    RequestClass(name=<span class="hljs-string">&quot;interactive_w16&quot;</span>, frac=<span class="hljs-number">0.05</span>, prompt_scale=<span class="hljs-number">0.40</span>, output_scale=<span class="hljs-number">0.40</span>, priority=-<span class="hljs-number">15</span>),  <span class="hljs-comment"># w=16</span><br><br>    <span class="hljs-comment"># batch 保持 w=1（避免在 analysis/mixed 下过度扰动吞吐）</span><br>    RequestClass(name=<span class="hljs-string">&quot;batch_w1&quot;</span>,        frac=<span class="hljs-number">0.30</span>, prompt_scale=<span class="hljs-number">5.0</span>,  output_scale=<span class="hljs-number">3.0</span>,  priority=<span class="hljs-number">0</span>),    <span class="hljs-comment"># w=1</span><br>]<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">_make_per_request_rng</span>(<span class="hljs-params">scenario_name: <span class="hljs-built_in">str</span>, i: <span class="hljs-built_in">int</span></span>) -&gt; <span class="hljs-type">Tuple</span>[random.Random, np.random.Generator]:<br>    <span class="hljs-comment"># 每个请求使用独立 RNG，避免 asyncio 并发导致 random 序列被不同 policy 扰动</span><br>    base = (SEED * <span class="hljs-number">1000003</span>) ^ (<span class="hljs-built_in">hash</span>(scenario_name) &amp; <span class="hljs-number">0xFFFFFFFF</span>) ^ (i * <span class="hljs-number">9176</span>)<br>    py_rng = random.Random(base)<br>    np_rng = np.random.default_rng(base)<br>    <span class="hljs-keyword">return</span> py_rng, np_rng<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">_pick_request_class</span>(<span class="hljs-params">py_rng: random.Random,</span><br><span class="hljs-params">                        classes: <span class="hljs-type">List</span>[RequestClass]</span>) -&gt; RequestClass:<br>    r = py_rng.random()<br>    acc = <span class="hljs-number">0.0</span><br>    <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> classes:<br>        acc += c.frac<br>        <span class="hljs-keyword">if</span> r &lt;= acc:<br>            <span class="hljs-keyword">return</span> c<br>    <span class="hljs-keyword">return</span> classes[-<span class="hljs-number">1</span>]<br></code></pre></td></tr></table></figure>
+<p>为贴近真实在线服务的请求到达，我们对 inter-arrival time 采用指数分布，累加得到请求到达时刻序列 {ti​} 。</p>
+<p>每个请求协程在到达时刻前 await sleep()，从而形成真实的并发排队压力。该设计保证当 N  增大或 λ  增大时，系统会经历更明显的排队效应，调度策略差异也更容易在 TTFT&#x2F;p95 等指标上显现。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 在 run_experiment() 中</span><br>tasks = []<br>start_time = time.time()<br>arrival_t = start_time<br>arrival_rng = random.Random(SEED ^ (<span class="hljs-built_in">hash</span>(scenario_name) &amp; <span class="hljs-number">0xFFFFFFFF</span>))<br><br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(total_requests):<br>    inter_arrival = arrival_rng.expovariate(config.arrival_rate)<br>    arrival_t += inter_arrival<br>    tasks.append(asyncio.create_task(one_request(i, arrival_t)))<br><br><span class="hljs-keyword">await</span> asyncio.gather(*tasks)<br></code></pre></td></tr></table></figure>
+
+<p>脚本通过异步迭代 engine.generate() 的返回流，使用 token 数变化检测首 token 产生时刻，并记录：</p>
+<p>（a）TTFT：请求开始到首 token 的时间差；</p>
+<p>（b）Latency：请求开始到最后一个 token 的时间差；</p>
+<p>（c）TBT（time-between-tokens）：首 token 之后的平均 token 间隔；</p>
+<p>（d）per-request throughput：单请求 tokens&#x2F;s；</p>
+<p>（e）overall throughput：所有请求 token 总数除以全局 wall time。</p>
+<p>每次实验结束后，脚本输出 mean&#x2F;p95 的汇总统计，批量实验由 verify_scheduler.sh 统一驱动，用于遍历不同场景、不同策略与不同请求规模 N ，保证测试过程可复现。</p>
+<p><img src="/../pic/vllm10.png" srcset="/img/loading.gif" lazyload alt="图"><br><img src="/../pic/vllm11.png" srcset="/img/loading.gif" lazyload alt="图"><br><img src="/../pic/vllm12.png" srcset="/img/loading.gif" lazyload alt="图"><br>Mixed 场景模拟真实混合负载，平均输入长度 200 tokens、输出长度 100 tokens，到达率 30 请求&#x2F;秒。在该场景下，作业长度和到达过程均呈现中等复杂度，各策略表现出明显的差异。</p>
+<p>从端到端平均延迟Latency Mean来看，RR策略表现最优。在 N&#x3D;1000 时，RR 的平均延迟为 47.845s，明显优于 FCFS 的 51.956s。这说明在混合负载下，RR 的时间片轮转机制有效防止了长作业对队列头部的长期占用也就是HoL Blocking，使得系统能更快速地响应各类请求从而降低了整体的平均等待时间。</p>
+<p>WRR 和 EDF 策略表现与 FCFS 接近。WRR (N&#x3D;1000, 51.043s) 和 EDF (N&#x3D;1000, 51.290s) 的延迟数据与 FCFS 持平。这表明在当前到达率下，尽管 EDF 按截止时间排序，WRR 按权重分配资源，但在宏观层面并未比简单的 FCFS 带来显著的性能提升，系统瓶颈可能更多在于计算资源的饱和。</p>
+<p>Priority 策略表现最差。在 N&#x3D;1000 时，其平均延迟高达 63.538s，且总体吞吐量仅为 783.911 tokens&#x2F;s，显著低于其他策略，均在 910 tokens&#x2F;s 以上。这一结果说明在高负载混合场景下Priority 调度可能引入了过高的调度开销，或者导致了严重的资源碎片化，反而拖慢了整体的处理进度。</p>
+<p><img src="/../pic/vllm13.png" srcset="/img/loading.gif" lazyload alt="图"><br><img src="/../pic/vllm14.png" srcset="/img/loading.gif" lazyload alt="图"><br><img src="/../pic/vllm15.png" srcset="/img/loading.gif" lazyload alt="图"><br>Chatbot 场景模拟高并发客服对话，请求特征高度同质化，短输入短输出且到达率高达 60 请求&#x2F;秒。</p>
+<p>实验结果表明，在短作业高并发场景下，FCFS 策略展现了竞争力。在 N&#x3D;1000 的高负载点，FCFS 的平均延迟为 23.882s，在所有策略中最低，且保持了最高的系统吞吐量（911.289 tokens&#x2F;s）。这主要归因于短作业特性下，复杂的调度逻辑如排序、抢占带来的收益微乎其微，反而可能因为调度器开销Scheduling Overhead引入额外延迟。FCFS 简单的先进先出逻辑在这种同质化负载下效率最高。</p>
+<p>其他复杂策略表现平庸甚至稍差。RR、WRR 和 Priority 的平均延迟均集中在 25s-26s 区间（例如 RR 为 25.444s，WRR 为 25.791s），略高于 FCFS。EDF 在此场景下表现垫底（26.518s），这也符合预期：当所有任务的长度和截止时间都相近时，EDF 退化为一种带有计算开销的 FIFO，无法体现其排序优势。</p>
+<p>总体而言，Chatbot 场景的图表趋势显示，随着请求量 $N$ 的增加，所有策略的延迟均呈线性增长，但 FCFS 始终保持着微弱但稳定的优势。</p>
+<p><img src="/../pic/vllm16.png" srcset="/img/loading.gif" lazyload alt="图"><br><img src="/../pic/vllm17.png" srcset="/img/loading.gif" lazyload alt="图"><br><img src="/../pic/vllm18.png" srcset="/img/loading.gif" lazyload alt="图"></p>
+<p>Analysis 场景模拟文档摘要类长作业，输入长度大，达800 tokens，系统压力主要来自计算而非并发管理。</p>
+<p>在此场景下，WRR 策略取得了最佳的平均延迟表现。N&#x3D;1000 时，WRR 的平均延迟为 128.944s，优于 FCFS 的 132.260s。这表明在长作业堆积时，基于权重的轮询机制在一定程度上平衡了资源的分配，避免了某些极端排队情况。</p>
+<p>FCFS 表现稳健，优于部分复杂策略。尽管长作业容易导致队头阻塞，但 FCFS (132.260s) 依然优于 RR (142.988s) 和 Priority (148.648s)。这可能是因为在长文本生成过程中，频繁的上下文切换会带来昂贵的 KV Cache 换页开销。FCFS 倾向于让任务一气呵成地执行反而减少了这种开销。</p>
+<p>RR 和 Priority 策略表现欠佳。RR 的延迟较高（142.988s）验证了上述猜想，强制的时间片轮转将长作业切碎，导致系统在不同请求的 KV Cache 之间频繁切换，降低了整体执行效率。Priority 策略在长作业场景下表现最差（148.648s），说明静态优先级在处理计算密集型长任务时，未能有效转化为用户体验的提升，反而可能因为资源竞争加剧了尾延迟，P95 高达 281.478s。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/vLLM/" class="category-chain-item">vLLM</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>为vLLM增加调度策略</div>
+      <div>http://example.com/2026/02/12/为vLLM增加调度策略/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年2月12日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/02/12/RAG%E6%8E%A2%E7%B4%A2%E5%AE%9E%E8%B7%B5/" title="RAG探索实践">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">RAG探索实践</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/02/12/%E5%AF%B9vLLM%E7%9A%84%E4%B8%80%E4%BA%9B%E6%8E%A2%E7%B4%A2%E5%AE%9E%E9%AA%8C/" title="对vLLM的一些探索实验">
+                        <span class="hidden-mobile">对vLLM的一些探索实验</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

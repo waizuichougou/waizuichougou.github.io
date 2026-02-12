@@ -1,0 +1,666 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="vLLM⽀持离线推理和在线推理两种⽅式.在python中通过import vllm库进⾏离线推理，调⽤的⽅式⾮常简单。通过 vllm.LLM 初始化⼀个LLM推理引擎，调⽤ vllm.LLM.generate 函数并将准备好的 prompts ⽂本传⼊，从返回的outputs ⾥⾯得到⼤模型的回答。在线推理模式下，在终端中启动vLLM server，默认监听 localhost:8000。 vLL">
+<meta property="og:type" content="article">
+<meta property="og:title" content="对vLLM的一些探索实验">
+<meta property="og:url" content="http://example.com/2026/02/12/%E5%AF%B9vLLM%E7%9A%84%E4%B8%80%E4%BA%9B%E6%8E%A2%E7%B4%A2%E5%AE%9E%E9%AA%8C/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="vLLM⽀持离线推理和在线推理两种⽅式.在python中通过import vllm库进⾏离线推理，调⽤的⽅式⾮常简单。通过 vllm.LLM 初始化⼀个LLM推理引擎，调⽤ vllm.LLM.generate 函数并将准备好的 prompts ⽂本传⼊，从返回的outputs ⾥⾯得到⼤模型的回答。在线推理模式下，在终端中启动vLLM server，默认监听 localhost:8000。 vLL">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/pic/vllm2.png">
+<meta property="og:image" content="http://example.com/pic/vllm1.png">
+<meta property="og:image" content="http://example.com/pic/vllm3.png">
+<meta property="og:image" content="http://example.com/pic/vllm4.png">
+<meta property="og:image" content="http://example.com/pic/vllm5.png">
+<meta property="og:image" content="http://example.com/pic/vllm6.png">
+<meta property="og:image" content="http://example.com/pic/vllm7.png">
+<meta property="og:image" content="http://example.com/pic/vllm9.png">
+<meta property="article:published_time" content="2026-02-12T09:56:57.000Z">
+<meta property="article:modified_time" content="2026-02-12T12:57:15.422Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/pic/vllm2.png">
+  
+  
+  
+  <title>对vLLM的一些探索实验 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="对vLLM的一些探索实验"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-02-12 17:56" pubdate>
+          2026年2月12日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          50 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">对vLLM的一些探索实验</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>vLLM⽀持离线推理和在线推理两种⽅式.在python中通过import vllm库进⾏离线推理，调⽤的⽅式⾮常简单。通过 vllm.LLM 初始化⼀个LLM推理引擎，调⽤ vllm.LLM.generate 函数并将准备好的 prompts ⽂本传⼊，从返回的outputs ⾥⾯得到⼤模型的回答。在线推理模式下，在终端中启动vLLM server，默认监听 localhost:8000。<br><img src="/../pic/vllm2.png" srcset="/img/loading.gif" lazyload alt="图"><br><img src="/../pic/vllm1.png" srcset="/img/loading.gif" lazyload alt="图"></p>
+<p>vLLM⽀持profiling功能，可以导出运⾏的trace，查看各个函数的执⾏时间.<br><img src="/../pic/vllm3.png" srcset="/img/loading.gif" lazyload alt="图"></p>
+<p>vLLM的源码主要在vllm&#x2F;⼦⽬录下，vLLM在GPU上进⾏⼀次prefill&#x2F;decode时的核⼼调⽤链如下:<br><img src="/../pic/vllm4.png" srcset="/img/loading.gif" lazyload alt="图"></p>
+<p>在执⾏Attention计算时，prefill与<br>decode时需要调⽤不同的算⼦,计算任务具有不同的特点：在prefill阶段，需要完成全部输入序列的Attention计算，产生KV Cache，这一阶段涉及密集的矩阵乘运算，属于计算密集型任务，可以充分利用tensor core来进行大量的矩阵运算；在decode阶段，只完成新token与历史序列的Attention计算，是增量式的计算，这一阶段计算量比较小，主要瓶颈是从显存中加载全部的KV Cache，属于内存带宽密集型任务，由于请求具有严格的序列依赖性，所以难以利用GPU的并行性。</p>
+<p>vllm显存占用包括模型参数，KVCache，Others三个主要部分。vLLM在初始化时，会在GPU上预先分配⼀些block。调整不同的 max_position_embeddings ，GPU block数量有变化。在vLLM初始化 KV Cache Block时，控制器通过调用 self._run_workers指令，让每个分布式worker分别在本地计算自己能够分配的最大GPU与CPU KV Block数量；随后，控制器将所有worker返回的结果汇总起来，对每个资源类别分别取最小值，以此确保所有计算节点在显存或内存限制上都能够承受统一的缓存配置。最终，这两个最小值 (num_gpu_blocks, num_cpu_blocks)作为全局统一的KV Cache Block分配上限返回，用于后续的缓存池初始化与内存调度，从而保证在分布式推理或训练时，不会出现某个节点因资源不足而导致系统崩溃或行为不一致。</p>
+<p>不同的block-size会对推理性能产⽣影响。将block-size&#x3D;16(8479.92 Tokens&#x2F;s)看成基准，数据显示性能随着block-size的增加呈现出先升后降的趋势。性能在block-size&#x3D;64时达到了明确的峰值（8573.04 Tokens&#x2F;s），实现了最快的执行时间(22.39s)和最高的吞吐量。当block-size进一步增加到128和256时，性能又开始出现回落，分别下降到 8555.53 和 8543.08 Tokens&#x2F;s。这样的性能反映了 vLLM 中PagedAttention的tradeoff，block-size&#x3D;16 和 32 时的性能稍差，使用极小的块会使block table很长，给vLLM调度器带来负担和管理压力，拖慢了整体速度。而当block-size增大到128和256时，性能从峰值回落，表明内存内部碎片成为限，因大块导致的内存浪费也会降低内存系统的整体效率从而导致性能不如 block-size&#x3D;64 时的最佳平衡点。总体来说过小的block-size会受到元数据管理开销的负面影响，而过大的block-size导致性能开始受到内存内部碎片化的轻微影响。<br><img src="/../pic/vllm5.png" srcset="/img/loading.gif" lazyload alt="图"></p>
+<p>在vLLM的论⽂中提到，当KV Cache Block不⾜时，会发⽣preemption，选择⼀个request<br>的KV Cache进⾏驱逐。驱逐时有swapping和recomputation两种⽅法。<br>1.	swapping类似于操作系统中的虚拟内存交换机制。当一个请求的KVCache块被驱逐时，vLLM 将这些块从GPU显存复制到CPU主存中进行缓存。当这个请求被重新调度执行时，系统再将这些 KVCache 块从 CPU 主存复制回GPU显存。优点是恢复过程主要是数据传输，不会消耗GPU计算资源，可以让 GPU 专注于处理其他正在运行的请求。缺点是性能受到 CPU 和 GPU 之间 PCIe 总线带宽的严重影响。同时如果block size很小，会导致大量零碎的数据传输，无法有效利用 PCIe 带宽，从而产生很大的开销。<br>2.	recomputation不缓存被驱逐的KVCache，当请求被重新调度时，系统会重新计算出被驱逐前的全部 KV Cache。vLLM 进行了优化，将该请求的原始prompt和已生成的所有token拼接成一个新的的prompt，然后通过一次prompt phase来一次性生成所有位置的KVCache。优点是该过程完全在 GPU 上进行，避免了与 CPU 的数据交换，不受 PCIe 带宽的瓶颈影响，同时重计算的开销与块大小无关，性能稳定。缺点是恢复过程需要消耗GPU计算时间，这部分时间本可以用于为其他请求生成新的 token，尤其是长序列可能更花费时间。</p>
+<p>vllm&#x2F;core&#x2F;block_manager_v1.py:BlockSpaceManagerV1 中有属性<br>watermark:float&#x3D;0.01.这个watermark的作用如下<br>1.	watermark用于设定最小空闲块数。如果(总块数-已用块数)&#x2F;总块数&lt; watermark，即空闲块的比例低于百分之1时，系统就会认为物理块即将耗尽，开始寻找可以被抢占的请求并通过 swap 或 recompute 的方式释放一些块。<br>2.	watermark的作用是确保即使在高负载下，系统总有少量备用块可以立即分配给新到达的请求，用于处理它们的prompt phase，从而避免新请求因为无法分配初始块而长时间等待。如果等到完全没有空闲块时再触发抢占，那么当前批次的请求可能因为需要分配一个新块而被迫停顿，直到抢占完成、块被释放从而显著增加延迟。watermark 机制允许抢占操作与正常的计算操作异步进行，使得调度更加合理来保证服务的连续和稳定。</p>
+<p><img src="/../pic/vllm6.png" srcset="/img/loading.gif" lazyload alt="图"><br>无论采用哪种preemption mode，增大 block-size 均显著提升性能。随着block-size增大，TTFT急剧下降，因为系统整体吞吐量大幅提升，请求在队列中的等待时间显著缩短。随着block-size增大，TPOT 略有上升，因为分摊到每个请求的单步解码延迟可能会略微增加。<br>在中等大小的block-size情况时，相同block-size下swap模式整体优于recompute模式，swap在各项指标上都略微领先一点点，但差距非常小，结果也符合论文中的发现。论文在图19的端到端性能测试中指出，对于中等大小的block-size (16到64)，两种方法的性能相当。但是在此我修改attention_kernel.cu后加入1，2，4，64，128的block-size编译成功后无法进行vllm serve，报错为vllm serve: error: argument –block-size: invalid choice: 128 (choose from 8, 16, 32)，已经尽力了。按照论文的图19，当block-size为1，2这样的很小值时，recompute机制的性能远优于交换swap机制，是因为小block-size导致交换机制需要在 CPU 和 GPU 之间进行大量零碎的数据传输，无法有效利用 PCIe 带宽从而产生了巨大的开销，重计算的开销与块大小无关，表现得更加稳定。当block-size很大时，swap机制的性能变得优于recompute，因为大块使得数据传输更加高效，更好地利用 PCIe 带宽，数据拷贝的延迟低于占用 GPU 重新进行计算的延迟。</p>
+<p>waiting：是等待被模型执行的请求队列。主要用于存储新的预填充（prefill）请求或被抢占(preempted)后需要重新计算的请求，当新请求到达时，会首先被添加到这个队列中等待调度。<br>running：是当前正在 GPU 上执行推理的请求队列，包含正在运行的decode请求和分块处理的prefill请求。<br>swapped：是被swapped out的序列组。当GPU显存不足时，一些优先级较低或稍后执行的请求会被从 running 队列中抢占（preempt）出来。它们的 KV 缓存可能会被swapped out到 CPU 内存，然后请求本身会被放入 swapped 队列，等待资源空闲时再被换入并继续执行。</p>
+<p>prefill、decode是否放入同一 batch取决于是否启用了chunked prefill功能。<br>在默认调度策略中：不会将prefill和decode放入同一batch。同时，prefill的优先级通常高于 decode，prefill 阶段计算量大，集中处理可以更高效地利用 GPU 的并行计算能力，从而尽快为请求生成第一个Token（优化 TTFT），可以优化整体吞吐量(throughput)。通过批量处理prefill请求，可以更高效地利用GPU资源，提高系统整体处理能力。<br>在chunked prefill调度策略中：则会将prefill和decode放入同一batch，在这种调度策略中，会优先选择decode请求。在默认调度策略中，如果频繁处理大量 prefill，会阻塞正在进行的 decode 请求，导致后续 Token 的输出间隔（TPOT）不稳定，出现长时间等待。chunked prefill调度策略改善了token间延迟,确保生成中的请求不会被新到来的prefill请求阻塞，从而提供更好的用户体验。同时，通过将chunked的prefill和decode放在同一batch中，仍然能保持高GPU利用率。</p>
+<p>vLLM在构建batch时，一个batch当中最大token容量是由max_num_batched_tokens参数决定的。这个参数在SchedulerConfig类中定义，其限制了单个处理步骤中一批次所能处理的最大 Token 数量。<br>如果超过了这个参数限制，可能会导致请求被拒绝或延迟、预填充请求被忽略、运行中的请求被抢占。系统的吞吐量将会下降，请求延迟增加，还可能触发OOM。</p>
+<p>观察entrypoints.llm的_run_engine函数发现，其运行模型的具体代码为self.llm_engine.step()。通过观察engine.llm_engine中的具体运行细节，发现每个Sequence Group对应的scheduler_outputs中都会维护一个num_prefill_groups变量，其代表当前Sequence Group中需要进行prefill操作的group数量。由于benchmark_latency.py脚本运行llm.generate的方式为单线程调用，因此vllm每次运行时只有一个Sequence Group,则当num_prefill_groups变量归零时当前轮次的prefill阶段结束，后续将进行decode阶段操作。</p>
+<p><img src="/../pic/vllm7.png" srcset="/img/loading.gif" lazyload alt="图"></p>
+<p>如图所示，随着请求长度的增加，prefill阶段时间逐渐增长，而decode阶段由于输出长度固定，时间变化较小。当请求长度在100 token以内时，prefill阶段时间相较于decode阶段几乎可以忽略不计，而当请求长度在3k token左右时，prefill阶段与decode阶段耗时几乎相同，而当请求长度到达10k token时，prefill阶段时间是decode阶段的两倍以上。<br>Prefill阶段需要对每个 token 进行 Attention 计算，并且缓存产生的 KV Cache，输入token的数量越多，Prefill阶段的耗时越长。Decode 阶段由于KV cache优化，每个 token 生成时间相对较为稳定，因此受输入token数量的影响不大。在短输入场景下，Decode 阶段通常是延迟的主要来源。但在长输入场景下，Prefill 阶段成为主要瓶颈，这解释了为什么在处理长文档、多轮对话等应用时需要关注 Prefill 阶段的优化。</p>
+<p><img src="/../pic/vllm9.png" srcset="/img/loading.gif" lazyload alt="图"></p>
+<p>Prefill和Decode两个阶段的延迟对批处理大小batchsize的增长表现出不同的敏感度。对于Prefill阶段，当batch_size从1增加到8时，Prefill均值的增长从0.022秒到0.037秒。这表明GPU处理小批量prefill任务时非常高效，增加几个请求的开销很小。但再增大时，其平均耗时随着 batchsize 的增加而急剧上升，从 batchsize 为8时的0.036秒变化至batchsize为64时的0.25秒，增长了近7倍，这表明 Prefill 是一个计算密集型操作，其总计算量与批次内需要一次性处理的token总数强相关，因此延迟会随着并发请求数的增加而显著增加。当batch总token数突破GPU并行处理的能力后，计算量的线性增长无法被GPU并行能力完全覆盖，且KVCache的内存占用增加导致数据读写开销上升，导致非线性的延迟激增。相反，Decode 阶段的总耗时表现出稳定性，当 batchsize 从1增加到64倍时，其总延迟从1.36秒增长到1.91秒。Decode阶段每次仅生成1个token，计算量与序列数量batchsize直接相关，而非总token数。小batch时，KVCache访问量小，内存带宽未成为瓶颈，延迟基本稳定，大batch时，序列数量增多，KVCache总容量增大，内存访问开销累积，延迟上升加快。生成每个后续token的平均延迟变高，batchsize&#x3D;64时系统虽然吞吐量大，但每个用户的交互体验变差了。</p>
+<p>vllm默认策略优点是通过优先处理prefill请求，调度器可以快速构建起一个大batch，将大量序列一次性塞给GPU进行计算，可以提高吞吐量。对于离线推理、批处理任务，这种策略比较好，因为它可以在最短的时间内完成最大量的工作。GPU大部分时间都在进行密集的计算，空闲时间很少，从而实现了高硬件利用率。<br>缺点是从TBT增长中可以看到，该策略以牺牲延迟为代价换取吞吐量。对于在线服务等对响应速度要求高的交互式应用，这种策略会带来不好的用户体验，尤其是在系统负载较高时，导致decode阶段latency比prefill长很多。同时调度器优先服务新来的prefill请求，这对已经处于decode阶段的请求不公平的，在极端情况下，如果系统不断有新的请求涌入，理论上一个正在进行长序列生成的decode请求可能会出现starvation的情况。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/vLLM/" class="category-chain-item">vLLM</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>对vLLM的一些探索实验</div>
+      <div>http://example.com/2026/02/12/对vLLM的一些探索实验/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年2月12日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/02/12/%E4%B8%BAvLLM%E5%A2%9E%E5%8A%A0%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5/" title="为vLLM增加调度策略">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">为vLLM增加调度策略</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/02/12/3713-%E6%9C%80%E9%95%BF%E7%9A%84%E5%B9%B3%E8%A1%A1%E5%AD%90%E4%B8%B2-I/" title="3713. 最长的平衡子串 I">
+                        <span class="hidden-mobile">3713. 最长的平衡子串 I</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
