@@ -228,6 +228,60 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/12/27/bitcask%E5%86%85%E5%AD%98%E7%A3%81%E7%9B%98%E8%AE%BE%E8%AE%A1/" target="_self">
+          bitcask内存设计与数据读写
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/27/bitcask%E5%86%85%E5%AD%98%E7%A3%81%E7%9B%98%E8%AE%BE%E8%AE%A1/" target="_self">
+        <div>
+          keydir 是 Bitcask 唯一的核心内存结构，本质是一个哈希表，映射集群中所有 Key 到固定大小的元数据结构，元数据包含 4 个关键信息： file_id：Key 最新条目所在的磁盘数据文件 ID； value_pos：最新条目在数据文件中的偏移量； value_sz：最新条目的值（Value）大小； tstamp：最新条目的写入时间戳。  Bitcask 实例对应一个物理目录，所有磁盘
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-12-27 09:20" pubdate>
+              2025-12-27
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/12/26/2483-%E5%95%86%E5%BA%97%E7%9A%84%E6%9C%80%E5%B0%91%E4%BB%A3%E4%BB%B7/" target="_self">
           2483. 商店的最少代价
         </a>
@@ -677,60 +731,6 @@
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
             <time datetime="2025-12-19 14:27" pubdate>
-              2025-12-19
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/19/2092-%E6%89%BE%E5%87%BA%E7%9F%A5%E6%99%93%E7%A7%98%E5%AF%86%E7%9A%84%E6%89%80%E6%9C%89%E4%B8%93%E5%AE%B6/" target="_self">
-          2092. 找出知晓秘密的所有专家
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/19/2092-%E6%89%BE%E5%87%BA%E7%9F%A5%E6%99%93%E7%A7%98%E5%AF%86%E7%9A%84%E6%89%80%E6%9C%89%E4%B8%93%E5%AE%B6/" target="_self">
-        <div>
-          给你一个整数 n ，表示有 n 个专家从 0 到 n - 1 编号。另外给你一个下标从 0 开始的二维整数数组 meetings ，其中 meetings[i] &#x3D; [xi, yi, timei] 表示专家 xi 和专家 yi 在时间 timei 要开一场会。一个专家可以同时参加 多场会议 。最后，给你一个整数 firstPerson 。 专家 0 有一个 秘密 ，最初，他在时间 0 将
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-19 13:20" pubdate>
               2025-12-19
             </time>
           </div>
