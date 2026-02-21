@@ -228,6 +228,114 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2026/01/13/bitcask%E5%86%99%E6%95%B0%E6%8D%AE/" target="_self">
+          bitcask写数据
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/13/bitcask%E5%86%99%E6%95%B0%E6%8D%AE/" target="_self">
+        <div>
+          事务的ACID，一批数据要么全部写入成功，要么全部回滚。常用的方式包括WAL以及redo undo log。可以回CSP复习。 隔离性是最难实现的。 读未提交(存在的问题:脏读) 读提交(存在的问题:不可重复读) 可重复读(存在的问题:幻读) 串行化  并发控制的实现主要围绕事务隔离性展开，旨在确保多个事务并发执行时不会因交叉操作导致数据不一致。早期方案采用两阶段锁机制，即在事务执行过程中对操作对
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-13 13:45" pubdate>
+              2026-01-13
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/01/13/bitcask%E6%95%B0%E6%8D%AE%E6%96%87%E4%BB%B6/" target="_self">
+          bitcask数据文件
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/13/bitcask%E6%95%B0%E6%8D%AE%E6%96%87%E4%BB%B6/" target="_self">
+        <div>
+          之前已经定义好了IOManager的接口，封装这一层主要是为了屏蔽上层调用者，并且可以后续接入不同IO类型比如MMap接下来实现如何打开数据文件，根据文件id和offset就可以读取写入 12345678910111213141516171819202122const (	DataFileNameSuffix    = &quot;.data&quot;	HintFileName
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-13 10:32" pubdate>
+              2026-01-13
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2026/01/13/3453-%E5%88%86%E5%89%B2%E6%AD%A3%E6%96%B9%E5%BD%A2-I/" target="_self">
           3453. 分割正方形 I
         </a>
@@ -624,114 +732,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2025-12-31 11:46" pubdate>
               2025-12-31
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/30/840-%E7%9F%A9%E9%98%B5%E4%B8%AD%E7%9A%84%E5%B9%BB%E6%96%B9/" target="_self">
-          840. 矩阵中的幻方
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/30/840-%E7%9F%A9%E9%98%B5%E4%B8%AD%E7%9A%84%E5%B9%BB%E6%96%B9/" target="_self">
-        <div>
-          3 x 3 的幻方是一个填充有 从 1 到 9  的不同数字的 3 x 3 矩阵，其中每行，每列以及两条对角线上的各数之和都相等。 给定一个由整数组成的row x col 的 grid，其中有多少个 3 × 3 的 “幻方” 子矩阵？ 注意：虽然幻方只能包含 1 到 9 的数字，但 grid 可以包含最多15的数字。 示例 1： 输入: grid &#x3D; [[4,3,8,4],[9,5,1,
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-30 12:54" pubdate>
-              2025-12-30
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/29/756-%E9%87%91%E5%AD%97%E5%A1%94%E8%BD%AC%E6%8D%A2%E7%9F%A9%E9%98%B5/" target="_self">
-          756. 金字塔转换矩阵
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/29/756-%E9%87%91%E5%AD%97%E5%A1%94%E8%BD%AC%E6%8D%A2%E7%9F%A9%E9%98%B5/" target="_self">
-        <div>
-          你正在把积木堆成金字塔。每个块都有一个颜色，用一个字母表示。每一行的块比它下面的行 少一个块 ，并且居中。 为了使金字塔美观，只有特定的 三角形图案 是允许的。一个三角形的图案由 两个块 和叠在上面的 单个块 组成。模式是以三个字母字符串的列表形式 allowed 给出的，其中模式的前两个字符分别表示左右底部块，第三个字符表示顶部块。 例如，&quot;ABC&quot; 表示一个三角形图案，其中
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-29 10:35" pubdate>
-              2025-12-29
             </time>
           </div>
         
