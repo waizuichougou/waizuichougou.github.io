@@ -19,21 +19,21 @@
   <meta name="author" content="wyz">
   <meta name="keywords" content="">
   
-    <meta name="description" content="给你两个整数 left 和 right ，在闭区间 [left, right] 范围内，统计并返回 计算置位位数为质数 的整数个数。 计算置位位数 就是二进制表示中 1 的个数。 例如， 21 的二进制表示 10101 有 3 个计算置位。  示例 1： 输入：left &#x3D; 6, right &#x3D; 10输出：4解释：6 -&gt; 110 (2 个计算置位，2 是质数)7 -&amp;g">
+    <meta name="description" content="给你一个整数数组 arr 。请你将数组中的元素按照其二进制表示中数字 1 的数目升序排序。 如果存在多个数字二进制中 1 的数目相同，则必须将它们按照数值大小升序排列。 请你返回排序后的数组。 示例 1： 输入：arr &#x3D; [0,1,2,3,4,5,6,7,8]输出：[0,1,2,4,8,3,5,6,7]解释：[0] 是唯一一个有 0 个 1 的数。[1,2,4,8] 都有 1 个 1">
 <meta property="og:type" content="article">
-<meta property="og:title" content="762. 二进制表示中质数个计算置位">
-<meta property="og:url" content="http://example.com/2026/02/21/762-%E4%BA%8C%E8%BF%9B%E5%88%B6%E8%A1%A8%E7%A4%BA%E4%B8%AD%E8%B4%A8%E6%95%B0%E4%B8%AA%E8%AE%A1%E7%AE%97%E7%BD%AE%E4%BD%8D/index.html">
+<meta property="og:title" content="1356. 根据数字二进制下 1 的数目排序">
+<meta property="og:url" content="http://example.com/2026/02/25/1356-%E6%A0%B9%E6%8D%AE%E6%95%B0%E5%AD%97%E4%BA%8C%E8%BF%9B%E5%88%B6%E4%B8%8B-1-%E7%9A%84%E6%95%B0%E7%9B%AE%E6%8E%92%E5%BA%8F/index.html">
 <meta property="og:site_name" content="歪嘴臭狗的狗窝">
-<meta property="og:description" content="给你两个整数 left 和 right ，在闭区间 [left, right] 范围内，统计并返回 计算置位位数为质数 的整数个数。 计算置位位数 就是二进制表示中 1 的个数。 例如， 21 的二进制表示 10101 有 3 个计算置位。  示例 1： 输入：left &#x3D; 6, right &#x3D; 10输出：4解释：6 -&gt; 110 (2 个计算置位，2 是质数)7 -&amp;g">
+<meta property="og:description" content="给你一个整数数组 arr 。请你将数组中的元素按照其二进制表示中数字 1 的数目升序排序。 如果存在多个数字二进制中 1 的数目相同，则必须将它们按照数值大小升序排列。 请你返回排序后的数组。 示例 1： 输入：arr &#x3D; [0,1,2,3,4,5,6,7,8]输出：[0,1,2,4,8,3,5,6,7]解释：[0] 是唯一一个有 0 个 1 的数。[1,2,4,8] 都有 1 个 1">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2026-02-21T08:21:15.000Z">
-<meta property="article:modified_time" content="2026-02-21T08:30:38.110Z">
+<meta property="article:published_time" content="2026-02-25T01:47:07.000Z">
+<meta property="article:modified_time" content="2026-02-25T01:47:37.852Z">
 <meta property="article:author" content="wyz">
 <meta name="twitter:card" content="summary_large_image">
   
   
   
-  <title>762. 二进制表示中质数个计算置位 - 歪嘴臭狗的狗窝</title>
+  <title>1356. 根据数字二进制下 1 的数目排序 - 歪嘴臭狗的狗窝</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -199,7 +199,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="762. 二进制表示中质数个计算置位"></span>
+            <span id="subtitle" data-typed-text="1356. 根据数字二进制下 1 的数目排序"></span>
           
         </div>
 
@@ -210,8 +210,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2026-02-21 16:21" pubdate>
-          2026年2月21日 下午
+        <time datetime="2026-02-25 09:47" pubdate>
+          2026年2月25日 上午
         </time>
       </span>
     
@@ -222,7 +222,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.1k 字
+          798 字
         
       </span>
     
@@ -233,7 +233,7 @@
         
         
         
-          9 分钟
+          7 分钟
         
       </span>
     
@@ -270,23 +270,25 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">762. 二进制表示中质数个计算置位</h1>
+            <h1 id="seo-header">1356. 根据数字二进制下 1 的数目排序</h1>
             
             
               <div class="markdown-body">
                 
-                <p>给你两个整数 left 和 right ，在闭区间 [left, right] 范围内，统计并返回 计算置位位数为质数 的整数个数。</p>
-<p>计算置位位数 就是二进制表示中 1 的个数。</p>
-<pre><code class="hljs">例如， 21 的二进制表示 10101 有 3 个计算置位。
-</code></pre>
+                <p>给你一个整数数组 arr 。请你将数组中的元素按照其二进制表示中数字 1 的数目升序排序。</p>
+<p>如果存在多个数字二进制中 1 的数目相同，则必须将它们按照数值大小升序排列。</p>
+<p>请你返回排序后的数组。</p>
 <p>示例 1：</p>
-<p>输入：left &#x3D; 6, right &#x3D; 10<br>输出：4<br>解释：<br>6 -&gt; 110 (2 个计算置位，2 是质数)<br>7 -&gt; 111 (3 个计算置位，3 是质数)<br>9 -&gt; 1001 (2 个计算置位，2 是质数)<br>10-&gt; 1010 (2 个计算置位，2 是质数)<br>共计 4 个计算置位为质数的数字。</p>
+<p>输入：arr &#x3D; [0,1,2,3,4,5,6,7,8]<br>输出：[0,1,2,4,8,3,5,6,7]<br>解释：[0] 是唯一一个有 0 个 1 的数。<br>[1,2,4,8] 都有 1 个 1 。<br>[3,5,6] 有 2 个 1 。<br>[7] 有 3 个 1 。<br>按照 1 的个数排序得到的结果数组为 [0,1,2,4,8,3,5,6,7]</p>
 <p>示例 2：</p>
-<p>输入：left &#x3D; 10, right &#x3D; 15<br>输出：5<br>解释：<br>10 -&gt; 1010 (2 个计算置位, 2 是质数)<br>11 -&gt; 1011 (3 个计算置位, 3 是质数)<br>12 -&gt; 1100 (2 个计算置位, 2 是质数)<br>13 -&gt; 1101 (3 个计算置位, 3 是质数)<br>14 -&gt; 1110 (3 个计算置位, 3 是质数)<br>15 -&gt; 1111 (4 个计算置位, 4 不是质数)<br>共计 5 个计算置位为质数的数字。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">isPrime</span><span class="hljs-params">(x <span class="hljs-type">int</span>)</span></span><span class="hljs-type">bool</span>&#123;<br>    <span class="hljs-keyword">if</span> x&lt;<span class="hljs-number">2</span>&#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>    &#125;<br>    <span class="hljs-keyword">for</span> i:=<span class="hljs-number">2</span>;i*i&lt;=x;i++&#123;<br>        <span class="hljs-keyword">if</span> x%i==<span class="hljs-number">0</span>&#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">oneNum</span><span class="hljs-params">(x <span class="hljs-type">int</span>)</span></span><span class="hljs-type">int</span>&#123;<br>    res:=<span class="hljs-number">0</span><br>    <span class="hljs-keyword">for</span> ;x&gt;<span class="hljs-number">0</span>;x&amp;=x<span class="hljs-number">-1</span>&#123;<br>        res++<br>    &#125;<br>    <span class="hljs-keyword">return</span> res<br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">countPrimeSetBits</span><span class="hljs-params">(left <span class="hljs-type">int</span>, right <span class="hljs-type">int</span>)</span></span> <span class="hljs-type">int</span> &#123;<br>    ans:=<span class="hljs-number">0</span><br>    <span class="hljs-keyword">for</span> x:=left;x&lt;=right;x++&#123;<br>        <span class="hljs-keyword">if</span> isPrime(oneNum(x))&#123;<br>            ans++<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> ans    <br>&#125;<br></code></pre></td></tr></table></figure>
-<p>n &amp; (n−1)，其运算结果为把 n 的二进制位中的最低位的 1 变为 0 之后的结果。不断让当前的 n 与 n−1 做与运算，直到 n 变为 0 即可。因为每次运算会使得 n 的最低位的 1 被翻转，因此运算次数就等于 n 的二进制位中 1 的个数。</p>
-<p>如果 y 是 x 的因数，那么 yx​ 也必然是 x 的因数，因此我们只要校验 y 或者 yx​ 即可。而如果我们每次选择校验两者中的较小数，则不难发现较小数一定落在 [2,x<br>​] 的区间中，因此我们只需要枚举 [2,x<br>​] 中的所有数即可</p>
-
+<p>输入：arr &#x3D; [1024,512,256,128,64,32,16,8,4,2,1]<br>输出：[1,2,4,8,16,32,64,128,256,512,1024]<br>解释：数组中所有整数二进制下都只有 1 个 1 ，所以你需要按照数值大小将它们排序。</p>
+<p>示例 3：</p>
+<p>输入：arr &#x3D; [10000,10000]<br>输出：[10000,10000]</p>
+<p>示例 4：</p>
+<p>输入：arr &#x3D; [2,3,5,7,11,13,17,19]<br>输出：[2,3,5,17,7,11,13,19]</p>
+<p>示例 5：</p>
+<p>输入：arr &#x3D; [10,100,1000,10000]<br>输出：[10,100,10000,1000]</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">onesCount</span><span class="hljs-params">(x <span class="hljs-type">int</span>)</span></span>(c <span class="hljs-type">int</span>)&#123;<br>    <span class="hljs-keyword">for</span> ;x&gt;<span class="hljs-number">0</span>;x=x&gt;&gt;<span class="hljs-number">1</span>&#123;<br>        c+=x%<span class="hljs-number">2</span><br>    &#125;<br>    <span class="hljs-keyword">return</span><br>&#125;<br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">sortByBits</span><span class="hljs-params">(a []<span class="hljs-type">int</span>)</span></span> []<span class="hljs-type">int</span> &#123;<br>    sort.Slice(a,<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(i,j <span class="hljs-type">int</span>)</span></span><span class="hljs-type">bool</span>&#123;<br>        x,y:=a[i],a[j]<br>        cx,cy:=onesCount(x),onesCount(y)<br>        <span class="hljs-keyword">return</span> cx&lt;cy || cx==cy &amp;&amp; x&lt;y<br>    &#125;)<br>    <span class="hljs-keyword">return</span>  a<br>&#125;<br></code></pre></td></tr></table></figure>
                 
               </div>
             
@@ -324,8 +326,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>762. 二进制表示中质数个计算置位</div>
-      <div>http://example.com/2026/02/21/762-二进制表示中质数个计算置位/</div>
+      <div>1356. 根据数字二进制下 1 的数目排序</div>
+      <div>http://example.com/2026/02/25/1356-根据数字二进制下-1-的数目排序/</div>
     </div>
     <div class="license-meta">
       
@@ -337,7 +339,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2026年2月21日</div>
+          <div>2026年2月25日</div>
         </div>
       
       
@@ -369,18 +371,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2026/02/22/868-%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%97%B4%E8%B7%9D/" title="868. 二进制间距">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">868. 二进制间距</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2026/02/20/761-%E7%89%B9%E6%AE%8A%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AD%97%E7%AC%A6%E4%B8%B2/" title="761. 特殊的二进制字符串">
-                        <span class="hidden-mobile">761. 特殊的二进制字符串</span>
+                      <a href="/2026/02/24/1022-%E4%BB%8E%E6%A0%B9%E5%88%B0%E5%8F%B6%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B0%E4%B9%8B%E5%92%8C/" title="1022. 从根到叶的二进制数之和">
+                        <span class="hidden-mobile">1022. 从根到叶的二进制数之和</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>

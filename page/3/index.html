@@ -228,6 +228,222 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2026/01/16/bitcask-HTTP%E6%8E%A5%E5%8F%A3/" target="_self">
+          bitcask HTTP接口
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/16/bitcask-HTTP%E6%8E%A5%E5%8F%A3/" target="_self">
+        <div>
+          将 KV存储引擎接入HTTP协议可以方便地实现数据的访问和共享。通过使用HTTP协议的GET和POST等请求方式，可以快速地从存储引擎中获取数据、更新数据以及删除数据。这样不仅可以方便地与其他系统进行数据交换，而且可以在不同的平台和语言之间实现数据的互通。 对于Go语言，有很多web框架可以来实现这一点，比如go-zero、echo、gin等等，为了实现上的简洁我们课程当中采用了Go自带的HTTP
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-16 15:54" pubdate>
+              2026-01-16
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/01/15/bitcask%E5%86%85%E5%AD%98%E5%92%8CIO%E7%9A%84%E4%BC%98%E5%8C%96/" target="_self">
+          bitcask内存和IO的优化
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/15/bitcask%E5%86%85%E5%AD%98%E5%92%8CIO%E7%9A%84%E4%BC%98%E5%8C%96/" target="_self">
+        <div>
+          Bitcask模型将所有索引置于内存，如果使用BTree，ART，跳表，虽能实现快速检索，一次磁盘IO即可获取数据，但内存容量直接限制了可维护的索引数量，进而约束了数据库的key+索引存储总量。为突破这一限制，可采用更省内存的数据结构或将索引持久化至磁盘。磁盘索引虽节省了内存并消除了容量上限，却会增加一次磁盘读取操作，导致读写性能下降。Go语言的boltdb和Rust的jammdb可作为现成的B+
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-15 16:02" pubdate>
+              2026-01-15
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/01/15/2943-%E6%9C%80%E5%A4%A7%E5%8C%96%E7%BD%91%E6%A0%BC%E5%9B%BE%E4%B8%AD%E6%AD%A3%E6%96%B9%E5%BD%A2%E7%A9%BA%E6%B4%9E%E7%9A%84%E9%9D%A2%E7%A7%AF/" target="_self">
+          2943. 最大化网格图中正方形空洞的面积
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/15/2943-%E6%9C%80%E5%A4%A7%E5%8C%96%E7%BD%91%E6%A0%BC%E5%9B%BE%E4%B8%AD%E6%AD%A3%E6%96%B9%E5%BD%A2%E7%A9%BA%E6%B4%9E%E7%9A%84%E9%9D%A2%E7%A7%AF/" target="_self">
+        <div>
+          给你一个网格图，由 n + 2 条 横线段 和 m + 2 条 竖线段 组成，一开始所有区域均为 1 x 1 的单元格。 所有线段的编号从 1 开始。 给你两个整数 n 和 m 。 同时给你两个整数数组 hBars 和 vBars 。 hBars 包含区间 [2, n + 1] 内 互不相同 的横线段编号。 vBars 包含 [2, m + 1] 内 互不相同的 竖线段编号。  如果满足以下条件之
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-15 09:19" pubdate>
+              2026-01-15
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/01/14/bitcask%E5%90%88%E5%B9%B6%E6%93%8D%E4%BD%9C/" target="_self">
+          bitcask合并操作
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/14/bitcask%E5%90%88%E5%B9%B6%E6%93%8D%E4%BD%9C/" target="_self">
+        <div>
+          merge操作主要是清理磁盘上的无用数据，避免由于数据增加无用数据一直占据数据目录的空间。 merge主要包括两个操作，一个是清理旧的数据文件，重写有效的数据。另一个是生成包含索引的hint文件。在执行merge操作的时候，我们要尽量保证不对前台的正常读写造成很大影响。 为避免清理无效数据时与主实例竞争资源，可采用隔离重写策略，在独立目录中启动临时数据库实例，逐一读取原数据文件，仅将内存索引验证有
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-14 15:37" pubdate>
+              2026-01-14
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2026/01/13/bitcask%E5%86%99%E6%95%B0%E6%8D%AE/" target="_self">
           bitcask写数据
         </a>
@@ -516,222 +732,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2026-01-08 18:06" pubdate>
               2026-01-08
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/01/07/1339-%E5%88%86%E8%A3%82%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E6%9C%80%E5%A4%A7%E4%B9%98%E7%A7%AF/" target="_self">
-          1339. 分裂二叉树的最大乘积
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/07/1339-%E5%88%86%E8%A3%82%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E6%9C%80%E5%A4%A7%E4%B9%98%E7%A7%AF/" target="_self">
-        <div>
-          给你一棵二叉树，它的根为 root 。请你删除 1 条边，使二叉树分裂成两棵子树，且它们子树和的乘积尽可能大。 由于答案可能会很大，请你将结果对 10^9 + 7 取模后再返回。 示例 1： 输入：root &#x3D; [1,2,3,4,5,6]输出：110解释：删除红色的边，得到 2 棵子树，和分别为 11 和 10 。它们的乘积是 110 （11*10） 示例 2： 输入：root &#x3
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-07 13:06" pubdate>
-              2026-01-07
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/01/05/1975-%E6%9C%80%E5%A4%A7%E6%96%B9%E9%98%B5%E5%92%8C/" target="_self">
-          1975. 最大方阵和
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/05/1975-%E6%9C%80%E5%A4%A7%E6%96%B9%E9%98%B5%E5%92%8C/" target="_self">
-        <div>
-          给你一个 n x n 的整数方阵 matrix 。你可以执行以下操作 任意次 ： 选择 matrix 中 相邻 两个元素，并将它们都 乘以 -1 。  如果两个元素有 公共边 ，那么它们就是 相邻 的。 你的目的是 最大化 方阵元素的和。请你在执行以上操作之后，返回方阵的 最大 和。 示例 1： 输入：matrix &#x3D; [[1,-1],[-1,1]]输出：4解释：我们可以执行以下操作使和
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-05 10:17" pubdate>
-              2026-01-05
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/01/04/1390-%E5%9B%9B%E5%9B%A0%E6%95%B0/" target="_self">
-          1390. 四因数
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/04/1390-%E5%9B%9B%E5%9B%A0%E6%95%B0/" target="_self">
-        <div>
-          给你一个整数数组 nums，请你返回该数组中恰有四个因数的这些整数的各因数之和。如果数组中不存在满足题意的整数，则返回 0 。 示例 1： 输入：nums &#x3D; [21,4,7]输出：32解释：21 有 4 个因数：1, 3, 7, 214 有 3 个因数：1, 2, 47 有 2 个因数：1, 7答案仅为 21 的所有因数的和。 示例 2: 输入: nums &#x3D; [21,21]
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-04 16:55" pubdate>
-              2026-01-04
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/31/1970-%E4%BD%A0%E8%83%BD%E7%A9%BF%E8%BF%87%E7%9F%A9%E9%98%B5%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%A4%A9/" target="_self">
-          1970. 你能穿过矩阵的最后一天
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/31/1970-%E4%BD%A0%E8%83%BD%E7%A9%BF%E8%BF%87%E7%9F%A9%E9%98%B5%E7%9A%84%E6%9C%80%E5%90%8E%E4%B8%80%E5%A4%A9/" target="_self">
-        <div>
-          给你一个下标从 1 开始的二进制矩阵，其中 0 表示陆地，1 表示水域。同时给你 row 和 col 分别表示矩阵中行和列的数目。 一开始在第 0 天，整个 矩阵都是 陆地 。但每一天都会有一块新陆地被 水 淹没变成水域。给你一个下标从 1 开始的二维数组 cells ，其中 cells[i] &#x3D; [ri, ci] 表示在第 i 天，第 ri 行 ci 列（下标都是从 1 开始）的陆地会
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-31 11:46" pubdate>
-              2025-12-31
             </time>
           </div>
         
