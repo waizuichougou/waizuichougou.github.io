@@ -4,6 +4,25 @@
   
   
   <entry>
+    <title>1404. 将二进制表示减到 1 的步骤数</title>
+    <link href="/2026/02/26/1404-%E5%B0%86%E4%BA%8C%E8%BF%9B%E5%88%B6%E8%A1%A8%E7%A4%BA%E5%87%8F%E5%88%B0-1-%E7%9A%84%E6%AD%A5%E9%AA%A4%E6%95%B0/"/>
+    <url>/2026/02/26/1404-%E5%B0%86%E4%BA%8C%E8%BF%9B%E5%88%B6%E8%A1%A8%E7%A4%BA%E5%87%8F%E5%88%B0-1-%E7%9A%84%E6%AD%A5%E9%AA%A4%E6%95%B0/</url>
+    
+    <content type="html"><![CDATA[<p>给你一个以二进制形式表示的数字 s 。请你返回按下述规则将其减少到 1 所需要的步骤数：</p><pre><code class="hljs">如果当前数字为偶数，则将其除以 2 。如果当前数字为奇数，则将其加上 1 。</code></pre><p>题目保证你总是可以按上述规则将测试用例变为 1 。</p><p>示例 1：</p><p>输入：s &#x3D; “1101”<br>输出：6<br>解释：”1101” 表示十进制数 13 。<br>Step 1) 13 是奇数，加 1 得到 14<br>Step 2) 14 是偶数，除 2 得到 7<br>Step 3) 7  是奇数，加 1 得到 8<br>Step 4) 8  是偶数，除 2 得到 4<br>Step 5) 4  是偶数，除 2 得到 2<br>Step 6) 2  是偶数，除 2 得到 1  </p><p>示例 2：</p><p>输入：s &#x3D; “10”<br>输出：1<br>解释：”10” 表示十进制数 2 。<br>Step 1) 2 是偶数，除 2 得到 1 </p><p>示例 3：</p><p>输入：s &#x3D; “1”<br>输出：0</p><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">numSteps</span><span class="hljs-params">(s <span class="hljs-type">string</span>)</span></span> <span class="hljs-type">int</span> &#123;<br>    n:=<span class="hljs-built_in">len</span>(s)<br>    ans:=<span class="hljs-number">0</span><br>    meet1:=<span class="hljs-literal">false</span><br>    <span class="hljs-keyword">for</span> i:=n<span class="hljs-number">-1</span>;i&gt;=<span class="hljs-number">0</span>;i--&#123;<br>        <span class="hljs-keyword">if</span> s[i]==<span class="hljs-string">&#x27;0&#x27;</span>&#123;<br>            <span class="hljs-keyword">if</span> meet1&#123;<br>                ans+=<span class="hljs-number">2</span><br>            &#125;<span class="hljs-keyword">else</span>&#123;<br>                ans+=<span class="hljs-number">1</span><br>            &#125;<br>        &#125;<span class="hljs-keyword">else</span>&#123;<br>            <span class="hljs-keyword">if</span> !meet1&#123;<br>                <span class="hljs-keyword">if</span> i!=<span class="hljs-number">0</span>&#123;<br>                    ans+=<span class="hljs-number">2</span><br>                &#125;<br>                meet1=<span class="hljs-literal">true</span><br>            &#125;<span class="hljs-keyword">else</span>&#123;<br>                ans++<br>            &#125;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> ans<br>&#125;<br></code></pre></td></tr></table></figure><p>以字符串 1100011100 为例：</p><pre><code class="hljs">一开始最低位为 0，这些 0 的「命运」就是被除二操作删除。通过两次除二的操作，得到字符串 11000111；现在的最低位为 1，这些 1 的「命运」就是被加一操作变成 0 再被删除。通过一次加一操作将字符串变为 11001000，再进行三次除二操作，得到 11001。这一步的操作次数为 4；现在的最低位为 1，通过两次操作（一次加一，一次除二）将字符串变为 1101。最低位仍然为 1，通过两次操作将字符串变为 111；最低位还是 1，通过一次加一操作将字符串变为 1000，产生了额外的进位，再通过三次除二操作将字符串变为 1。</code></pre><p>通过上面的例子，可以归纳出每一个字符的「命运」以及需要的步骤数：</p><pre><code class="hljs">只有在一开始的时候，才需要考虑字符串最低位为 0 的情况，通过若干次操作删去低位的所有 0；在任意时刻，字符串的最低位均为 1。如果有 k 个 1，那么我们需要 k+1 次操作（1 次加一操作和 k 次除二操作）将所有的 1 变为 0 并删除。并且在这 k+1 次操作后，原本最靠近右侧的那个 0 变为了 1。这也解释了为什么我们不需要考虑最低位为 0 的情况了。</code></pre>]]></content>
+    
+    
+    <categories>
+      
+      <category>leetcode</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>1356. 根据数字二进制下 1 的数目排序</title>
     <link href="/2026/02/25/1356-%E6%A0%B9%E6%8D%AE%E6%95%B0%E5%AD%97%E4%BA%8C%E8%BF%9B%E5%88%B6%E4%B8%8B-1-%E7%9A%84%E6%95%B0%E7%9B%AE%E6%8E%92%E5%BA%8F/"/>
     <url>/2026/02/25/1356-%E6%A0%B9%E6%8D%AE%E6%95%B0%E5%AD%97%E4%BA%8C%E8%BF%9B%E5%88%B6%E4%B8%8B-1-%E7%9A%84%E6%95%B0%E7%9B%AE%E6%8E%92%E5%BA%8F/</url>
