@@ -228,15 +228,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2026/01/14/bitcask%E5%90%88%E5%B9%B6%E6%93%8D%E4%BD%9C/" target="_self">
-          bitcask合并操作
+        <a href="/2026/03/04/1582-%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%9F%A9%E9%98%B5%E4%B8%AD%E7%9A%84%E7%89%B9%E6%AE%8A%E4%BD%8D%E7%BD%AE/" target="_self">
+          1582. 二进制矩阵中的特殊位置
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/14/bitcask%E5%90%88%E5%B9%B6%E6%93%8D%E4%BD%9C/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/03/04/1582-%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%9F%A9%E9%98%B5%E4%B8%AD%E7%9A%84%E7%89%B9%E6%AE%8A%E4%BD%8D%E7%BD%AE/" target="_self">
         <div>
-          merge操作主要是清理磁盘上的无用数据，避免由于数据增加无用数据一直占据数据目录的空间。 merge主要包括两个操作，一个是清理旧的数据文件，重写有效的数据。另一个是生成包含索引的hint文件。在执行merge操作的时候，我们要尽量保证不对前台的正常读写造成很大影响。 为避免清理无效数据时与主实例竞争资源，可采用隔离重写策略，在独立目录中启动临时数据库实例，逐一读取原数据文件，仅将内存索引验证有
+          给定一个 m x n 的二进制矩阵 mat，返回矩阵 mat 中特殊位置的数量。 如果位置 (i, j) 满足 mat[i][j] &#x3D;&#x3D; 1 并且行 i 与列 j 中的所有其他元素都是 0（行和列的下标从 0 开始计数），那么它被称为 特殊 位置。 示例 1： 输入：mat &#x3D; [[1,0,0],[0,0,1],[1,0,0]]输出：1解释：位置 (1, 2) 是一个
         </div>
       </a>
 
@@ -244,170 +244,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-14 15:37" pubdate>
-              2026-01-14
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/01/13/bitcask%E5%86%99%E6%95%B0%E6%8D%AE/" target="_self">
-          bitcask写数据
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/13/bitcask%E5%86%99%E6%95%B0%E6%8D%AE/" target="_self">
-        <div>
-          事务的ACID，一批数据要么全部写入成功，要么全部回滚。常用的方式包括WAL以及redo undo log。可以回CSP复习。 隔离性是最难实现的。 读未提交(存在的问题:脏读) 读提交(存在的问题:不可重复读) 可重复读(存在的问题:幻读) 串行化  并发控制的实现主要围绕事务隔离性展开，旨在确保多个事务并发执行时不会因交叉操作导致数据不一致。早期方案采用两阶段锁机制，即在事务执行过程中对操作对
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-13 13:45" pubdate>
-              2026-01-13
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/01/13/bitcask%E6%95%B0%E6%8D%AE%E6%96%87%E4%BB%B6/" target="_self">
-          bitcask数据文件
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/13/bitcask%E6%95%B0%E6%8D%AE%E6%96%87%E4%BB%B6/" target="_self">
-        <div>
-          之前已经定义好了IOManager的接口，封装这一层主要是为了屏蔽上层调用者，并且可以后续接入不同IO类型比如MMap接下来实现如何打开数据文件，根据文件id和offset就可以读取写入 12345678910111213141516171819202122const (	DataFileNameSuffix    = &quot;.data&quot;	HintFileName
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-13 10:32" pubdate>
-              2026-01-13
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/01/13/3453-%E5%88%86%E5%89%B2%E6%AD%A3%E6%96%B9%E5%BD%A2-I/" target="_self">
-          3453. 分割正方形 I
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/13/3453-%E5%88%86%E5%89%B2%E6%AD%A3%E6%96%B9%E5%BD%A2-I/" target="_self">
-        <div>
-          给你一个二维整数数组 squares ，其中 squares[i] &#x3D; [xi, yi, li] 表示一个与 x 轴平行的正方形的左下角坐标和正方形的边长。 找到一个最小的 y 坐标，它对应一条水平线，该线需要满足它以上正方形的总面积 等于 该线以下正方形的总面积。 答案如果与实际答案的误差在 10-5 以内，将视为正确答案。 注意：正方形 可能会 重叠。重叠区域应该被 多次计数 。 示
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-13 09:08" pubdate>
-              2026-01-13
+            <time datetime="2026-03-04 08:46" pubdate>
+              2026-03-04
             </time>
           </div>
         
@@ -444,15 +282,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2026/01/09/865-%E5%85%B7%E6%9C%89%E6%89%80%E6%9C%89%E6%9C%80%E6%B7%B1%E8%8A%82%E7%82%B9%E7%9A%84%E6%9C%80%E5%B0%8F%E5%AD%90%E6%A0%91/" target="_self">
-          865. 具有所有最深节点的最小子树
+        <a href="/2026/03/03/1545-%E6%89%BE%E5%87%BA%E7%AC%AC-N-%E4%B8%AA%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B8%AD%E7%9A%84%E7%AC%AC-K-%E4%BD%8D/" target="_self">
+          1545. 找出第 N 个二进制字符串中的第 K 位
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/09/865-%E5%85%B7%E6%9C%89%E6%89%80%E6%9C%89%E6%9C%80%E6%B7%B1%E8%8A%82%E7%82%B9%E7%9A%84%E6%9C%80%E5%B0%8F%E5%AD%90%E6%A0%91/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/03/03/1545-%E6%89%BE%E5%87%BA%E7%AC%AC-N-%E4%B8%AA%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B8%AD%E7%9A%84%E7%AC%AC-K-%E4%BD%8D/" target="_self">
         <div>
-          给定一个根为 root 的二叉树，每个节点的深度是 该节点到根的最短距离 。 返回包含原始树中所有 最深节点 的 最小子树 。 如果一个节点在 整个树 的任意节点之间具有最大的深度，则该节点是 最深的 。 一个节点的 子树 是该节点加上它的所有后代的集合。 示例 1： 输入：root &#x3D; [3,5,1,6,2,0,8,null,null,7,4]输出：[2,7,4]解释：我们返回值为 2
+          给你两个正整数 n 和 k，二进制字符串  Sn 的形成规则如下： S1 = &quot;0&quot; 当 i &gt; 1 时，Si = Si-1 + &quot;1&quot; + reverse(invert(Si-1))  其中 + 表示串联操作，reverse(x) 返回反转 x 后得到的字符串，而 invert(x) 则会翻转 x 中的每一位（0 变为 1，而 1 变为 0）。 例如
         </div>
       </a>
 
@@ -460,8 +298,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-09 12:19" pubdate>
-              2026-01-09
+            <time datetime="2026-03-03 10:53" pubdate>
+              2026-03-03
             </time>
           </div>
         
@@ -498,15 +336,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2026/01/08/bitcask%E6%95%B0%E6%8D%AE%E8%AF%BB%E3%80%81%E5%86%99%E3%80%81%E5%88%A0%E9%99%A4/" target="_self">
-          bitcask数据读、写、删除
+        <a href="/2026/03/02/1536-%E6%8E%92%E5%B8%83%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%BD%91%E6%A0%BC%E7%9A%84%E6%9C%80%E5%B0%91%E4%BA%A4%E6%8D%A2%E6%AC%A1%E6%95%B0/" target="_self">
+          1536. 排布二进制网格的最少交换次数
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/08/bitcask%E6%95%B0%E6%8D%AE%E8%AF%BB%E3%80%81%E5%86%99%E3%80%81%E5%88%A0%E9%99%A4/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/03/02/1536-%E6%8E%92%E5%B8%83%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%BD%91%E6%A0%BC%E7%9A%84%E6%9C%80%E5%B0%91%E4%BA%A4%E6%8D%A2%E6%AC%A1%E6%95%B0/" target="_self">
         <div>
-          按照bitcask论文，写数据包括写磁盘文件和更新内存索引两步将数据封装到LogRecord结构体 表示追加写到数据文件中的日志记录Type 主要是数据是否被删除的墓碑值 1234567891011const (	LogRecordNormal LogRecordType = iota	LogRecordDeleted	LogRecordTxnFinished)type LogRecord str
+          给你一个 n x n 的二进制网格 grid，每一次操作中，你可以选择网格的 相邻两行 进行交换。 一个符合要求的网格需要满足主对角线以上的格子全部都是 0 。 请你返回使网格满足要求的最少操作次数，如果无法使网格符合要求，请你返回 -1 。 主对角线指的是从 (1, 1) 到 (n, n) 的这些格子。 示例 1： 输入：grid &#x3D; [[0,0,1],[1,1,0],[1,0,0]]
         </div>
       </a>
 
@@ -514,62 +352,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-08 18:33" pubdate>
-              2026-01-08
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/go%E5%AE%9E%E7%8E%B0bitcask/" class="category-chain-item">go实现bitcask</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/01/08/1458-%E4%B8%A4%E4%B8%AA%E5%AD%90%E5%BA%8F%E5%88%97%E7%9A%84%E6%9C%80%E5%A4%A7%E7%82%B9%E7%A7%AF/" target="_self">
-          1458. 两个子序列的最大点积
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/08/1458-%E4%B8%A4%E4%B8%AA%E5%AD%90%E5%BA%8F%E5%88%97%E7%9A%84%E6%9C%80%E5%A4%A7%E7%82%B9%E7%A7%AF/" target="_self">
-        <div>
-          给你两个数组 nums1 和 nums2 。 请你返回 nums1 和 nums2 中两个长度相同的 非空 子序列的最大点积。 数组的非空子序列是通过删除原数组中某些元素（可能一个也不删除）后剩余数字组成的序列，但不能改变数字间相对顺序。比方说，[2,3,5] 是 [1,2,3,4,5] 的一个子序列而 [1,5,3] 不是。 示例 1： 输入：nums1 &#x3D; [2,1,-2,5], n
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-08 18:06" pubdate>
-              2026-01-08
+            <time datetime="2026-03-02 09:01" pubdate>
+              2026-03-02
             </time>
           </div>
         
@@ -606,15 +390,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2026/01/07/1339-%E5%88%86%E8%A3%82%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E6%9C%80%E5%A4%A7%E4%B9%98%E7%A7%AF/" target="_self">
-          1339. 分裂二叉树的最大乘积
+        <a href="/2026/02/26/1404-%E5%B0%86%E4%BA%8C%E8%BF%9B%E5%88%B6%E8%A1%A8%E7%A4%BA%E5%87%8F%E5%88%B0-1-%E7%9A%84%E6%AD%A5%E9%AA%A4%E6%95%B0/" target="_self">
+          1404. 将二进制表示减到 1 的步骤数
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/07/1339-%E5%88%86%E8%A3%82%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E6%9C%80%E5%A4%A7%E4%B9%98%E7%A7%AF/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/02/26/1404-%E5%B0%86%E4%BA%8C%E8%BF%9B%E5%88%B6%E8%A1%A8%E7%A4%BA%E5%87%8F%E5%88%B0-1-%E7%9A%84%E6%AD%A5%E9%AA%A4%E6%95%B0/" target="_self">
         <div>
-          给你一棵二叉树，它的根为 root 。请你删除 1 条边，使二叉树分裂成两棵子树，且它们子树和的乘积尽可能大。 由于答案可能会很大，请你将结果对 10^9 + 7 取模后再返回。 示例 1： 输入：root &#x3D; [1,2,3,4,5,6]输出：110解释：删除红色的边，得到 2 棵子树，和分别为 11 和 10 。它们的乘积是 110 （11*10） 示例 2： 输入：root &#x3
+          给你一个以二进制形式表示的数字 s 。请你返回按下述规则将其减少到 1 所需要的步骤数： 如果当前数字为偶数，则将其除以 2 。  如果当前数字为奇数，则将其加上 1 。  题目保证你总是可以按上述规则将测试用例变为 1 。 示例 1： 输入：s &#x3D; “1101”输出：6解释：”1101” 表示十进制数 13 。Step 1) 13 是奇数，加 1 得到 14Step 2) 14 是偶数
         </div>
       </a>
 
@@ -622,8 +406,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-07 13:06" pubdate>
-              2026-01-07
+            <time datetime="2026-02-26 09:49" pubdate>
+              2026-02-26
             </time>
           </div>
         
@@ -660,15 +444,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2026/01/05/1975-%E6%9C%80%E5%A4%A7%E6%96%B9%E9%98%B5%E5%92%8C/" target="_self">
-          1975. 最大方阵和
+        <a href="/2026/02/25/1356-%E6%A0%B9%E6%8D%AE%E6%95%B0%E5%AD%97%E4%BA%8C%E8%BF%9B%E5%88%B6%E4%B8%8B-1-%E7%9A%84%E6%95%B0%E7%9B%AE%E6%8E%92%E5%BA%8F/" target="_self">
+          1356. 根据数字二进制下 1 的数目排序
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/05/1975-%E6%9C%80%E5%A4%A7%E6%96%B9%E9%98%B5%E5%92%8C/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/02/25/1356-%E6%A0%B9%E6%8D%AE%E6%95%B0%E5%AD%97%E4%BA%8C%E8%BF%9B%E5%88%B6%E4%B8%8B-1-%E7%9A%84%E6%95%B0%E7%9B%AE%E6%8E%92%E5%BA%8F/" target="_self">
         <div>
-          给你一个 n x n 的整数方阵 matrix 。你可以执行以下操作 任意次 ： 选择 matrix 中 相邻 两个元素，并将它们都 乘以 -1 。  如果两个元素有 公共边 ，那么它们就是 相邻 的。 你的目的是 最大化 方阵元素的和。请你在执行以上操作之后，返回方阵的 最大 和。 示例 1： 输入：matrix &#x3D; [[1,-1],[-1,1]]输出：4解释：我们可以执行以下操作使和
+          给你一个整数数组 arr 。请你将数组中的元素按照其二进制表示中数字 1 的数目升序排序。 如果存在多个数字二进制中 1 的数目相同，则必须将它们按照数值大小升序排列。 请你返回排序后的数组。 示例 1： 输入：arr &#x3D; [0,1,2,3,4,5,6,7,8]输出：[0,1,2,4,8,3,5,6,7]解释：[0] 是唯一一个有 0 个 1 的数。[1,2,4,8] 都有 1 个 1
         </div>
       </a>
 
@@ -676,8 +460,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-05 10:17" pubdate>
-              2026-01-05
+            <time datetime="2026-02-25 09:47" pubdate>
+              2026-02-25
             </time>
           </div>
         
@@ -714,15 +498,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2026/01/04/1390-%E5%9B%9B%E5%9B%A0%E6%95%B0/" target="_self">
-          1390. 四因数
+        <a href="/2026/02/24/1022-%E4%BB%8E%E6%A0%B9%E5%88%B0%E5%8F%B6%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B0%E4%B9%8B%E5%92%8C/" target="_self">
+          1022. 从根到叶的二进制数之和
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/04/1390-%E5%9B%9B%E5%9B%A0%E6%95%B0/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/02/24/1022-%E4%BB%8E%E6%A0%B9%E5%88%B0%E5%8F%B6%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B0%E4%B9%8B%E5%92%8C/" target="_self">
         <div>
-          给你一个整数数组 nums，请你返回该数组中恰有四个因数的这些整数的各因数之和。如果数组中不存在满足题意的整数，则返回 0 。 示例 1： 输入：nums &#x3D; [21,4,7]输出：32解释：21 有 4 个因数：1, 3, 7, 214 有 3 个因数：1, 2, 47 有 2 个因数：1, 7答案仅为 21 的所有因数的和。 示例 2: 输入: nums &#x3D; [21,21]
+          给出一棵二叉树，其上每个结点的值都是 0 或 1 。每一条从根到叶的路径都代表一个从最高有效位开始的二进制数。 例如，如果路径为 0 -&gt; 1 -&gt; 1 -&gt; 0 -&gt; 1，那么它表示二进制数 01101，也就是 13 。  对树上的每一片叶子，我们都要找出从根到该叶子的路径所表示的数字。 返回这些数字之和。题目数据保证答案是一个 32 位 整数。 示例 1： 输入：roo
         </div>
       </a>
 
@@ -730,8 +514,224 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-04 16:55" pubdate>
-              2026-01-04
+            <time datetime="2026-02-24 10:48" pubdate>
+              2026-02-24
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/02/23/1461-%E6%A3%80%E6%9F%A5%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%98%AF%E5%90%A6%E5%8C%85%E5%90%AB%E6%89%80%E6%9C%89%E9%95%BF%E5%BA%A6%E4%B8%BA-K-%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AD%90%E4%B8%B2/" target="_self">
+          1461. 检查一个字符串是否包含所有长度为 K 的二进制子串
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/02/23/1461-%E6%A3%80%E6%9F%A5%E4%B8%80%E4%B8%AA%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%98%AF%E5%90%A6%E5%8C%85%E5%90%AB%E6%89%80%E6%9C%89%E9%95%BF%E5%BA%A6%E4%B8%BA-K-%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AD%90%E4%B8%B2/" target="_self">
+        <div>
+          给你一个二进制字符串 s 和一个整数 k 。如果所有长度为 k 的二进制字符串都是 s 的子串，请返回 true ，否则请返回 false 。 示例 1： 输入：s &#x3D; “00110110”, k &#x3D; 2输出：true解释：长度为 2 的二进制串包括 “00”，”01”，”10” 和 “11”。它们分别是 s 中下标为 0，1，3，2 开始的长度为 2 的子串。 示例 2： 输
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-02-23 10:33" pubdate>
+              2026-02-23
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/02/22/868-%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%97%B4%E8%B7%9D/" target="_self">
+          868. 二进制间距
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/02/22/868-%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%97%B4%E8%B7%9D/" target="_self">
+        <div>
+          给定一个正整数 n，找到并返回 n 的二进制表示中两个 相邻 1 之间的 最长距离 。如果不存在两个相邻的 1，返回 0 。 如果只有 0 将两个 1 分隔开（可能不存在 0 ），则认为这两个 1 彼此 相邻 。两个 1 之间的距离是它们的二进制表示中位置的绝对差。例如，”1001” 中的两个 1 的距离为 3 。 示例 1： 输入：n &#x3D; 22输出：2解释：22 的二进制是 “1011
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-02-22 19:59" pubdate>
+              2026-02-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/02/21/762-%E4%BA%8C%E8%BF%9B%E5%88%B6%E8%A1%A8%E7%A4%BA%E4%B8%AD%E8%B4%A8%E6%95%B0%E4%B8%AA%E8%AE%A1%E7%AE%97%E7%BD%AE%E4%BD%8D/" target="_self">
+          762. 二进制表示中质数个计算置位
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/02/21/762-%E4%BA%8C%E8%BF%9B%E5%88%B6%E8%A1%A8%E7%A4%BA%E4%B8%AD%E8%B4%A8%E6%95%B0%E4%B8%AA%E8%AE%A1%E7%AE%97%E7%BD%AE%E4%BD%8D/" target="_self">
+        <div>
+          给你两个整数 left 和 right ，在闭区间 [left, right] 范围内，统计并返回 计算置位位数为质数 的整数个数。 计算置位位数 就是二进制表示中 1 的个数。 例如， 21 的二进制表示 10101 有 3 个计算置位。  示例 1： 输入：left &#x3D; 6, right &#x3D; 10输出：4解释：6 -&gt; 110 (2 个计算置位，2 是质数)7 -&g
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-02-21 16:21" pubdate>
+              2026-02-21
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/leetcode/" class="category-chain-item">leetcode</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/02/20/761-%E7%89%B9%E6%AE%8A%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AD%97%E7%AC%A6%E4%B8%B2/" target="_self">
+          761. 特殊的二进制字符串
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/02/20/761-%E7%89%B9%E6%AE%8A%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AD%97%E7%AC%A6%E4%B8%B2/" target="_self">
+        <div>
+          特殊的二进制字符串 是具有以下两个性质的二进制序列： 0 的数量与 1 的数量相等。 二进制序列的每一个前缀码中 1 的数量要大于等于 0 的数量。  给定一个特殊的二进制字符串 s。 一次移动操作包括选择字符串 s 中的两个连续的、非空的、特殊子串，并交换它们。两个字符串是连续的，如果第一个字符串的最后一个字符与第二个字符串的第一个字符的索引相差正好为 1。 返回在字符串上应用任意次操作后可能得
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-02-20 16:44" pubdate>
+              2026-02-20
             </time>
           </div>
         
@@ -766,7 +766,7 @@
 
   <nav aria-label="navigation">
     <span class="pagination" id="pagination">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="page-number" href="/page/3/#board">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/#board">7</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="page-number" href="/page/3/#board">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/#board">10</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
     </span>
   </nav>
 
