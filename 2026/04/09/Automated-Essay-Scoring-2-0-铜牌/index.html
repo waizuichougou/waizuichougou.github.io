@@ -1,0 +1,712 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="wyz">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="本次比赛的任务是根据学生作文全文，预测作文的整体评分。作文分数是 1 到 6 的有序离散分值，目标是尽可能贴近人工评分结果。官方给出的数据集规模约为 24,000 篇学生议论文，其中公开训练集为 17,307 篇。 比赛的官方评测指标是 Quadratic Weighted Kappa（QWK）。这个指标更强调预测分数与真实分数之间的距离：差 1 分和差 3 分的惩罚完全不同，因此这道题本质上更接">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Automated Essay Scoring 2.0 铜牌">
+<meta property="og:url" content="http://example.com/2026/04/09/Automated-Essay-Scoring-2-0-%E9%93%9C%E7%89%8C/index.html">
+<meta property="og:site_name" content="歪嘴臭狗的狗窝">
+<meta property="og:description" content="本次比赛的任务是根据学生作文全文，预测作文的整体评分。作文分数是 1 到 6 的有序离散分值，目标是尽可能贴近人工评分结果。官方给出的数据集规模约为 24,000 篇学生议论文，其中公开训练集为 17,307 篇。 比赛的官方评测指标是 Quadratic Weighted Kappa（QWK）。这个指标更强调预测分数与真实分数之间的距离：差 1 分和差 3 分的惩罚完全不同，因此这道题本质上更接">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/pic/AES.png">
+<meta property="article:published_time" content="2026-04-09T00:50:45.000Z">
+<meta property="article:modified_time" content="2026-04-09T01:21:53.161Z">
+<meta property="article:author" content="wyz">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/pic/AES.png">
+  
+  
+  
+  <title>Automated Essay Scoring 2.0 铜牌 - 歪嘴臭狗的狗窝</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Fluid</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Automated Essay Scoring 2.0 铜牌"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-04-09 08:50" pubdate>
+          2026年4月9日 早上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          8.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          73 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Automated Essay Scoring 2.0 铜牌</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><img src="/../pic/AES.png" srcset="/img/loading.gif" lazyload alt="图"><br>本次比赛的任务是根据学生作文全文，预测作文的整体评分。作文分数是 1 到 6 的有序离散分值，目标是尽可能贴近人工评分结果。官方给出的数据集规模约为 24,000 篇学生议论文，其中公开训练集为 17,307 篇。</p>
+<p>比赛的官方评测指标是 Quadratic Weighted Kappa（QWK）。这个指标更强调预测分数与真实分数之间的距离：差 1 分和差 3 分的惩罚完全不同，因此这道题本质上更接近一个有序分类 &#x2F; 排序回归问题，而不是普通的多分类问题。</p>
+<p>从任务性质上看，这个比赛有两个核心难点.第一，作文是长文本，单纯截断容易损失关键信息；第二，作文评分具有明显的序关系和一定主观性，因此模型要尽量拟合人工评分标准。结合这两个特点，我最终采用了一套 Transformer 概率特征,手工统计特征 + LightGBM 二级融合”的混合方案。</p>
+<h3 id="整体方案概述"><a href="#整体方案概述" class="headerlink" title="整体方案概述"></a>整体方案概述</h3><p>我的整体思路不是单纯依赖一个端到端模型，而是把方案拆成两层：</p>
+<p>一级模型：使用多个 DeBERTa-v3-large 序列分类模型，对作文进行 6 分类预测，并对多个模型输出的概率做平均，得到更稳定的语义概率特征。<br>特征工程层：从原始作文中提取多粒度统计特征，包括段落、句子、单词长度分布、拼写错误数、TF-IDF 特征、CountVectorizer 特征等。<br>二级模型：将上述统计特征与一级模型的 OOF &#x2F; 概率特征拼接，送入 LightGBMRegressor，并通过自定义目标函数和评估函数，让训练过程尽量贴近 QWK。</p>
+<p>这套方案的核心出发点是：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-attribute">Transformer</span> 负责提取深层语义信息；<br>手工特征 负责补充作文结构、语言质量和长度分布等可解释信息；<br>LightGBM 负责学习不同特征之间的非线性组合关系；<br>QWK 对齐训练 负责让优化目标尽量接近比赛榜单指标。<br></code></pre></td></tr></table></figure>
+<h3 id="核心代码与实现"><a href="#核心代码与实现" class="headerlink" title="核心代码与实现"></a>核心代码与实现</h3><p><strong>DeBERTa 集成</strong></p>
+<p>首先加载多个预训练好的分类模型，对测试集进行推理，并将多个模型的 softmax 概率做平均：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs python">MAX_LENGTH = <span class="hljs-number">1024</span><br>TEST_DATA_PATH = <span class="hljs-string">&quot;/kaggle/input/learning-agency-lab-automated-essay-scoring-2/test.csv&quot;</span><br>MODEL_PATH = <span class="hljs-string">&quot;/kaggle/input/aes2-400-20240419134941//&quot;</span><br>EVAL_BATCH_SIZE = <span class="hljs-number">1</span><br><br>models = glob(MODEL_PATH)<br>tokenizer = AutoTokenizer.from_pretrained(models[<span class="hljs-number">0</span>])<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">tokenize</span>(<span class="hljs-params">sample</span>):<br><span class="hljs-keyword">return</span> tokenizer(sample[<span class="hljs-string">&quot;full_text&quot;</span>], max_length=MAX_LENGTH, truncation=<span class="hljs-literal">True</span>)<br><br>df_test = pd.read_csv(TEST_DATA_PATH)<br>ds = Dataset.from_pandas(df_test).<span class="hljs-built_in">map</span>(tokenize).remove_columns([<span class="hljs-string">&quot;essay_id&quot;</span>, <span class="hljs-string">&quot;full_text&quot;</span>])<br><br>args = TrainingArguments(<br><span class="hljs-string">&quot;.&quot;</span>,<br>per_device_eval_batch_size=EVAL_BATCH_SIZE,<br>report_to=<span class="hljs-string">&quot;none&quot;</span><br>)<br><br>predictions = []<br><span class="hljs-keyword">for</span> model_path <span class="hljs-keyword">in</span> models:<br>model = AutoModelForSequenceClassification.from_pretrained(model_path)<br>trainer = Trainer(<br>model=model,<br>args=args,<br>data_collator=DataCollatorWithPadding(tokenizer),<br>tokenizer=tokenizer<br>)<br>preds = trainer.predict(ds).predictions<br>predictions.append(softmax(preds, axis=-<span class="hljs-number">1</span>))<br><br>predicted_score = np.mean(predictions, axis=<span class="hljs-number">0</span>)<br></code></pre></td></tr></table></figure>
+
+<p>先用强语义模型对作文进行一个整体判断，输出每篇作文属于 1~6 分各类别的概率。相比单模型，这里做了模型集成，能够减少单个模型波动带来的影响，也为后续二级模型提供更稳健的高层语义特征。</p>
+<p><strong>数据预处理 统一文本格式 降低噪声</strong></p>
+<p>在进入统计特征阶段前，我先对原始文本做了统一清洗，包括大小写归一化、HTML 去除、URL 去除、数字去除、冗余空格压缩等：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">removeHTML</span>(<span class="hljs-params">x</span>):<br>html = re.<span class="hljs-built_in">compile</span>(<span class="hljs-string">r&quot;&lt;.*?&gt;&quot;</span>)<br><span class="hljs-keyword">return</span> html.sub(<span class="hljs-string">r&quot;&quot;</span>, x)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">dataPreprocessing</span>(<span class="hljs-params">x</span>):<br>x = x.lower()<br>x = removeHTML(x)<br>x = re.sub(<span class="hljs-string">&quot;@\w+&quot;</span>, <span class="hljs-string">&quot;&quot;</span>, x)<br>x = re.sub(<span class="hljs-string">&quot;&#x27;\d+&quot;</span>, <span class="hljs-string">&quot;&quot;</span>, x)<br>x = re.sub(<span class="hljs-string">&quot;\d+&quot;</span>, <span class="hljs-string">&quot;&quot;</span>, x)<br>x = re.sub(<span class="hljs-string">&quot;http\w+&quot;</span>, <span class="hljs-string">&quot;&quot;</span>, x)<br>x = re.sub(<span class="hljs-string">r&quot;\s+&quot;</span>, <span class="hljs-string">&quot; &quot;</span>, x)<br>x = re.sub(<span class="hljs-string">r&quot;.+&quot;</span>, <span class="hljs-string">&quot;.&quot;</span>, x)<br>x = re.sub(<span class="hljs-string">r&quot;,+&quot;</span>, <span class="hljs-string">&quot;,&quot;</span>, x)<br>x = x.strip()<br><span class="hljs-keyword">return</span> x<br></code></pre></td></tr></table></figure>
+
+<p>这一步的意义主要有两点：</p>
+<p>降低无效符号、网页噪声、异常格式对特征统计的干扰；<br>让后续段落、句子、单词级别的统计更加稳定。</p>
+<p>对于作文评分任务来说，文本清洗不只是规范化输入，更让后续特征尽量反映写作质量本身，而不是被脏数据误导。</p>
+<p><strong>特征工程 段落、句子、单词三层统计</strong></p>
+<p>围绕作文的结构信息做了比较完整的手工特征设计。</p>
+<p>（1）段落级特征</p>
+<p>先按双换行切分段落，再统计段落长度、句子数、单词数、拼写错误数，并聚合出最大值、均值、最小值、总和、分位数等特征：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs python">columns = [<br>(pl.col(<span class="hljs-string">&quot;full_text&quot;</span>).<span class="hljs-built_in">str</span>.split(by=<span class="hljs-string">&quot;\n\n&quot;</span>).alias(<span class="hljs-string">&quot;paragraph&quot;</span>)),<br>]<br><br>train = pl.read_csv(PATH + <span class="hljs-string">&quot;train.csv&quot;</span>).with_columns(columns)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">Paragraph_Preprocess</span>(<span class="hljs-params">tmp</span>):<br>tmp = tmp.explode(<span class="hljs-string">&quot;paragraph&quot;</span>)<br>tmp = tmp.with_columns(pl.col(<span class="hljs-string">&quot;paragraph&quot;</span>).map_elements(dataPreprocessing))<br>tmp = tmp.with_columns(<br>pl.col(<span class="hljs-string">&quot;paragraph&quot;</span>).map_elements(remove_punctuation).alias(<span class="hljs-string">&quot;paragraph_no_pinctuation&quot;</span>)<br>)<br>tmp = tmp.with_columns(<br>pl.col(<span class="hljs-string">&quot;paragraph_no_pinctuation&quot;</span>).map_elements(count_spelling_errors).alias(<span class="hljs-string">&quot;paragraph_error_num&quot;</span>)<br>)<br>tmp = tmp.with_columns(<br>pl.col(<span class="hljs-string">&quot;paragraph&quot;</span>).map_elements(<span class="hljs-keyword">lambda</span> x: <span class="hljs-built_in">len</span>(x)).alias(<span class="hljs-string">&quot;paragraph_len&quot;</span>),<br>pl.col(<span class="hljs-string">&quot;paragraph&quot;</span>).map_elements(<span class="hljs-keyword">lambda</span> x: <span class="hljs-built_in">len</span>(x.split(<span class="hljs-string">&quot;.&quot;</span>))).alias(<span class="hljs-string">&quot;paragraph_sentence_cnt&quot;</span>),<br>pl.col(<span class="hljs-string">&quot;paragraph&quot;</span>).map_elements(<span class="hljs-keyword">lambda</span> x: <span class="hljs-built_in">len</span>(x.split(<span class="hljs-string">&quot; &quot;</span>))).alias(<span class="hljs-string">&quot;paragraph_word_cnt&quot;</span>),<br>)<br><span class="hljs-keyword">return</span> tmp<br></code></pre></td></tr></table></figure>
+
+<p>我认为这类特征对 AES 很有帮助，因为高分作文通常不只是词更高级，还会表现出更稳定的段落组织能力，比如段落长度更均衡、段落内部句子分布更合理、整体结构更完整。</p>
+<p>（2）句子级特征</p>
+<p>句子级特征重点统计句长和句子中的单词数，再继续做分布聚合：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">Sentence_Preprocess</span>(<span class="hljs-params">tmp</span>):<br>tmp = tmp.with_columns(<br>pl.col(<span class="hljs-string">&quot;full_text&quot;</span>).map_elements(dataPreprocessing).<span class="hljs-built_in">str</span>.split(by=<span class="hljs-string">&quot;.&quot;</span>).alias(<span class="hljs-string">&quot;sentence&quot;</span>)<br>)<br>tmp = tmp.explode(<span class="hljs-string">&quot;sentence&quot;</span>)<br>tmp = tmp.with_columns(<br>pl.col(<span class="hljs-string">&quot;sentence&quot;</span>).map_elements(<span class="hljs-keyword">lambda</span> x: <span class="hljs-built_in">len</span>(x)).alias(<span class="hljs-string">&quot;sentence_len&quot;</span>),<br>pl.col(<span class="hljs-string">&quot;sentence&quot;</span>).map_elements(<span class="hljs-keyword">lambda</span> x: <span class="hljs-built_in">len</span>(x.split(<span class="hljs-string">&quot; &quot;</span>))).alias(<span class="hljs-string">&quot;sentence_word_cnt&quot;</span>)<br>)<br><span class="hljs-keyword">return</span> tmp<br></code></pre></td></tr></table></figure>
+
+<p>这部分的本质是用统计方式刻画写作风格，句子是否过短、是否过长、是否存在明显不均衡、整体节奏是否平稳。对于作文评分来说，这类特征往往能从语言组织能力的角度补充纯语义模型。</p>
+<p>（3）单词级特征</p>
+<p>单词层面主要统计词长分布：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">Word_Preprocess</span>(<span class="hljs-params">tmp</span>):<br>tmp = tmp.with_columns(pl.col(<span class="hljs-string">&quot;full_text&quot;</span>).map_elements(dataPreprocessing).<span class="hljs-built_in">str</span>.split(by=<span class="hljs-string">&quot; &quot;</span>).alias(<span class="hljs-string">&quot;word&quot;</span>))<br>tmp = tmp.explode(<span class="hljs-string">&quot;word&quot;</span>)<br>tmp = tmp.with_columns(pl.col(<span class="hljs-string">&quot;word&quot;</span>).map_elements(<span class="hljs-keyword">lambda</span> x: <span class="hljs-built_in">len</span>(x)).alias(<span class="hljs-string">&quot;word_len&quot;</span>))<br>tmp = tmp.<span class="hljs-built_in">filter</span>(pl.col(<span class="hljs-string">&quot;word_len&quot;</span>) != <span class="hljs-number">0</span>)<br><span class="hljs-keyword">return</span> tmp<br></code></pre></td></tr></table></figure>
+
+<p>这类特征反映的是词汇复杂度和表达习惯。虽然它不能直接理解语义，但能从另一个角度反映作文成熟度，比如高分作文往往在词汇多样性、词长分布和表达丰富度上更有优势。</p>
+<p><strong>拼写错误特征</strong></p>
+<p>代码里还引入了 spaCy 和外部英文词表，用 lemmatization 之后的词去统计拼写错误数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">nlp = spacy.load(<span class="hljs-string">&quot;en_core_web_sm&quot;</span>)<br><br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;/kaggle/input/english-word-hx/words.txt&quot;</span>, <span class="hljs-string">&quot;r&quot;</span>) <span class="hljs-keyword">as</span> file:<br>english_vocab = <span class="hljs-built_in">set</span>(word.strip().lower() <span class="hljs-keyword">for</span> word <span class="hljs-keyword">in</span> file)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">count_spelling_errors</span>(<span class="hljs-params">text</span>):<br>doc = nlp(text)<br>lemmatized_tokens = [token.lemma_.lower() <span class="hljs-keyword">for</span> token <span class="hljs-keyword">in</span> doc]<br>spelling_errors = <span class="hljs-built_in">sum</span>(<span class="hljs-number">1</span> <span class="hljs-keyword">for</span> token <span class="hljs-keyword">in</span> lemmatized_tokens <span class="hljs-keyword">if</span> token <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> english_vocab)<br><span class="hljs-keyword">return</span> spelling_errors<br></code></pre></td></tr></table></figure>
+
+<p>这一类特征的价值在于：作文评分不只是看内容，还会受到语言规范性影响。拼写错误、词形不规范、基础语言错误，通常都与较低得分有一定相关性。这部分特征增强了模型对语言质量的感知。</p>
+<p><strong>稀疏文本特征 TF-IDF + CountVectorizer</strong></p>
+<p>除了结构统计特征，代码中还补充了传统的稀疏文本表示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python">vectorizer = TfidfVectorizer(<br>tokenizer=<span class="hljs-keyword">lambda</span> x: x,<br>preprocessor=<span class="hljs-keyword">lambda</span> x: x,<br>token_pattern=<span class="hljs-literal">None</span>,<br>strip_accents=<span class="hljs-string">&quot;unicode&quot;</span>,<br>analyzer=<span class="hljs-string">&quot;word&quot;</span>,<br>ngram_range=(<span class="hljs-number">3</span>, <span class="hljs-number">6</span>),<br>min_df=<span class="hljs-number">0.05</span>,<br>max_df=<span class="hljs-number">0.95</span>,<br>sublinear_tf=<span class="hljs-literal">True</span>,<br>)<br><br>train_tfid = vectorizer.fit_transform([i <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> train[<span class="hljs-string">&quot;full_text&quot;</span>]])<br>dense_matrix = train_tfid.toarray()<br>df = pd.DataFrame(dense_matrix)<br>df.columns = [<span class="hljs-string">f&quot;tfid_<span class="hljs-subst">&#123;i&#125;</span>&quot;</span> <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-built_in">len</span>(df.columns))]<br></code></pre></td></tr></table></figure>
+
+<p>以及：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python">vectorizer_cnt = CountVectorizer(<br>tokenizer=<span class="hljs-keyword">lambda</span> x: x,<br>preprocessor=<span class="hljs-keyword">lambda</span> x: x,<br>token_pattern=<span class="hljs-literal">None</span>,<br>strip_accents=<span class="hljs-string">&quot;unicode&quot;</span>,<br>analyzer=<span class="hljs-string">&quot;word&quot;</span>,<br>ngram_range=(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>),<br>min_df=<span class="hljs-number">0.10</span>,<br>max_df=<span class="hljs-number">0.85</span>,<br>)<br><br>train_cnt = vectorizer_cnt.fit_transform([i <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> train[<span class="hljs-string">&quot;full_text&quot;</span>]])<br>dense_matrix = train_cnt.toarray()<br>df = pd.DataFrame(dense_matrix)<br>df.columns = [<span class="hljs-string">f&quot;tfid_cnt_<span class="hljs-subst">&#123;i&#125;</span>&quot;</span> <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-built_in">len</span>(df.columns))]<br></code></pre></td></tr></table></figure>
+
+<p>这两部分特征的目的，是让模型保留一些更直接的 n-gram 统计信息。相比深度模型的语义表示，TF-IDF &#x2F; CountVectorizer 更偏表层模式，但在表述习惯、固定搭配、局部短语模式的识别上依然很有效。</p>
+<p><strong>把 DeBERTa 的输出接入二级模型</strong></p>
+<p>一级模型的 OOF &#x2F; 概率输出被直接拼接为二级模型的元特征：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python">deberta_oof = joblib.load(<span class="hljs-string">&quot;/kaggle/input/aes2-400-20240419134941/oof.pkl&quot;</span>)<br><br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">6</span>):<br>train_feats[<span class="hljs-string">f&quot;deberta_oof_<span class="hljs-subst">&#123;i&#125;</span>&quot;</span>] = deberta_oof[:, i]<br></code></pre></td></tr></table></figure>
+
+<p>这一步非常关键。因为手工统计特征擅长表达“结构、长度、规范性”，但不擅长捕捉深层语义；而 DeBERTa 的类别概率恰好提供了这种高维语义判断。两者结合，实际上构成了一个比较标准的 stacking 方案。</p>
+<p><strong>二级模型 LightGBM + 自定义 QWK 目标</strong></p>
+<p>为了更贴近比赛指标，代码中没有直接把任务当普通分类，而是设计了一个围绕 QWK 的自定义目标函数，并用 LightGBMRegressor 做训练：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">quadratic_weighted_kappa</span>(<span class="hljs-params">y_true, y_pred</span>):<br>y_true = y_true + a<br>y_pred = (y_pred + a).clip(<span class="hljs-number">1</span>, <span class="hljs-number">6</span>).<span class="hljs-built_in">round</span>()<br>qwk = cohen_kappa_score(y_true, y_pred, weights=<span class="hljs-string">&quot;quadratic&quot;</span>)<br><span class="hljs-keyword">return</span> <span class="hljs-string">&quot;QWK&quot;</span>, qwk, <span class="hljs-literal">True</span><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">qwk_obj</span>(<span class="hljs-params">y_true, y_pred</span>):<br>labels = y_true + a<br>preds = y_pred + a<br>preds = preds.clip(<span class="hljs-number">1</span>, <span class="hljs-number">6</span>)<br><br>f = <span class="hljs-number">1</span> / <span class="hljs-number">2</span> * np.<span class="hljs-built_in">sum</span>((preds - labels) ** <span class="hljs-number">2</span>)<br>g = <span class="hljs-number">1</span> / <span class="hljs-number">2</span> * np.<span class="hljs-built_in">sum</span>((preds - a) ** <span class="hljs-number">2</span> + b)<br><br>df = preds - labels<br>dg = preds - a<br>grad = (df / g - f * dg / g ** <span class="hljs-number">2</span>) * <span class="hljs-built_in">len</span>(labels)<br>hess = np.ones(<span class="hljs-built_in">len</span>(labels))<br><span class="hljs-keyword">return</span> grad, hess<br><br>a = <span class="hljs-number">2.998</span><br>b = <span class="hljs-number">1.092</span><br></code></pre></td></tr></table></figure>
+
+<p>训练部分如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python">skf = StratifiedKFold(n_splits=<span class="hljs-number">3</span>, shuffle=<span class="hljs-literal">True</span>, random_state=<span class="hljs-number">0</span>)<br><br>model = lgb.LGBMRegressor(<br>objective=qwk_obj,<br>metrics=<span class="hljs-string">&quot;None&quot;</span>,<br>learning_rate=<span class="hljs-number">0.05</span>,<br>max_depth=<span class="hljs-number">5</span>,<br>num_leaves=<span class="hljs-number">10</span>,<br>colsample_bytree=<span class="hljs-number">0.3</span>,<br>reg_alpha=<span class="hljs-number">0.7</span>,<br>reg_lambda=<span class="hljs-number">0.1</span>,<br>n_estimators=<span class="hljs-number">700</span>,<br>random_state=<span class="hljs-number">42</span>,<br>extra_trees=<span class="hljs-literal">True</span>,<br>class_weight=<span class="hljs-string">&quot;balanced&quot;</span>,<br>verbosity=-<span class="hljs-number">1</span><br>)<br></code></pre></td></tr></table></figure>
+
+<p>这一层设计说明我的思路非常明确，分数是有序的，优化目标也应该尽量贴近有序评分指标。因此我没有直接把 1~6 当成互相独立的 6 个类别，而是通过回归 + 截断 + 四舍五入的方式来拟合评分区间，再用 QWK 做验证，这与比赛目标更一致。</p>
+<p><strong>推理与提交</strong></p>
+<p>最终测试集流程是：重新生成测试集统计特征，拼接一级模型输出概率，再对多个 LightGBM fold 做平均预测，最后 clip 到 [1, 6] 并 round：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">6</span>):<br>test_feats[<span class="hljs-string">f&quot;deberta_oof_<span class="hljs-subst">&#123;i&#125;</span>&quot;</span>] = predicted_score[:, i]<br><br>probabilities = []<br><span class="hljs-keyword">for</span> model <span class="hljs-keyword">in</span> models:<br>proba = model.predict(test_feats[feature_select]) + a<br>probabilities.append(proba)<br><br>predictions = np.mean(probabilities, axis=<span class="hljs-number">0</span>)<br>predictions = np.<span class="hljs-built_in">round</span>(predictions.clip(<span class="hljs-number">1</span>, <span class="hljs-number">6</span>))<br><br>submission = pd.read_csv(<span class="hljs-string">&quot;/kaggle/input/learning-agency-lab-automated-essay-scoring-2/sample_submission.csv&quot;</span>)<br>submission[<span class="hljs-string">&quot;score&quot;</span>] = predictions.astype(<span class="hljs-built_in">int</span>)<br>submission.to_csv(<span class="hljs-string">&quot;submission.csv&quot;</span>, index=<span class="hljs-literal">None</span>)<br></code></pre></td></tr></table></figure>
+
+<p>一级模型产出语义判断，二级模型综合所有信息完成最终评分，最后通过折均值进一步减少方差。</p>
+<h3 id="方案总结"><a href="#方案总结" class="headerlink" title="方案总结"></a>方案总结</h3><p>这份方案最大的优点，是没有把希望全部押在单一模型上，而是把深度语义信息；结构统计信息；语言规范性信息；稀疏 n-gram 信息统一融合到了一个框架里。这样做的好处是更稳，也更适合作文评分这种多因素共同作用的任务。</p>
+<p>QWK 是比赛核心，因此我在二级模型中显式引入了与 QWK 对齐的目标函数和评估方式。相比直接用普通分类 loss，这样的做法更有机会把训练目标真正对准 leaderboard 指标。</p>
+<p>相比完全黑盒的端到端模型，这套方案中很多特征都可以被解释：段落数量、句子长度、拼写错误、词长分布等，都能够映射到写作质量的具体方面。因此从建模角度看，这不仅是一套“能跑分”的方案，也是一套相对可分析的方案。</p>
+<p>虽然一级模型把 max_length 提到了 1024，但作文评分仍然是一个典型长文本任务，长作文中后半部分的信息依旧可能被截断。对于这类任务，长上下文建模能力依然是一个重要瓶颈。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/kaggle%E5%A4%8D%E7%9B%98/" class="category-chain-item">kaggle复盘</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Automated Essay Scoring 2.0 铜牌</div>
+      <div>http://example.com/2026/04/09/Automated-Essay-Scoring-2-0-铜牌/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>wyz</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年4月9日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/04/09/March-Machine-Learning-Mania-2026-%E9%93%9C%E7%89%8C/" title="March Machine Learning Mania 2026 铜牌">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">March Machine Learning Mania 2026 铜牌</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/03/19/3212-%E7%BB%9F%E8%AE%A1-X-%E5%92%8C-Y-%E9%A2%91%E6%95%B0%E7%9B%B8%E7%AD%89%E7%9A%84%E5%AD%90%E7%9F%A9%E9%98%B5%E6%95%B0%E9%87%8F/" title="3212. 统计 X 和 Y 频数相等的子矩阵数量">
+                        <span class="hidden-mobile">3212. 统计 X 和 Y 频数相等的子矩阵数量</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

@@ -19,12 +19,12 @@
   <meta name="author" content="wyz">
   <meta name="keywords" content="">
   
-    <meta name="description" content="为贴近真实用户访问，将请求到达过程建模为泊松过程。设单位时间内到达率为λ，则时间窗口 T 内到达请求数 K 满足： • chatbot：短输入短输出、请求频率高。设置arrival_rate&#x3D;60, avg_prompt_len&#x3D;50,avg_output_len&#x3D;50。• analysis：长输入长输出、单请求计算更重。设置arrival_rate&#x3D;15,">
+    <meta name="description" content="思路为贴近真实用户访问，将请求到达过程建模为泊松过程。设单位时间内到达率为λ，则时间窗口 T 内到达请求数 K 满足： • chatbot：短输入短输出、请求频率高。设置arrival_rate&#x3D;60, avg_prompt_len&#x3D;50,avg_output_len&#x3D;50。• analysis：长输入长输出、单请求计算更重。设置arrival_rate&#x3D;1">
 <meta property="og:type" content="article">
 <meta property="og:title" content="为vLLM增加调度策略">
 <meta property="og:url" content="http://example.com/2026/02/12/%E4%B8%BAvLLM%E5%A2%9E%E5%8A%A0%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5/index.html">
 <meta property="og:site_name" content="歪嘴臭狗的狗窝">
-<meta property="og:description" content="为贴近真实用户访问，将请求到达过程建模为泊松过程。设单位时间内到达率为λ，则时间窗口 T 内到达请求数 K 满足： • chatbot：短输入短输出、请求频率高。设置arrival_rate&#x3D;60, avg_prompt_len&#x3D;50,avg_output_len&#x3D;50。• analysis：长输入长输出、单请求计算更重。设置arrival_rate&#x3D;15,">
+<meta property="og:description" content="思路为贴近真实用户访问，将请求到达过程建模为泊松过程。设单位时间内到达率为λ，则时间窗口 T 内到达请求数 K 满足： • chatbot：短输入短输出、请求频率高。设置arrival_rate&#x3D;60, avg_prompt_len&#x3D;50,avg_output_len&#x3D;50。• analysis：长输入长输出、单请求计算更重。设置arrival_rate&#x3D;1">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/pic/vllm10.png">
 <meta property="og:image" content="http://example.com/pic/vllm11.png">
@@ -36,7 +36,7 @@
 <meta property="og:image" content="http://example.com/pic/vllm17.png">
 <meta property="og:image" content="http://example.com/pic/vllm18.png">
 <meta property="article:published_time" content="2026-02-12T10:30:22.000Z">
-<meta property="article:modified_time" content="2026-02-12T12:57:16.000Z">
+<meta property="article:modified_time" content="2026-04-09T00:59:39.555Z">
 <meta property="article:author" content="wyz">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="http://example.com/pic/vllm10.png">
@@ -285,7 +285,7 @@
             
               <div class="markdown-body">
                 
-                <p>为贴近真实用户访问，将请求到达过程建模为泊松过程。设单位时间内到达率为λ，则时间窗口 T 内到达请求数 K 满足：</p>
+                <h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>为贴近真实用户访问，将请求到达过程建模为泊松过程。设单位时间内到达率为λ，则时间窗口 T 内到达请求数 K 满足：</p>
 <p>• chatbot：短输入短输出、请求频率高。设置arrival_rate&#x3D;60, avg_prompt_len&#x3D;50,<br>avg_output_len&#x3D;50。<br>• analysis：长输入长输出、单请求计算更重。设置arrival_rate&#x3D;15, avg_prompt_len&#x3D;800,<br>avg_output_len&#x3D;200。<br>• mixed：上述两类请求按一定比例混合，产生显著异质性。设置arrival_rate&#x3D;30,<br>avg_prompt_len&#x3D;200, avg_output_len&#x3D;100。</p>
 <p>VLLM 的调度逻辑封装在 Scheduler 类中，核心维护 3 个队列：<br>• waiting: 等待队列，存放新的 prefill 请求或被抢占后需重计算的请求；<br>• running: 运行队列，存放 decode 请求或分块 prefill（chunked prefill）请求；<br>• swapped: 交换队列，存放被换出到 CPU 的 decode 请求。<br>本作业比较的策略如下，并给出其核心思想和对应代码：</p>
 <ol>
