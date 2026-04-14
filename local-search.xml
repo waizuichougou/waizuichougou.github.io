@@ -4,6 +4,44 @@
   
   
   <entry>
+    <title>2463. 最小移动总距离</title>
+    <link href="/2026/04/14/2463-%E6%9C%80%E5%B0%8F%E7%A7%BB%E5%8A%A8%E6%80%BB%E8%B7%9D%E7%A6%BB/"/>
+    <url>/2026/04/14/2463-%E6%9C%80%E5%B0%8F%E7%A7%BB%E5%8A%A8%E6%80%BB%E8%B7%9D%E7%A6%BB/</url>
+    
+    <content type="html"><![CDATA[<p>X 轴上有一些机器人和工厂。给你一个整数数组 robot ，其中 robot[i] 是第 i 个机器人的位置。再给你一个二维整数数组 factory ，其中 factory[j] &#x3D; [positionj, limitj] ，表示第 j 个工厂的位置在 positionj ，且第 j 个工厂最多可以修理 limitj 个机器人。</p><p>每个机器人所在的位置 互不相同 。每个工厂所在的位置也 互不相同 。注意一个机器人可能一开始跟一个工厂在 相同的位置 。</p><p>所有机器人一开始都是坏的，他们会沿着设定的方向一直移动。设定的方向要么是 X 轴的正方向，要么是 X 轴的负方向。当一个机器人经过一个没达到上限的工厂时，这个工厂会维修这个机器人，且机器人停止移动。</p><p>任何时刻，你都可以设置 部分 机器人的移动方向。你的目标是最小化所有机器人总的移动距离。</p><p>请你返回所有机器人移动的最小总距离。测试数据保证所有机器人都可以被维修。</p><p>注意：</p><pre><code class="hljs">所有机器人移动速度相同。如果两个机器人移动方向相同，它们永远不会碰撞。如果两个机器人迎面相遇，它们也不会碰撞，它们彼此之间会擦肩而过。如果一个机器人经过了一个已经达到上限的工厂，机器人会当作工厂不存在，继续移动。机器人从位置 x 到位置 y 的移动距离为 |y - x| 。</code></pre><p>示例 1：</p><p>输入：robot &#x3D; [0,4,6], factory &#x3D; [[2,2],[6,2]]<br>输出：4<br>解释：如上图所示：</p><ul><li>第一个机器人从位置 0 沿着正方向移动，在第一个工厂处维修。</li><li>第二个机器人从位置 4 沿着负方向移动，在第一个工厂处维修。</li><li>第三个机器人在位置 6 被第二个工厂维修，它不需要移动。<br>第一个工厂的维修上限是 2 ，它维修了 2 个机器人。<br>第二个工厂的维修上限是 2 ，它维修了 1 个机器人。<br>总移动距离是 |2 - 0| + |2 - 4| + |6 - 6| &#x3D; 4 。没有办法得到比 4 更少的总移动距离。</li></ul><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">abs</span><span class="hljs-params">(x <span class="hljs-type">int64</span>)</span></span><span class="hljs-type">int64</span> &#123;<br>    <span class="hljs-keyword">if</span> x&lt;<span class="hljs-number">0</span>&#123;<br>        <span class="hljs-keyword">return</span> -x<br>    &#125;<br>    <span class="hljs-keyword">return</span> x<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">minimumTotalDistance</span><span class="hljs-params">(robot []<span class="hljs-type">int</span>, factory [][]<span class="hljs-type">int</span>)</span></span> <span class="hljs-type">int64</span> &#123;<br>    sort.Ints(robot)<br>    sort.Slice(factory,<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(i,j <span class="hljs-type">int</span>)</span></span><span class="hljs-type">bool</span>&#123;<span class="hljs-keyword">return</span> factory[i][<span class="hljs-number">0</span>]&lt;factory[j][<span class="hljs-number">0</span>]&#125;)<br>    n,m:=<span class="hljs-built_in">len</span>(robot),<span class="hljs-built_in">len</span>(factory)<br>    dp:=<span class="hljs-built_in">make</span>([][]<span class="hljs-type">int64</span>,n+<span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">for</span> i:=<span class="hljs-keyword">range</span> dp&#123;<br>        dp[i]=<span class="hljs-built_in">make</span>([]<span class="hljs-type">int64</span>,m+<span class="hljs-number">1</span>)<br>        <span class="hljs-keyword">if</span> i==<span class="hljs-number">0</span>&#123;<br>            <span class="hljs-keyword">continue</span><br>        &#125;<br>        <span class="hljs-keyword">for</span> j:=<span class="hljs-keyword">range</span> dp[i]&#123;<br>            dp[i][j]=math.MaxInt64/<span class="hljs-number">2</span><br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">for</span> j:=<span class="hljs-number">1</span>;j&lt;=m;j++&#123;<br>        <span class="hljs-keyword">for</span> i:=<span class="hljs-number">1</span>;i&lt;=n;i++&#123;<br>            dp[i][j]=dp[i][j<span class="hljs-number">-1</span>]<br>            cost:=<span class="hljs-type">int64</span>(<span class="hljs-number">0</span>)<br>            <span class="hljs-keyword">for</span> k:=<span class="hljs-number">1</span>;k&lt;=min(i,factory[j<span class="hljs-number">-1</span>][<span class="hljs-number">1</span>]);k++&#123;<br>                cost+=abs(<span class="hljs-type">int64</span>(robot[i-k]-factory[j<span class="hljs-number">-1</span>][<span class="hljs-number">0</span>]))<br>                dp[i][j]=min(dp[i][j],dp[i-k][j<span class="hljs-number">-1</span>]+cost)<br>            &#125;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> dp[n][m]<br>&#125;<br></code></pre></td></tr></table></figure><p>可以分类讨论证明，排序后的机器人去排序后的工厂，也就是一个工厂修理连续的一段机器人。然后用动态规划定义 dp[i][j] 为用前 j 个工厂修理前 i 个机器人的最小总移动距离。对于第 j 个工厂（下标从 1 开始），枚举它修理的机器人数量 k（0≤k≤min(i,limitj​)）。<br>状态转移方程：<br>dp[i][j]&#x3D;0≤k≤min​(dp[i−k][j−1]+∑​∣robot t​−factory j​∣)</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>leetcode</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>442. 数组中重复的数据</title>
+    <link href="/2026/04/13/442-%E6%95%B0%E7%BB%84%E4%B8%AD%E9%87%8D%E5%A4%8D%E7%9A%84%E6%95%B0%E6%8D%AE/"/>
+    <url>/2026/04/13/442-%E6%95%B0%E7%BB%84%E4%B8%AD%E9%87%8D%E5%A4%8D%E7%9A%84%E6%95%B0%E6%8D%AE/</url>
+    
+    <content type="html"><![CDATA[<p>给你一个长度为 n 的整数数组 nums ，其中 nums 的所有整数都在范围 [1, n] 内，且每个整数出现 最多两次 。请你找出所有出现 两次 的整数，并以数组形式返回。</p><p>你必须设计并实现一个时间复杂度为 O(n) 且仅使用常量额外空间（不包括存储输出所需的空间）的算法解决此问题。</p><p>示例 1：</p><p>输入：nums &#x3D; [4,3,2,7,8,2,3,1]<br>输出：[2,3]</p><p>示例 2：</p><p>输入：nums &#x3D; [1,1,2]<br>输出：[1]</p><p>示例 3：</p><p>输入：nums &#x3D; [1]<br>输出：[]</p><p>提示：</p><pre><code class="hljs">n == nums.length1 &lt;= n &lt;= 1051 &lt;= nums[i] &lt;= nnums 中的每个元素出现 一次 或 两次</code></pre><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">findDuplicates</span><span class="hljs-params">(nums []<span class="hljs-type">int</span>)</span></span>(ans []<span class="hljs-type">int</span>)&#123;<br>    <span class="hljs-keyword">for</span> i:=<span class="hljs-keyword">range</span> nums&#123;<br>        <span class="hljs-keyword">for</span> nums[i]!=nums[nums[i]<span class="hljs-number">-1</span>]&#123;<br>            nums[i],nums[nums[i]<span class="hljs-number">-1</span>]=nums[nums[i]<span class="hljs-number">-1</span>],nums[i]<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">for</span> i,num:=<span class="hljs-keyword">range</span> nums&#123;<br>        <span class="hljs-keyword">if</span> num<span class="hljs-number">-1</span>!=i&#123;<br>            ans =<span class="hljs-built_in">append</span>(ans,num)<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span><br>&#125;<br></code></pre></td></tr></table></figure><p>将每一个数放在对应的位置。由于数组的下标范围是 [0,n−1]，我们需要将数 i 放在数组中下标为 i−1 的位置.如果 i 恰好出现了一次，那么将 i 放在数组中下标为 i−1 的位置即可；如果 i 出现了两次，那么我们希望其中的一个 i 放在数组下标中为 i−1 的位置，另一个 i 放置在任意「不冲突」的位置 j。即数 j+1 没有在数组中出现过。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>leetcode</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>3488. 距离最小相等元素查询</title>
     <link href="/2026/04/13/3488-%E8%B7%9D%E7%A6%BB%E6%9C%80%E5%B0%8F%E7%9B%B8%E7%AD%89%E5%85%83%E7%B4%A0%E6%9F%A5%E8%AF%A2/"/>
     <url>/2026/04/13/3488-%E8%B7%9D%E7%A6%BB%E6%9C%80%E5%B0%8F%E7%9B%B8%E7%AD%89%E5%85%83%E7%B4%A0%E6%9F%A5%E8%AF%A2/</url>
